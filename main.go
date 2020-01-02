@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"crypto/tls"
 	"fmt"
 	"log"
+	"text/template"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -59,7 +61,23 @@ func main() {
 						listLen := len(archive.ReplyList)
 						list.Layout(gtx, listLen, func(i int) {
 							layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-								message := string(archive.ReplyList[i].Content.Blob)
+								reply := archive.ReplyList[i]
+								author, has, err := store.GetIdentity(&reply.Author)
+								if err != nil {
+									log.Printf("failed finding %s in store: %v", &reply.Author, err)
+								}
+								if !has {
+									author = &forest.Identity{}
+								}
+								buf := new(bytes.Buffer)
+								messageTemplate.Execute(buf, struct {
+									Author *forest.Identity
+									Reply  *forest.Reply
+								}{
+									Author: author.(*forest.Identity),
+									Reply:  reply,
+								})
+								message := buf.String()
 								element := theme.Body1(message)
 								element.Layout(gtx)
 							})
@@ -71,6 +89,24 @@ func main() {
 	}()
 	app.Main()
 }
+
+const messageTemplateText = `{{ nameString .Author }} - {{ dateString .Reply }}
+{{ contentString .Reply }}`
+
+var messageTemplate = template.Must(
+	template.New("message").
+		Funcs(template.FuncMap(map[string]interface{}{
+			"nameString": func(author *forest.Identity) string {
+				return string(author.Name.Blob)
+			},
+			"dateString": func(reply *forest.Reply) string {
+				return reply.Created.Time().Local().String()
+			},
+			"contentString": func(reply *forest.Reply) string {
+				return string(reply.Content.Blob)
+			},
+		})).
+		Parse(messageTemplateText))
 
 func LaunchWorker() (chan<- struct{}, *archive.Archive, sprout.SubscribableStore, error) {
 	arch, err := archive.NewArchive(forest.NewMemoryStore())
