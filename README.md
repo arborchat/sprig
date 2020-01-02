@@ -4,7 +4,11 @@ Sprig is a highly experimental [Arbor](https://arbor.chat) chat client. It curre
 
 ### Try it
 
-To give it a shot on desktop, install [go 1.13+](https://golang.org/dl) and run:
+To give it a shot on desktop, install [go 1.13+](https://golang.org/dl).
+
+Then make sure you have the [gio dependencies](https://gioui.org/doc/install#linux) for your current OS.
+
+Finally, run:
 
 ```
 go run git.sr.ht/~whereswaldon/sprig
