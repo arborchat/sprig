@@ -11,7 +11,7 @@ Then make sure you have the [gio dependencies](https://gioui.org/doc/install#lin
 Finally, run:
 
 ```
-go run git.sr.ht/~whereswaldon/sprig
+env GO111MODULE=on go run git.sr.ht/~whereswaldon/sprig
 ```
 
 To run on android, clone this repo and run:
