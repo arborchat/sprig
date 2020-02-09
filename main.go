@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"crypto/tls"
 	"fmt"
 	"log"
-	"text/template"
 
 	"gioui.org/app"
 	"gioui.org/font/gofont"
@@ -51,38 +48,31 @@ func main() {
 				if list.Dragging() {
 					key.HideInputOp{}.Add(gtx.Ops)
 				}
-				layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-					layout.Rigid(func() {
-						title := theme.H1("sprig")
-						title.Alignment = text.Middle
-						title.Layout(gtx)
-					}),
-					layout.Flexed(1, func() {
-						listLen := len(archive.ReplyList)
-						list.Layout(gtx, listLen, func(i int) {
-							layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-								reply := archive.ReplyList[i]
-								author, has, err := store.GetIdentity(&reply.Author)
-								if err != nil {
-									log.Printf("failed finding %s in store: %v", &reply.Author, err)
-								}
-								if !has {
-									author = &forest.Identity{}
-								}
-								buf := new(bytes.Buffer)
-								messageTemplate.Execute(buf, struct {
-									Author *forest.Identity
-									Reply  *forest.Reply
-								}{
-									Author: author.(*forest.Identity),
-									Reply:  reply,
+				layout.Inset{
+					Top:    e.Insets.Top,
+					Bottom: e.Insets.Bottom,
+					Left:   e.Insets.Left,
+					Right:  e.Insets.Right,
+				}.Layout(gtx,
+					func() {
+						layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+							layout.Rigid(func() {
+								title := theme.H3("sprig")
+								title.Alignment = text.Start
+								title.Layout(gtx)
+							}),
+							layout.Flexed(1, func() {
+								listLen := len(archive.ReplyList)
+								list.Layout(gtx, listLen, func(i int) {
+									layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+										reply := archive.ReplyList[i]
+										Layout(gtx, theme, reply, store)
+									})
 								})
-								message := buf.String()
-								element := theme.Body1(message)
-								element.Layout(gtx)
-							})
-						})
-					}))
+							}),
+						)
+					},
+				)
 				e.Frame(gtx.Ops)
 			}
 		}
@@ -90,23 +80,34 @@ func main() {
 	app.Main()
 }
 
-const messageTemplateText = `{{ nameString .Author }} - {{ dateString .Reply }}
-{{ contentString .Reply }}`
-
-var messageTemplate = template.Must(
-	template.New("message").
-		Funcs(template.FuncMap(map[string]interface{}{
-			"nameString": func(author *forest.Identity) string {
-				return string(author.Name.Blob)
-			},
-			"dateString": func(reply *forest.Reply) string {
-				return reply.Created.Time().Local().String()
-			},
-			"contentString": func(reply *forest.Reply) string {
-				return string(reply.Content.Blob)
-			},
-		})).
-		Parse(messageTemplateText))
+func Layout(gtx *layout.Context, theme *material.Theme, reply *forest.Reply, store forest.Store) {
+	author, has, err := store.GetIdentity(&reply.Author)
+	if err != nil {
+		log.Printf("failed finding %s in store: %v", &reply.Author, err)
+	}
+	if !has {
+		author = &forest.Identity{}
+	}
+	log.Print(author)
+	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+		layout.Rigid(func() {
+			layout.Flex{}.Layout(gtx,
+				layout.Rigid(func() {
+					label := theme.Label(unit.Dp(10), string(author.(*forest.Identity).Name.Blob)+"  ")
+					label.Font.Weight = text.Bold
+					label.Layout(gtx)
+				}),
+				layout.Rigid(func() {
+					theme.Label(unit.Dp(10), reply.Created.Time().Local().Format("2006/01/02 15:04")).Layout(gtx)
+				}),
+			)
+		}),
+		layout.Rigid(func() {
+			element := theme.Body1(string(reply.Content.Blob))
+			element.Layout(gtx)
+		}),
+	)
+}
 
 func LaunchWorker() (chan<- struct{}, *archive.Archive, sprout.SubscribableStore, error) {
 	arch, err := archive.NewArchive(forest.NewMemoryStore())
@@ -115,16 +116,7 @@ func LaunchWorker() (chan<- struct{}, *archive.Archive, sprout.SubscribableStore
 	}
 	store := sprout.NewSubscriberStore(arch)
 	const address = "arbor.chat:7117"
-	conn, err := tls.Dial("tcp", address, &tls.Config{})
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed dialing %s: %w", address, err)
-	}
 	doneChan := make(chan struct{})
-	worker, err := sprout.NewWorker(doneChan, conn, store)
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed launching worker: %w", err)
-	}
-	go worker.Run()
-	go worker.BootstrapLocalStore(1024)
+	sprout.LaunchSupervisedWorker(doneChan, address, store, nil, log.New(log.Writer(), address+" ", log.LstdFlags))
 	return doneChan, arch, store, nil
 }
