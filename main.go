@@ -88,7 +88,6 @@ func Layout(gtx *layout.Context, theme *material.Theme, reply *forest.Reply, sto
 	if !has {
 		author = &forest.Identity{}
 	}
-	log.Print(author)
 	layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func() {
 			layout.Flex{}.Layout(gtx,
