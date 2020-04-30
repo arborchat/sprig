@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 	"sort"
 	"strings"
@@ -32,10 +33,15 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
+	address := flag.String("address", "", "arbor relay address to connect to")
+	flag.Parse()
 	appState := NewAppState()
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
 	})
+	appState.Settings.Address = *address
+	appState.UIState.ConnectFormState.Editor.SetText(*address)
+	appState.UIState.FirstFrame = true
 	gtx := layout.NewContext(w.Queue())
 	for {
 		switch event := (<-w.Events()).(type) {
@@ -123,6 +129,7 @@ const (
 )
 
 type UIState struct {
+	FirstFrame  bool
 	CurrentView ViewID
 	ConnectFormState
 	CommunityMenuState
@@ -131,8 +138,11 @@ type UIState struct {
 func (ui *UIState) Update(config *Settings, arborState *ArborState, gtx *layout.Context) {
 	switch ui.CurrentView {
 	case ConnectForm:
-		if ui.ConnectFormState.ConnectButton.Clicked(gtx) {
+		switch {
+		case ui.ConnectFormState.ConnectButton.Clicked(gtx):
 			config.Address = ui.ConnectFormState.Editor.Text()
+			fallthrough
+		case ui.FirstFrame && config.Address != "":
 			arborState.RestartWorker(config.Address)
 			ui.CurrentView = CommunityMenu
 		}
@@ -141,6 +151,7 @@ func (ui *UIState) Update(config *Settings, arborState *ArborState, gtx *layout.
 			ui.CurrentView = ConnectForm
 		}
 	}
+	ui.FirstFrame = false
 }
 
 type ConnectFormState struct {
