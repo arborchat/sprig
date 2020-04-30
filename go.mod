@@ -7,4 +7,5 @@ require (
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200207033954-0859340e8253
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200208174132-0b59703c7bc8
 	git.sr.ht/~whereswaldon/wisteria v0.0.0-20200208175622-9cdf067c54df
+	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
 )
