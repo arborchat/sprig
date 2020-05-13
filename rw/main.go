@@ -3,15 +3,18 @@ package main
 import (
 	"flag"
 	"fmt"
+	"image/color"
 	"log"
 	"sort"
 	"strings"
 	"sync"
 
 	"gioui.org/app"
+	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/io/system"
 	"gioui.org/layout"
+	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -202,6 +205,9 @@ func (ui *UIState) Update(config *Settings, arborState *ArborState, gtx *layout.
 				ui.ReplyViewState.Selected = clickHandler.Reply
 				ui.ReplyViewState.Ancestry, _ = arborState.ForestArchive.AncestryOf(clickHandler.Reply)
 				ui.ReplyViewState.Descendants, _ = arborState.ForestArchive.DescendantsOf(clickHandler.Reply)
+				reply, _, _ := arborState.ForestArchive.Get(clickHandler.Reply)
+				ui.Conversation = &reply.(*forest.Reply).ConversationID
+
 			}
 		}
 	}
@@ -221,12 +227,13 @@ type CommunityMenuState struct {
 }
 
 type ReplyViewState struct {
-	BackButton  widget.Clickable
-	ReplyList   layout.List
-	ReplyStates []ReplyState
-	Selected    *fields.QualifiedHash
-	Ancestry    []*fields.QualifiedHash
-	Descendants []*fields.QualifiedHash
+	BackButton   widget.Clickable
+	ReplyList    layout.List
+	ReplyStates  []ReplyState
+	Selected     *fields.QualifiedHash
+	Ancestry     []*fields.QualifiedHash
+	Descendants  []*fields.QualifiedHash
+	Conversation *fields.QualifiedHash
 }
 
 func Layout(appState *AppState, gtx *layout.Context) {
@@ -362,14 +369,21 @@ func LayoutReplyView(appState *AppState, gtx *layout.Context) {
 		layout.Stack{}.Layout(gtx,
 			layout.Stacked(func() {
 				gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
-				leftInset := unit.Dp(8)
+				leftInset := unit.Dp(0)
+				background := color.RGBA{R: 175, G: 175, B: 175, A: 255}
 				if appState.ReplyViewState.Selected != nil && reply.ID().Equals(appState.ReplyViewState.Selected) {
-					leftInset = unit.Dp(16)
+					leftInset = unit.Dp(20)
+					background.R = 255
+					background.G = 255
+					background.B = 255
 				} else {
 					found := false
 					for _, id := range appState.ReplyViewState.Ancestry {
 						if id.Equals(reply.ID()) {
-							leftInset = unit.Dp(12)
+							leftInset = unit.Dp(20)
+							background.R = 230
+							background.G = 230
+							background.B = 230
 							found = true
 							break
 						}
@@ -377,27 +391,67 @@ func LayoutReplyView(appState *AppState, gtx *layout.Context) {
 					if !found {
 						for _, id := range appState.ReplyViewState.Descendants {
 							if id.Equals(reply.ID()) {
-								leftInset = unit.Dp(20)
+								leftInset = unit.Dp(30)
+								background.R = 230
+								background.G = 230
+								background.B = 230
+								found = true
 								break
 							}
 						}
 					}
+					if !found && appState.ReplyViewState.Conversation != nil && !appState.ReplyViewState.Conversation.Equals(fields.NullHash()) {
+						if appState.ReplyViewState.Conversation.Equals(&reply.ConversationID) {
+							leftInset = unit.Dp(10)
+						}
+					}
 				}
-				layout.Inset{Left: leftInset}.Layout(gtx, func() {
-					layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-						layout.Rigid(func() {
-							layout.NW.Layout(gtx, func() {
-								material.Body2(appState.Theme, string(author.Name.Blob)).Layout(gtx)
-							})
-							layout.NE.Layout(gtx, func() {
-								material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04")).Layout(gtx)
-							})
-						}),
-						layout.Rigid(func() {
-							material.Body1(appState.Theme, string(reply.Content.Blob)).Layout(gtx)
-						}),
-					)
-				})
+				layout.Stack{}.Layout(gtx,
+					layout.Expanded(func() {
+						paintOp := paint.ColorOp{Color: color.RGBA{G: 128, B: 128, A: 255}}
+						paintOp.Add(gtx.Ops)
+						paint.PaintOp{Rect: f32.Rectangle{
+							Max: f32.Point{
+								X: float32(gtx.Constraints.Width.Max),
+								Y: float32(gtx.Constraints.Height.Max),
+							},
+						}}.Add(gtx.Ops)
+					}),
+					layout.Stacked(func() {
+						layout.Inset{Left: leftInset}.Layout(gtx, func() {
+							layout.Stack{}.Layout(gtx,
+								layout.Expanded(func() {
+									paintOp := paint.ColorOp{Color: background}
+									paintOp.Add(gtx.Ops)
+									paint.PaintOp{Rect: f32.Rectangle{
+										Max: f32.Point{
+											X: float32(gtx.Constraints.Width.Max),
+											Y: float32(gtx.Constraints.Height.Max),
+										},
+									}}.Add(gtx.Ops)
+								}),
+								layout.Stacked(func() {
+									layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+										layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+											layout.Rigid(func() {
+												gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+												layout.NW.Layout(gtx, func() {
+													material.Body2(appState.Theme, string(author.Name.Blob)).Layout(gtx)
+												})
+												layout.NE.Layout(gtx, func() {
+													material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04")).Layout(gtx)
+												})
+											}),
+											layout.Rigid(func() {
+												material.Body1(appState.Theme, string(reply.Content.Blob)).Layout(gtx)
+											}),
+										)
+									})
+								}),
+							)
+						})
+					}),
+				)
 			}),
 			layout.Expanded(func() {
 				state.Clickable.Layout(gtx)
