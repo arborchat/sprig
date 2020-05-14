@@ -1,11 +1,14 @@
 module git.sr.ht/~whereswaldon/sprig
 
-go 1.13
+go 1.14
 
 require (
-	gioui.org v0.0.0-20200207203519-d2d495416a91
-	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200207033954-0859340e8253
-	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200208174132-0b59703c7bc8
-	git.sr.ht/~whereswaldon/wisteria v0.0.0-20200208175622-9cdf067c54df
-	golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3
+	gioui.org v0.0.0-20200511145007-062e2bc54b10
+	gioui.org/cmd v0.0.0-20200514114436-31acd5451e03 // indirect
+	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200319194448-e3a47dd95cda
+	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200319194723-df82b3bc1ee9
+	git.sr.ht/~whereswaldon/wisteria v0.0.11
+	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5
 )
+
+replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c
