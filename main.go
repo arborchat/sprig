@@ -15,6 +15,7 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op/paint"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -436,10 +437,15 @@ func LayoutReplyView(appState *AppState, gtx *layout.Context) {
 											layout.Rigid(func() {
 												gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
 												layout.NW.Layout(gtx, func() {
-													material.Body2(appState.Theme, string(author.Name.Blob)).Layout(gtx)
+													name := material.Body2(appState.Theme, string(author.Name.Blob))
+													name.Font.Weight = text.Bold
+													name.Layout(gtx)
 												})
 												layout.NE.Layout(gtx, func() {
-													material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04")).Layout(gtx)
+													date := material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+													date.Color.A = 200
+													date.TextSize = unit.Dp(12)
+													date.Layout(gtx)
 												})
 											}),
 											layout.Rigid(func() {
