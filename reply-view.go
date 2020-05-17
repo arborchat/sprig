@@ -40,6 +40,8 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *materia
 		ArborState: arborState,
 		Theme:      theme,
 	}
+	c.ReplyList.ScrollToEnd = true
+	c.ReplyList.Position.BeforeEnd = false
 	return c
 }
 
@@ -110,6 +112,7 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 			}
 			author := authorNode.(*forest.Identity)
 			black := color.RGBA{A: 255}
+			teal := color.RGBA{G: 128, B: 128, A: 255}
 			//darkGray := color.RGBA{R: 50, G: 50, B: 50, A: 255}
 			//mediumGray := color.RGBA{R: 100, G: 100, B: 100, A: 255}
 			white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
@@ -137,8 +140,10 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 				fallthrough
 			default:
 				leftInset = sideInset
-				background = lightLightGray
+				background = teal
 				background.A = 0
+				background.G += 10
+				background.B += 10
 				textColor = black
 			}
 			messageWidth := gtx.Constraints.Width.Max - gtx.Px(unit.Dp(36))
