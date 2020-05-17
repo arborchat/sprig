@@ -19,11 +19,11 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
-	"git.sr.ht/~whereswaldon/forest-go"
-	forestArch "git.sr.ht/~whereswaldon/forest-go/archive"
+	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
-	"git.sr.ht/~whereswaldon/sprout-go"
-	"git.sr.ht/~whereswaldon/wisteria/archive"
+	"git.sr.ht/~whereswaldon/forest-go/store"
+	sprout "git.sr.ht/~whereswaldon/sprout-go"
+	"git.sr.ht/~whereswaldon/wisteria/replylist"
 
 	"golang.org/x/exp/shiny/materialdesign/icons"
 )
@@ -74,18 +74,15 @@ type AppState struct {
 }
 
 func NewAppState() (*AppState, error) {
-	memStore := forest.NewMemoryStore()
-	arch, err := archive.NewArchive(memStore)
+	archive := store.NewArchive(store.NewMemoryStore())
+	rl, err := replylist.New(archive)
 	if err != nil {
-		return nil, fmt.Errorf("failed to build archive: %w", err)
+		return nil, fmt.Errorf("failed to construct replylist: %w", err)
 	}
-	forestArch := forestArch.New(arch)
-	store := sprout.NewSubscriberStore(arch)
 	return &AppState{
 		ArborState: ArborState{
-			SubscribableStore: store,
-			Archive:           arch,
-			ForestArchive:     forestArch,
+			SubscribableStore: archive,
+			ReplyList:         rl,
 		},
 		Theme: material.NewTheme(),
 	}, nil
@@ -97,9 +94,8 @@ func (appState *AppState) Update(gtx *layout.Context) {
 
 type ArborState struct {
 	sync.Once
-	sprout.SubscribableStore
-	*archive.Archive
-	ForestArchive *forestArch.Archive
+	SubscribableStore store.ExtendedStore
+	*replylist.ReplyList
 
 	communities []*forest.Community
 	replies     []*forest.Reply
@@ -107,18 +103,6 @@ type ArborState struct {
 	workerLock sync.Mutex
 	workerDone chan struct{}
 	workerLog  *log.Logger
-}
-
-func LaunchWorker() (chan<- struct{}, *archive.Archive, sprout.SubscribableStore, error) {
-	arch, err := archive.NewArchive(forest.NewMemoryStore())
-	if err != nil {
-		return nil, nil, nil, fmt.Errorf("failed wrapping store in archive: %w", err)
-	}
-	store := sprout.NewSubscriberStore(arch)
-	const address = "arbor.chat:7117"
-	doneChan := make(chan struct{})
-	sprout.LaunchSupervisedWorker(doneChan, address, store, nil, log.New(log.Writer(), address+" ", log.LstdFlags))
-	return doneChan, arch, store, nil
 }
 
 func (a *ArborState) init() {
@@ -136,7 +120,7 @@ func (a *ArborState) init() {
 					})
 				}
 			case *forest.Reply:
-				a.Archive.Sort()
+				a.ReplyList.Sort()
 			}
 		})
 	})
@@ -204,9 +188,9 @@ func (ui *UIState) Update(config *Settings, arborState *ArborState, gtx *layout.
 			if clickHandler.Clicked(gtx) {
 				log.Printf("clicked %s", clickHandler.Reply)
 				ui.ReplyViewState.Selected = clickHandler.Reply
-				ui.ReplyViewState.Ancestry, _ = arborState.ForestArchive.AncestryOf(clickHandler.Reply)
-				ui.ReplyViewState.Descendants, _ = arborState.ForestArchive.DescendantsOf(clickHandler.Reply)
-				reply, _, _ := arborState.ForestArchive.Get(clickHandler.Reply)
+				ui.ReplyViewState.Ancestry, _ = arborState.SubscribableStore.AncestryOf(clickHandler.Reply)
+				ui.ReplyViewState.Descendants, _ = arborState.SubscribableStore.DescendantsOf(clickHandler.Reply)
+				reply, _, _ := arborState.SubscribableStore.Get(clickHandler.Reply)
 				ui.Conversation = &reply.(*forest.Reply).ConversationID
 
 			}
@@ -356,43 +340,33 @@ func LayoutReplyView(appState *AppState, gtx *layout.Context) {
 
 	appState.ReplyViewState.ReplyList.Axis = layout.Vertical
 	stateIndex := 0
-	appState.ReplyViewState.ReplyList.Layout(gtx, len(appState.ArborState.Archive.ReplyList), func(index int) {
-		if stateIndex >= len(appState.ReplyViewState.ReplyStates) {
-			appState.ReplyViewState.ReplyStates = append(appState.ReplyViewState.ReplyStates, ReplyState{})
-		}
-		state := &appState.ReplyViewState.ReplyStates[stateIndex]
-		reply := appState.ArborState.Archive.ReplyList[index]
-		authorNode, found, err := appState.ArborState.SubscribableStore.GetIdentity(&reply.Author)
-		if err != nil || !found {
-			log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
-		}
-		author := authorNode.(*forest.Identity)
-		layout.Stack{}.Layout(gtx,
-			layout.Stacked(func() {
-				gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
-				leftInset := unit.Dp(0)
-				background := color.RGBA{R: 175, G: 175, B: 175, A: 255}
-				if appState.ReplyViewState.Selected != nil && reply.ID().Equals(appState.ReplyViewState.Selected) {
-					leftInset = unit.Dp(20)
-					background.R = 255
-					background.G = 255
-					background.B = 255
-				} else {
-					found := false
-					for _, id := range appState.ReplyViewState.Ancestry {
-						if id.Equals(reply.ID()) {
-							leftInset = unit.Dp(20)
-							background.R = 230
-							background.G = 230
-							background.B = 230
-							found = true
-							break
-						}
-					}
-					if !found {
-						for _, id := range appState.ReplyViewState.Descendants {
+	appState.ArborState.ReplyList.WithReplies(func(replies []*forest.Reply) {
+		appState.ReplyViewState.ReplyList.Layout(gtx, len(replies), func(index int) {
+			if stateIndex >= len(appState.ReplyViewState.ReplyStates) {
+				appState.ReplyViewState.ReplyStates = append(appState.ReplyViewState.ReplyStates, ReplyState{})
+			}
+			state := &appState.ReplyViewState.ReplyStates[stateIndex]
+			reply := replies[index]
+			authorNode, found, err := appState.ArborState.SubscribableStore.GetIdentity(&reply.Author)
+			if err != nil || !found {
+				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
+			}
+			author := authorNode.(*forest.Identity)
+			layout.Stack{}.Layout(gtx,
+				layout.Stacked(func() {
+					gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+					leftInset := unit.Dp(0)
+					background := color.RGBA{R: 175, G: 175, B: 175, A: 255}
+					if appState.ReplyViewState.Selected != nil && reply.ID().Equals(appState.ReplyViewState.Selected) {
+						leftInset = unit.Dp(20)
+						background.R = 255
+						background.G = 255
+						background.B = 255
+					} else {
+						found := false
+						for _, id := range appState.ReplyViewState.Ancestry {
 							if id.Equals(reply.ID()) {
-								leftInset = unit.Dp(30)
+								leftInset = unit.Dp(20)
 								background.R = 230
 								background.G = 230
 								background.B = 230
@@ -400,71 +374,83 @@ func LayoutReplyView(appState *AppState, gtx *layout.Context) {
 								break
 							}
 						}
-					}
-					if !found && appState.ReplyViewState.Conversation != nil && !appState.ReplyViewState.Conversation.Equals(fields.NullHash()) {
-						if appState.ReplyViewState.Conversation.Equals(&reply.ConversationID) {
-							leftInset = unit.Dp(10)
+						if !found {
+							for _, id := range appState.ReplyViewState.Descendants {
+								if id.Equals(reply.ID()) {
+									leftInset = unit.Dp(30)
+									background.R = 230
+									background.G = 230
+									background.B = 230
+									found = true
+									break
+								}
+							}
+						}
+						if !found && appState.ReplyViewState.Conversation != nil && !appState.ReplyViewState.Conversation.Equals(fields.NullHash()) {
+							if appState.ReplyViewState.Conversation.Equals(&reply.ConversationID) {
+								leftInset = unit.Dp(10)
+							}
 						}
 					}
-				}
-				layout.Stack{}.Layout(gtx,
-					layout.Expanded(func() {
-						paintOp := paint.ColorOp{Color: color.RGBA{G: 128, B: 128, A: 255}}
-						paintOp.Add(gtx.Ops)
-						paint.PaintOp{Rect: f32.Rectangle{
-							Max: f32.Point{
-								X: float32(gtx.Constraints.Width.Max),
-								Y: float32(gtx.Constraints.Height.Max),
-							},
-						}}.Add(gtx.Ops)
-					}),
-					layout.Stacked(func() {
-						layout.Inset{Left: leftInset}.Layout(gtx, func() {
-							layout.Stack{}.Layout(gtx,
-								layout.Expanded(func() {
-									paintOp := paint.ColorOp{Color: background}
-									paintOp.Add(gtx.Ops)
-									paint.PaintOp{Rect: f32.Rectangle{
-										Max: f32.Point{
-											X: float32(gtx.Constraints.Width.Max),
-											Y: float32(gtx.Constraints.Height.Max),
-										},
-									}}.Add(gtx.Ops)
-								}),
-								layout.Stacked(func() {
-									layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-										layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-											layout.Rigid(func() {
-												gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
-												layout.NW.Layout(gtx, func() {
-													name := material.Body2(appState.Theme, string(author.Name.Blob))
-													name.Font.Weight = text.Bold
-													name.Layout(gtx)
-												})
-												layout.NE.Layout(gtx, func() {
-													date := material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
-													date.Color.A = 200
-													date.TextSize = unit.Dp(12)
-													date.Layout(gtx)
-												})
-											}),
-											layout.Rigid(func() {
-												material.Body1(appState.Theme, string(reply.Content.Blob)).Layout(gtx)
-											}),
-										)
-									})
-								}),
-							)
-						})
-					}),
-				)
-			}),
-			layout.Expanded(func() {
-				state.Clickable.Layout(gtx)
-				state.Reply = reply.ID()
-			}),
-		)
-		stateIndex++
+					layout.Stack{}.Layout(gtx,
+						layout.Expanded(func() {
+							paintOp := paint.ColorOp{Color: color.RGBA{G: 128, B: 128, A: 255}}
+							paintOp.Add(gtx.Ops)
+							paint.PaintOp{Rect: f32.Rectangle{
+								Max: f32.Point{
+									X: float32(gtx.Constraints.Width.Max),
+									Y: float32(gtx.Constraints.Height.Max),
+								},
+							}}.Add(gtx.Ops)
+						}),
+						layout.Stacked(func() {
+							layout.Inset{Left: leftInset}.Layout(gtx, func() {
+								layout.Stack{}.Layout(gtx,
+									layout.Expanded(func() {
+										paintOp := paint.ColorOp{Color: background}
+										paintOp.Add(gtx.Ops)
+										paint.PaintOp{Rect: f32.Rectangle{
+											Max: f32.Point{
+												X: float32(gtx.Constraints.Width.Max),
+												Y: float32(gtx.Constraints.Height.Max),
+											},
+										}}.Add(gtx.Ops)
+									}),
+									layout.Stacked(func() {
+										layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+											layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+												layout.Rigid(func() {
+													gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+													layout.NW.Layout(gtx, func() {
+														name := material.Body2(appState.Theme, string(author.Name.Blob))
+														name.Font.Weight = text.Bold
+														name.Layout(gtx)
+													})
+													layout.NE.Layout(gtx, func() {
+														date := material.Body2(appState.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+														date.Color.A = 200
+														date.TextSize = unit.Dp(12)
+														date.Layout(gtx)
+													})
+												}),
+												layout.Rigid(func() {
+													material.Body1(appState.Theme, string(reply.Content.Blob)).Layout(gtx)
+												}),
+											)
+										})
+									}),
+								)
+							})
+						}),
+					)
+				}),
+				layout.Expanded(func() {
+					state.Clickable.Layout(gtx)
+					state.Reply = reply.ID()
+				}),
+			)
+			stateIndex++
+		})
 	})
 }
 
