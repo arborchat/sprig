@@ -58,6 +58,38 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 	}
 }
 
+type replyStatus int
+
+const (
+	none replyStatus = iota
+	sibling
+	selected
+	ancestor
+	descendant
+)
+
+func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
+	if c.Selected != nil && reply.ID().Equals(c.Selected) {
+		return selected
+	}
+	for _, id := range c.Ancestry {
+		if id.Equals(reply.ID()) {
+			return ancestor
+		}
+	}
+	for _, id := range c.Descendants {
+		if id.Equals(reply.ID()) {
+			return descendant
+		}
+	}
+	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
+		if c.Conversation.Equals(&reply.ConversationID) {
+			return sibling
+		}
+	}
+	return none
+}
+
 func (c *ReplyListView) Layout(gtx *layout.Context) {
 	gtx.Constraints.Height.Min = gtx.Constraints.Height.Max
 	gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
@@ -77,43 +109,39 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
 			}
 			author := authorNode.(*forest.Identity)
-			leftInset := unit.Dp(0)
-			background := color.RGBA{R: 175, G: 175, B: 175, A: 255}
-			if c.Selected != nil && reply.ID().Equals(c.Selected) {
-				leftInset = unit.Dp(20)
-				background.R = 255
-				background.G = 255
-				background.B = 255
-			} else {
-				found := false
-				for _, id := range c.Ancestry {
-					if id.Equals(reply.ID()) {
-						leftInset = unit.Dp(20)
-						background.R = 230
-						background.G = 230
-						background.B = 230
-						found = true
-						break
-					}
-				}
-				if !found {
-					for _, id := range c.Descendants {
-						if id.Equals(reply.ID()) {
-							leftInset = unit.Dp(30)
-							background.R = 230
-							background.G = 230
-							background.B = 230
-							found = true
-							break
-						}
-					}
-				}
-				if !found && c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
-					if c.Conversation.Equals(&reply.ConversationID) {
-						leftInset = unit.Dp(10)
-					}
-				}
+			black := color.RGBA{A: 255}
+			//darkGray := color.RGBA{R: 50, G: 50, B: 50, A: 255}
+			//mediumGray := color.RGBA{R: 100, G: 100, B: 100, A: 255}
+			white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
+			lightLightGray := color.RGBA{R: 240, G: 240, B: 240, A: 255}
+			//lightGray := color.RGBA{R: 230, G: 230, B: 230, A: 255}
+			sideInset := unit.Dp(3)
+			var (
+				background, textColor color.RGBA
+				leftInset             unit.Value
+			)
+			switch c.statusOf(reply) {
+			case selected:
+				leftInset = unit.Dp(15)
+				background = white
+				textColor = black
+			case ancestor:
+				leftInset = unit.Dp(15)
+				background = lightLightGray
+				textColor = black
+			case descendant:
+				leftInset = unit.Dp(30)
+				background = lightLightGray
+				textColor = black
+			case sibling:
+				fallthrough
+			default:
+				leftInset = sideInset
+				background = lightLightGray
+				background.A = 0
+				textColor = black
 			}
+			messageWidth := gtx.Constraints.Width.Max - gtx.Px(unit.Dp(36))
 			layout.Stack{}.Layout(gtx,
 				layout.Stacked(func() {
 					gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
@@ -129,8 +157,13 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 							}}.Add(gtx.Ops)
 						}),
 						layout.Stacked(func() {
-							layout.Inset{Left: leftInset}.Layout(gtx, func() {
-								sprigTheme.Reply(theme).Layout(gtx, reply, author)
+							margin := unit.Dp(3)
+							layout.Inset{Left: leftInset, Top: margin, Bottom: margin, Right: sideInset}.Layout(gtx, func() {
+								gtx.Constraints.Width.Max = messageWidth
+								replyWidget := sprigTheme.Reply(theme)
+								replyWidget.Background = background
+								replyWidget.TextColor = textColor
+								replyWidget.Layout(gtx, reply, author)
 							})
 						}),
 					)
