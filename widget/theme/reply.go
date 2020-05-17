@@ -18,6 +18,10 @@ type ReplyStyle struct {
 	*material.Theme
 	Background color.RGBA
 	TextColor  color.RGBA
+
+	// CollapseMetadata should be set to true if this reply can be rendered
+	// without the author being displayed.
+	CollapseMetadata bool
 }
 
 func Reply(th *material.Theme) ReplyStyle {
@@ -63,31 +67,54 @@ func (r ReplyStyle) Layout(gtx *layout.Context, reply *forest.Reply, author *for
 		}),
 		layout.Stacked(func() {
 			layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-				layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-					layout.Rigid(func() {
-						gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
-						layout.NW.Layout(gtx, func() {
-							name := material.Body2(r.Theme, string(author.Name.Blob))
-							name.Font.Weight = text.Bold
-							name.Color = r.TextColor
-							name.Layout(gtx)
-						})
-						layout.NE.Layout(gtx, func() {
-							date := material.Body2(r.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
-							date.Color = r.TextColor
-							date.Color.A = 200
-							date.TextSize = unit.Dp(12)
-							date.Layout(gtx)
-						})
-					}),
-					layout.Rigid(func() {
-						content := material.Body1(r.Theme, string(reply.Content.Blob))
-						content.Color = r.TextColor
-						content.Layout(gtx)
-					}),
-				)
+				if !r.CollapseMetadata {
+					layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+						layout.Rigid(func() {
+							gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+							layout.NW.Layout(gtx, func() {
+								r.layoutAuthor(gtx, author)
+							})
+							layout.NE.Layout(gtx, func() {
+								r.layoutDate(gtx, reply)
+							})
+						}),
+						layout.Rigid(func() {
+							r.layoutContent(gtx, reply)
+						}),
+					)
+				} else {
+					layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx,
+						layout.Flexed(1, func() {
+							r.layoutContent(gtx, reply)
+						}),
+						layout.Rigid(func() {
+							r.layoutDate(gtx, reply)
+						}),
+					)
+				}
 			})
 			height = float32(gtx.Dimensions.Size.Y)
 		}),
 	)
+}
+
+func (r ReplyStyle) layoutAuthor(gtx *layout.Context, author *forest.Identity) {
+	name := material.Body2(r.Theme, string(author.Name.Blob))
+	name.Font.Weight = text.Bold
+	name.Color = r.TextColor
+	name.Layout(gtx)
+}
+
+func (r ReplyStyle) layoutDate(gtx *layout.Context, reply *forest.Reply) {
+	date := material.Body2(r.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+	date.Color = r.TextColor
+	date.Color.A = 200
+	date.TextSize = unit.Dp(12)
+	date.Layout(gtx)
+}
+
+func (r ReplyStyle) layoutContent(gtx *layout.Context, reply *forest.Reply) {
+	content := material.Body1(r.Theme, string(reply.Content.Blob))
+	content.Color = r.TextColor
+	content.Layout(gtx)
 }

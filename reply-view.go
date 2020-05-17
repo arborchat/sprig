@@ -106,6 +106,12 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 			}
 			state := &c.ReplyStates[stateIndex]
 			reply := replies[index]
+			collapseMetadata := false
+			if index > 0 {
+				if replies[index-1].Author.Equals(&reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
+					collapseMetadata = true
+				}
+			}
 			authorNode, found, err := c.ArborState.SubscribableStore.GetIdentity(&reply.Author)
 			if err != nil || !found {
 				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
@@ -128,6 +134,7 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 				leftInset = unit.Dp(15)
 				background = white
 				textColor = black
+				collapseMetadata = false
 			case ancestor:
 				leftInset = unit.Dp(15)
 				background = lightLightGray
@@ -162,12 +169,16 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 							}}.Add(gtx.Ops)
 						}),
 						layout.Stacked(func() {
-							margin := unit.Dp(3)
-							layout.Inset{Left: leftInset, Top: margin, Bottom: margin, Right: sideInset}.Layout(gtx, func() {
+							margin := unit.Dp(6)
+							if collapseMetadata {
+								margin = unit.Dp(3)
+							}
+							layout.Inset{Left: leftInset, Top: margin, Right: sideInset}.Layout(gtx, func() {
 								gtx.Constraints.Width.Max = messageWidth
 								replyWidget := sprigTheme.Reply(theme)
 								replyWidget.Background = background
 								replyWidget.TextColor = textColor
+								replyWidget.CollapseMetadata = collapseMetadata
 								replyWidget.Layout(gtx, reply, author)
 							})
 						}),
