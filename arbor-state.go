@@ -40,7 +40,7 @@ func (a *ArborState) init() {
 					})
 				}
 			case *forest.Reply:
-				a.ReplyList.Sort()
+				go a.ReplyList.Sort()
 			}
 		})
 	})
