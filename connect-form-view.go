@@ -39,6 +39,7 @@ func (c *ConnectFormView) Update(gtx *layout.Context) {
 	switch {
 	case c.ConnectButton.Clicked(gtx):
 		c.Settings.Address = c.Editor.Text()
+		go c.Settings.Persist()
 		fallthrough
 	case !c.initialized && c.Settings.Address != "":
 		c.ArborState.RestartWorker(c.Settings.Address)
