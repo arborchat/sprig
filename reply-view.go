@@ -30,6 +30,10 @@ type ReplyListView struct {
 	Ancestry     []*fields.QualifiedHash
 	Descendants  []*fields.QualifiedHash
 	Conversation *fields.QualifiedHash
+
+	// Filtered determines whether or not the visible nodes should be
+	// filtered to only those related to the selected node
+	Filtered bool
 }
 
 var _ View = &ReplyListView{}
@@ -50,12 +54,15 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked(gtx) {
 			log.Printf("clicked %s", clickHandler.Reply)
-			c.Selected = clickHandler.Reply
-			c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(clickHandler.Reply)
-			c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(clickHandler.Reply)
-			reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
-			c.Conversation = &reply.(*forest.Reply).ConversationID
-
+			if c.Selected == nil || !clickHandler.Reply.Equals(c.Selected) {
+				c.Selected = clickHandler.Reply
+				c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(clickHandler.Reply)
+				c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(clickHandler.Reply)
+				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
+				c.Conversation = &reply.(*forest.Reply).ConversationID
+			} else {
+				c.Filtered = !c.Filtered
+			}
 		}
 	}
 }
@@ -146,6 +153,10 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 			case sibling:
 				fallthrough
 			default:
+				if c.Filtered {
+					// do not render
+					return
+				}
 				leftInset = sideInset
 				background = teal
 				background.A = 0
