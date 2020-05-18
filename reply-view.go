@@ -12,6 +12,7 @@ import (
 	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -23,7 +24,8 @@ type ReplyListView struct {
 	*ArborState
 	*material.Theme
 
-	BackButton   widget.Clickable
+	BackButton widget.Clickable
+
 	ReplyList    layout.List
 	ReplyStates  []sprigWidget.Reply
 	Selected     *fields.QualifiedHash
@@ -65,6 +67,9 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 			}
 		}
 	}
+	if c.BackButton.Clicked(gtx) {
+		c.manager.RequestViewSwitch(CommunityMenu)
+	}
 }
 
 type replyStatus int
@@ -103,6 +108,21 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
 }
 
 func (c *ReplyListView) Layout(gtx *layout.Context) {
+	layout.Stack{}.Layout(gtx,
+		layout.Stacked(func() {
+			c.layoutReplyList(gtx)
+		}),
+		layout.Expanded(func() {
+			layout.NW.Layout(gtx, func() {
+				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+					material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
+				})
+			})
+		}),
+	)
+}
+
+func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 	gtx.Constraints.Height.Min = gtx.Constraints.Height.Max
 	gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
 
