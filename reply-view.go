@@ -26,6 +26,8 @@ type ReplyListView struct {
 
 	BackButton widget.Clickable
 
+	DeselectButton widget.Clickable
+
 	ReplyList    layout.List
 	ReplyStates  []sprigWidget.Reply
 	Selected     *fields.QualifiedHash
@@ -69,6 +71,9 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 	}
 	if c.BackButton.Clicked(gtx) {
 		c.manager.RequestViewSwitch(CommunityMenu)
+	}
+	if c.DeselectButton.Clicked(gtx) {
+		c.Selected = nil
 	}
 }
 
@@ -118,6 +123,13 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 					material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
 				})
 			})
+			if c.Selected != nil {
+				layout.NE.Layout(gtx, func() {
+					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+						material.IconButton(c.Theme, icons.ClearIcon).Layout(gtx, &c.DeselectButton)
+					})
+				})
+			}
 		}),
 	)
 }
