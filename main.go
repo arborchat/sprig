@@ -64,7 +64,12 @@ func eventLoop(w *app.Window) error {
 			return event.Err
 		case system.FrameEvent:
 			gtx.Reset(event.Queue, event.Config, event.Size)
-			viewManager.Layout(gtx)
+			layout.Inset{
+				Bottom: event.Insets.Bottom,
+				Top:    event.Insets.Top,
+			}.Layout(gtx, func() {
+				viewManager.Layout(gtx)
+			})
 			event.Frame(gtx.Ops)
 		}
 	}
