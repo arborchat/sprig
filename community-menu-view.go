@@ -18,6 +18,7 @@ type CommunityMenuView struct {
 	*material.Theme
 
 	BackButton     widget.Clickable
+	IdentityButton widget.Clickable
 	CommunityList  layout.List
 	CommunityBoxes []widget.Bool
 	ViewButton     widget.Clickable
@@ -47,6 +48,9 @@ func (c *CommunityMenuView) Update(gtx *layout.Context) {
 	if c.ViewButton.Clicked(gtx) {
 		c.manager.RequestViewSwitch(ReplyView)
 	}
+	if c.IdentityButton.Clicked(gtx) {
+		c.manager.RequestViewSwitch(IdentityForm)
+	}
 }
 
 func (c *CommunityMenuView) Layout(gtx *layout.Context) {
@@ -61,6 +65,13 @@ func (c *CommunityMenuView) Layout(gtx *layout.Context) {
 	layout.Center.Layout(gtx, func() {
 		gtx.Constraints.Width.Max = width
 		layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func() {
+				if c.Settings.ActiveIdentity != nil {
+					material.Body1(c.Theme, "Identity: "+c.Settings.ActiveIdentity.String()).Layout(gtx)
+				} else {
+					material.Button(c.Theme, "Create new Identity").Layout(gtx, &c.IdentityButton)
+				}
+			}),
 			layout.Rigid(func() {
 				gtx.Constraints.Width.Max = width
 				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {

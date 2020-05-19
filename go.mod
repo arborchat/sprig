@@ -8,6 +8,7 @@ require (
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8
 	git.sr.ht/~whereswaldon/wisteria v0.0.12-0.20200517191829-5c1c1cff11e2
+	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
 	golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5
 )
 
