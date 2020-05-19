@@ -119,6 +119,7 @@ func NewAppState(dataDir string) (*AppState, error) {
 		DataDir: dataDir,
 		Theme:   material.NewTheme(),
 	}
+	appState.Settings.dataDir = dataDir
 	jsonSettings, err := ioutil.ReadFile(appState.Settings.SettingsFile())
 	if err != nil {
 		log.Printf("failed to load settings: %v", err)
@@ -127,6 +128,7 @@ func NewAppState(dataDir string) (*AppState, error) {
 			log.Printf("couldn't parse json settings: %v", err)
 		}
 	}
+	// make sure this is still set properly after JSON unmarshalling
 	appState.Settings.dataDir = dataDir
 	return appState, nil
 }
@@ -143,6 +145,65 @@ func (s Settings) IdentitiesDir() string {
 	return filepath.Join(s.dataDir, "identities")
 }
 
+func (s *Settings) Identity() (*forest.Identity, error) {
+	if s.ActiveIdentity == nil {
+		return nil, fmt.Errorf("no identity configured")
+	}
+	if s.activeIdCache != nil {
+		return s.activeIdCache, nil
+	}
+	idData, err := ioutil.ReadFile(filepath.Join(s.IdentitiesDir(), s.ActiveIdentity.String()))
+	if err != nil {
+		return nil, fmt.Errorf("failed reading identity data: %w", err)
+	}
+	identity, err := forest.UnmarshalIdentity(idData)
+	if err != nil {
+		return nil, fmt.Errorf("failed decoding identity data: %w", err)
+	}
+	s.activeIdCache = identity
+	return identity, nil
+}
+
+func (s *Settings) Signer() (forest.Signer, error) {
+	if s.ActiveIdentity == nil {
+		return nil, fmt.Errorf("no identity configured, therefore no private key")
+	}
+	var privkey *openpgp.Entity
+	if s.activePrivKey != nil {
+		privkey = s.activePrivKey
+	} else {
+		keyfilePath := filepath.Join(s.KeysDir(), s.ActiveIdentity.String())
+		keyfile, err := os.Open(keyfilePath)
+		if err != nil {
+			return nil, fmt.Errorf("unable to read key file: %w", err)
+		}
+		defer keyfile.Close()
+		privkey, err = openpgp.ReadEntity(packet.NewReader(keyfile))
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode key data: %w", err)
+		}
+		s.activePrivKey = privkey
+	}
+	signer, err := forest.NewNativeSigner(privkey)
+	if err != nil {
+		return nil, fmt.Errorf("couldn't wrap privkey in forest signer: %w", err)
+	}
+	return signer, nil
+}
+
+func (s *Settings) Builder() (*forest.Builder, error) {
+	id, err := s.Identity()
+	if err != nil {
+		return nil, err
+	}
+	signer, err := s.Signer()
+	if err != nil {
+		return nil, err
+	}
+	builder := forest.As(id, signer)
+	return builder, nil
+}
+
 type Settings struct {
 	Address        string
 	ActiveIdentity *fields.QualifiedHash
@@ -151,6 +212,7 @@ type Settings struct {
 
 	// state used for authoring messages
 	activePrivKey *openpgp.Entity
+	activeIdCache *forest.Identity
 }
 
 func (s *Settings) CreateIdentity(name string) {
@@ -221,6 +283,7 @@ func (s *Settings) CreateIdentity(name string) {
 
 	s.ActiveIdentity = id
 	s.activePrivKey = keypair
+	s.Persist()
 }
 
 func (s Settings) Persist() {
