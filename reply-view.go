@@ -34,6 +34,9 @@ type ReplyListView struct {
 	Ancestry     []*fields.QualifiedHash
 	Descendants  []*fields.QualifiedHash
 	Conversation *fields.QualifiedHash
+	// Whether the Ancestry and Descendants need to be regenerated because the
+	// contents of the replylist changed
+	StateRefreshNeeded bool
 
 	ReplyingTo        *forest.Reply
 	ReplyingToAuthor  *forest.Identity
@@ -55,6 +58,10 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *materia
 		ArborState: arborState,
 		Theme:      theme,
 	}
+	// ensure that we are notified when we need to refresh the state of visible nodes
+	c.ArborState.SubscribableStore.SubscribeToNewMessages(func(forest.Node) {
+		c.StateRefreshNeeded = true
+	})
 	c.ReplyList.ScrollToEnd = true
 	c.ReplyList.Position.BeforeEnd = false
 	return c
@@ -66,15 +73,19 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 		if clickHandler.Clicked(gtx) {
 			log.Printf("clicked %s", clickHandler.Reply)
 			if c.Selected == nil || !clickHandler.Reply.Equals(c.Selected) {
+				c.StateRefreshNeeded = true
 				c.Selected = clickHandler.Reply
-				c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(clickHandler.Reply)
-				c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(clickHandler.Reply)
 				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 			} else {
 				c.Filtered = !c.Filtered
 			}
 		}
+	}
+	if c.StateRefreshNeeded && c.Selected != nil {
+		c.StateRefreshNeeded = false
+		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Selected)
+		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Selected)
 	}
 	if c.BackButton.Clicked(gtx) {
 		c.manager.RequestViewSwitch(CommunityMenu)
