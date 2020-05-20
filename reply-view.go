@@ -6,6 +6,8 @@ import (
 
 	"gioui.org/f32"
 	"gioui.org/layout"
+	"gioui.org/op"
+	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -230,7 +232,7 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 var (
 	black      = color.RGBA{A: 255}
 	teal       = color.RGBA{G: 128, B: 128, A: 255}
-	brightTeal = color.RGBA{G: 175, B: 175, A: 255}
+	brightTeal = color.RGBA{G: 200, B: 200, A: 255}
 	//darkGray = color.RGBA{R: 50, G: 50, B: 50, A: 255}
 	//mediumGray = color.RGBA{R: 100, G: 100, B: 100, A: 255}
 	white          = color.RGBA{R: 255, G: 255, B: 255, A: 255}
@@ -372,17 +374,31 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
 								layout.Stack{}.Layout(gtx,
 									layout.Expanded(func() {
+										var stack op.StackOp
+										stack.Push(gtx.Ops)
 										paintOp := paint.ColorOp{Color: white}
 										paintOp.Add(gtx.Ops)
-										paint.PaintOp{Rect: f32.Rectangle{
+										bounds := f32.Rectangle{
 											Max: f32.Point{
 												X: float32(gtx.Constraints.Width.Max),
-												Y: float32(gtx.Constraints.Height.Max),
+												Y: float32(gtx.Constraints.Height.Min),
 											},
-										}}.Add(gtx.Ops)
+										}
+										radii := float32(gtx.Px(unit.Dp(5)))
+										clip.Rect{
+											Rect: bounds,
+											NW:   radii,
+											NE:   radii,
+											SE:   radii,
+											SW:   radii,
+										}.Op(gtx.Ops).Add(gtx.Ops)
+										paint.PaintOp{Rect: bounds}.Add(gtx.Ops)
+										stack.Pop()
 									}),
 									layout.Stacked(func() {
-										material.Editor(c.Theme, "type your reply here").Layout(gtx, &c.ReplyEditor)
+										layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+											material.Editor(c.Theme, "type your reply here").Layout(gtx, &c.ReplyEditor)
+										})
 									}),
 								)
 							})
