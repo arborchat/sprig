@@ -35,6 +35,12 @@ type ReplyListView struct {
 	Descendants  []*fields.QualifiedHash
 	Conversation *fields.QualifiedHash
 
+	ReplyingTo        *forest.Reply
+	ReplyingToAuthor  *forest.Identity
+	ReplyEditor       widget.Editor
+	CancelReplyButton widget.Clickable
+	SendReplyButton   widget.Clickable
+
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
 	Filtered bool
@@ -74,6 +80,13 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 	}
 	if c.DeselectButton.Clicked(gtx) {
 		c.Selected = nil
+	}
+	if c.Selected != nil && c.SendReplyButton.Clicked(gtx) {
+		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
+		if err != nil {
+			log.Printf("failed looking up selected message: %v", err)
+		}
+		c.ReplyingTo = reply
 	}
 }
 
