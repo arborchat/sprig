@@ -133,6 +133,22 @@ func NewAppState(dataDir string) (*AppState, error) {
 	return appState, nil
 }
 
+func (a *AppState) CreateIdentity(name string) {
+	if err := a.Settings.CreateIdentity(name); err != nil {
+		log.Printf("failed creating identity: %v", err)
+		return
+	}
+	identity, err := a.Settings.Identity()
+	if err != nil {
+		log.Printf("failed looking up identity immediately after generating it: %v", err)
+		return
+	}
+	if err := a.ArborState.SubscribableStore.Add(identity); err != nil {
+		log.Printf("failed adding identity to store: %v", err)
+		return
+	}
+}
+
 func (s Settings) SettingsFile() string {
 	return filepath.Join(s.dataDir, "settings.json")
 }
@@ -215,75 +231,70 @@ type Settings struct {
 	activeIdCache *forest.Identity
 }
 
-func (s *Settings) CreateIdentity(name string) {
+func (s *Settings) CreateIdentity(name string) (err error) {
 	keysDir := s.KeysDir()
 	if err := os.MkdirAll(keysDir, 0770); err != nil {
-		log.Printf("failed creating key storage directory: %v", err)
-		return
+		return fmt.Errorf("failed creating key storage directory: %w", err)
 	}
 	keypair, err := openpgp.NewEntity(name, "sprig-generated arbor identity", "", &packet.Config{})
 	if err != nil {
-		log.Printf("failed generating new keypair: %v", err)
-		return
+		return fmt.Errorf("failed generating new keypair: %w", err)
 	}
 	signer, err := forest.NewNativeSigner(keypair)
 	if err != nil {
-		log.Printf("failed wrapping keypair into Signer: %v", err)
-		return
+		return fmt.Errorf("failed wrapping keypair into Signer: %w", err)
 	}
 	identity, err := forest.NewIdentity(signer, name, []byte{})
 	if err != nil {
-		log.Printf("failed generating arbor identity from signer: %v", err)
-		return
+		return fmt.Errorf("failed generating arbor identity from signer: %w", err)
 	}
 	id := identity.ID()
 
 	keyFilePath := filepath.Join(keysDir, id.String())
 	keyFile, err := os.OpenFile(keyFilePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0660)
 	if err != nil {
-		log.Printf("failed creating key file: %v", err)
-		return
+		return fmt.Errorf("failed creating key file: %w", err)
 	}
 	defer func() {
-		if err := keyFile.Close(); err != nil {
-			log.Printf("failed closing key file: %v", err)
+		if err != nil {
+			if err = keyFile.Close(); err != nil {
+				err = fmt.Errorf("failed closing key file: %w", err)
+			}
 		}
 	}()
 	if err := keypair.SerializePrivateWithoutSigning(keyFile, nil); err != nil {
-		log.Printf("failed saving private key: %v", err)
-		return
+		return fmt.Errorf("failed saving private key: %w", err)
 	}
 
 	idsDir := s.IdentitiesDir()
 	if err := os.MkdirAll(idsDir, 0770); err != nil {
-		log.Printf("failed creating identity storage directory: %v", err)
-		return
+		return fmt.Errorf("failed creating identity storage directory: %w", err)
 	}
 	idFilePath := filepath.Join(idsDir, id.String())
 
 	idFile, err := os.OpenFile(idFilePath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0660)
 	if err != nil {
-		log.Printf("failed creating identity file: %v", err)
-		return
+		return fmt.Errorf("failed creating identity file: %w", err)
 	}
 	defer func() {
-		if err := idFile.Close(); err != nil {
-			log.Printf("failed closing identity file: %v", err)
+		if err != nil {
+			if err = idFile.Close(); err != nil {
+				err = fmt.Errorf("failed closing identity file: %w", err)
+			}
 		}
 	}()
 	binIdent, err := identity.MarshalBinary()
 	if err != nil {
-		log.Printf("failed serializing new identity: %v", err)
-		return
+		return fmt.Errorf("failed serializing new identity: %w", err)
 	}
 	if _, err := idFile.Write(binIdent); err != nil {
-		log.Printf("failed writing identity: %v", err)
-		return
+		return fmt.Errorf("failed writing identity: %w", err)
 	}
 
 	s.ActiveIdentity = id
 	s.activePrivKey = keypair
 	s.Persist()
+	return nil
 }
 
 func (s Settings) Persist() {

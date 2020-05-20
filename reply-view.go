@@ -39,6 +39,7 @@ type ReplyListView struct {
 	ReplyingToAuthor  *forest.Identity
 	ReplyEditor       widget.Editor
 	CancelReplyButton widget.Clickable
+	CreateReplyButton widget.Clickable
 	SendReplyButton   widget.Clickable
 
 	// Filtered determines whether or not the visible nodes should be
@@ -81,13 +82,56 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 	if c.DeselectButton.Clicked(gtx) {
 		c.Selected = nil
 	}
-	if c.Selected != nil && c.SendReplyButton.Clicked(gtx) {
+	c.updateReplyEditState(gtx)
+}
+
+func (c *ReplyListView) updateReplyEditState(gtx *layout.Context) {
+	if c.Selected != nil && c.CreateReplyButton.Clicked(gtx) {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
+		} else {
+			c.ReplyingTo = reply.(*forest.Reply)
+			author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Author)
+			if err != nil {
+				log.Printf("failed looking up select message author: %v", err)
+			} else {
+				c.ReplyingToAuthor = author.(*forest.Identity)
+			}
 		}
-		c.ReplyingTo = reply
 	}
+	if c.CancelReplyButton.Clicked(gtx) {
+		c.resetReplyState()
+	}
+	if c.SendReplyButton.Clicked(gtx) {
+		nodeBuilder, err := c.Settings.Builder()
+		if err != nil {
+			log.Printf("failed acquiring node builder: %v", err)
+		} else {
+			reply, err := nodeBuilder.NewReply(c.ReplyingTo, c.ReplyEditor.Text(), []byte{})
+			if err != nil {
+				log.Printf("failed building reply: %v", err)
+			}
+			go func() {
+				if err := c.ArborState.SubscribableStore.Add(nodeBuilder.User); err != nil {
+					log.Printf("failed adding replying identity to store: %v", err)
+					return
+				}
+				if err := c.ArborState.SubscribableStore.Add(reply); err != nil {
+					log.Printf("failed adding reply to store: %v", err)
+					return
+				}
+			}()
+		}
+		c.resetReplyState()
+	}
+
+}
+
+func (c *ReplyListView) resetReplyState() {
+	c.ReplyingTo = nil
+	c.ReplyingToAuthor = nil
+	c.ReplyEditor.SetText("")
 }
 
 type replyStatus int
@@ -128,24 +172,61 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
 func (c *ReplyListView) Layout(gtx *layout.Context) {
 	layout.Stack{}.Layout(gtx,
 		layout.Stacked(func() {
-			c.layoutReplyList(gtx)
+			layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Flexed(1, func() {
+					c.layoutReplyList(gtx)
+				}),
+				layout.Rigid(func() {
+					if c.ReplyingTo != nil {
+						c.layoutEditor(gtx)
+					}
+				}),
+			)
 		}),
-		layout.Expanded(func() {
-			layout.NW.Layout(gtx, func() {
-				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-					material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
-				})
-			})
-			if c.Selected != nil {
-				layout.NE.Layout(gtx, func() {
+		layout.Stacked(func() {
+			gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+			layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx,
+				layout.Rigid(func() {
 					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.IconButton(c.Theme, icons.ClearIcon).Layout(gtx, &c.DeselectButton)
+						material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
 					})
-				})
-			}
+				}),
+				layout.Rigid(func() {
+					if c.Selected != nil {
+						if c.ReplyingTo == nil {
+							layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+								material.IconButton(c.Theme, icons.ReplyIcon).Layout(gtx, &c.CreateReplyButton)
+							})
+						} else {
+							layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+								material.IconButton(c.Theme, icons.CancelReplyIcon).Layout(gtx, &c.CancelReplyButton)
+							})
+						}
+					}
+				}),
+				layout.Rigid(func() {
+					if c.Selected != nil {
+						layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+							material.IconButton(c.Theme, icons.ClearIcon).Layout(gtx, &c.DeselectButton)
+						})
+					}
+				}),
+			)
 		}),
 	)
 }
+
+var (
+	black      = color.RGBA{A: 255}
+	teal       = color.RGBA{G: 128, B: 128, A: 255}
+	brightTeal = color.RGBA{G: 175, B: 175, A: 255}
+	//darkGray = color.RGBA{R: 50, G: 50, B: 50, A: 255}
+	//mediumGray = color.RGBA{R: 100, G: 100, B: 100, A: 255}
+	white          = color.RGBA{R: 255, G: 255, B: 255, A: 255}
+	lightLightGray = color.RGBA{R: 240, G: 240, B: 240, A: 255}
+
+//lightGray = color.RGBA{R: 230, G: 230, B: 230, A: 255}
+)
 
 func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 	gtx.Constraints.Height.Min = gtx.Constraints.Height.Max
@@ -172,13 +253,6 @@ func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
 			}
 			author := authorNode.(*forest.Identity)
-			black := color.RGBA{A: 255}
-			teal := color.RGBA{G: 128, B: 128, A: 255}
-			//darkGray := color.RGBA{R: 50, G: 50, B: 50, A: 255}
-			//mediumGray := color.RGBA{R: 100, G: 100, B: 100, A: 255}
-			white := color.RGBA{R: 255, G: 255, B: 255, A: 255}
-			lightLightGray := color.RGBA{R: 240, G: 240, B: 240, A: 255}
-			//lightGray := color.RGBA{R: 230, G: 230, B: 230, A: 255}
 			sideInset := unit.Dp(3)
 			var (
 				background, textColor color.RGBA
@@ -251,6 +325,70 @@ func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 			stateIndex++
 		})
 	})
+}
+
+func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
+	layout.Stack{}.Layout(gtx,
+		layout.Expanded(func() {
+			paintOp := paint.ColorOp{Color: brightTeal}
+			paintOp.Add(gtx.Ops)
+			paint.PaintOp{Rect: f32.Rectangle{
+				Max: f32.Point{
+					X: float32(gtx.Constraints.Width.Max),
+					Y: float32(gtx.Constraints.Height.Max),
+				},
+			}}.Add(gtx.Ops)
+		}),
+		layout.Stacked(func() {
+			layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Rigid(func() {
+					layout.Flex{}.Layout(gtx,
+						layout.Rigid(func() {
+							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
+								material.Body1(c.Theme, "Replying to:").Layout(gtx)
+							})
+						}),
+						layout.Flexed(1, func() {
+							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
+								sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor)
+							})
+						}),
+					)
+				}),
+				layout.Rigid(func() {
+					layout.Flex{}.Layout(gtx,
+						layout.Flexed(1, func() {
+							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
+								layout.Stack{}.Layout(gtx,
+									layout.Expanded(func() {
+										paintOp := paint.ColorOp{Color: white}
+										paintOp.Add(gtx.Ops)
+										paint.PaintOp{Rect: f32.Rectangle{
+											Max: f32.Point{
+												X: float32(gtx.Constraints.Width.Max),
+												Y: float32(gtx.Constraints.Height.Max),
+											},
+										}}.Add(gtx.Ops)
+									}),
+									layout.Stacked(func() {
+										material.Editor(c.Theme, "type your reply here").Layout(gtx, &c.ReplyEditor)
+									}),
+								)
+							})
+						}),
+						layout.Rigid(func() {
+							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
+								sendButton := material.IconButton(c.Theme, icons.SendReplyIcon)
+								sendButton.Size = unit.Dp(40)
+								sendButton.Padding = unit.Dp(10)
+								sendButton.Layout(gtx, &c.SendReplyButton)
+							})
+						}),
+					)
+				}),
+			)
+		}),
+	)
 }
 
 func (c *ReplyListView) SetManager(mgr ViewManager) {

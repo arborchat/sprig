@@ -14,3 +14,18 @@ var ClearIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ContentClear)
 	return icon
 }()
+
+var ReplyIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ContentReply)
+	return icon
+}()
+
+var CancelReplyIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.NavigationCancel)
+	return icon
+}()
+
+var SendReplyIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ContentSend)
+	return icon
+}()
