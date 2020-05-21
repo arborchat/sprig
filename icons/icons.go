@@ -29,3 +29,8 @@ var SendReplyIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ContentSend)
 	return icon
 }()
+
+var CreateConversationIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ContentCreate)
+	return icon
+}()

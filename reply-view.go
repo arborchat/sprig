@@ -40,12 +40,16 @@ type ReplyListView struct {
 	// contents of the replylist changed
 	StateRefreshNeeded bool
 
-	ReplyingTo        *forest.Reply
-	ReplyingToAuthor  *forest.Identity
-	ReplyEditor       widget.Editor
-	CancelReplyButton widget.Clickable
-	CreateReplyButton widget.Clickable
-	SendReplyButton   widget.Clickable
+	CreatingConversation     bool
+	ReplyingTo               *forest.Reply
+	ReplyingToAuthor         *forest.Identity
+	ReplyEditor              widget.Editor
+	CancelReplyButton        widget.Clickable
+	CreateReplyButton        widget.Clickable
+	SendReplyButton          widget.Clickable
+	CreateConversationButton widget.Clickable
+	CommunityChoice          widget.Enum
+	CommunitList             layout.List
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -113,30 +117,65 @@ func (c *ReplyListView) updateReplyEditState(gtx *layout.Context) {
 			}
 		}
 	}
+	if c.CreateConversationButton.Clicked(gtx) {
+		c.CreatingConversation = true
+	}
 	if c.CancelReplyButton.Clicked(gtx) {
 		c.resetReplyState()
 	}
 	if c.SendReplyButton.Clicked(gtx) {
-		nodeBuilder, err := c.Settings.Builder()
-		if err != nil {
-			log.Printf("failed acquiring node builder: %v", err)
-		} else {
-			reply, err := nodeBuilder.NewReply(c.ReplyingTo, c.ReplyEditor.Text(), []byte{})
-			if err != nil {
-				log.Printf("failed building reply: %v", err)
+		var newReply *forest.Reply
+		var author *forest.Identity
+		if c.CreatingConversation {
+			if c.CommunityChoice.Value != "" {
+				var chosen *forest.Community
+				chosenString := c.CommunityChoice.Value
+				for _, community := range c.ArborState.communities {
+					if community.ID().String() == chosenString {
+						chosen = community
+						break
+					}
+				}
+				nodeBuilder, err := c.Settings.Builder()
+				if err != nil {
+					log.Printf("failed acquiring node builder: %v", err)
+				} else {
+					author = nodeBuilder.User
+					convo, err := nodeBuilder.NewReply(chosen, c.ReplyEditor.Text(), []byte{})
+					if err != nil {
+						log.Printf("failed creating new conversation: %v", err)
+					} else {
+						newReply = convo
+					}
+				}
 			}
+		} else {
+			nodeBuilder, err := c.Settings.Builder()
+			if err != nil {
+				log.Printf("failed acquiring node builder: %v", err)
+			} else {
+				author = nodeBuilder.User
+				reply, err := nodeBuilder.NewReply(c.ReplyingTo, c.ReplyEditor.Text(), []byte{})
+				if err != nil {
+					log.Printf("failed building reply: %v", err)
+				} else {
+					newReply = reply
+				}
+			}
+		}
+		if newReply != nil {
 			go func() {
-				if err := c.ArborState.SubscribableStore.Add(nodeBuilder.User); err != nil {
+				if err := c.ArborState.SubscribableStore.Add(author); err != nil {
 					log.Printf("failed adding replying identity to store: %v", err)
 					return
 				}
-				if err := c.ArborState.SubscribableStore.Add(reply); err != nil {
+				if err := c.ArborState.SubscribableStore.Add(newReply); err != nil {
 					log.Printf("failed adding reply to store: %v", err)
 					return
 				}
 			}()
+			c.resetReplyState()
 		}
-		c.resetReplyState()
 	}
 
 }
@@ -144,6 +183,7 @@ func (c *ReplyListView) updateReplyEditState(gtx *layout.Context) {
 func (c *ReplyListView) resetReplyState() {
 	c.ReplyingTo = nil
 	c.ReplyingToAuthor = nil
+	c.CreatingConversation = false
 	c.ReplyEditor.SetText("")
 }
 
@@ -190,7 +230,7 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 					c.layoutReplyList(gtx)
 				}),
 				layout.Rigid(func() {
-					if c.ReplyingTo != nil {
+					if c.ReplyingTo != nil || c.CreatingConversation {
 						c.layoutEditor(gtx)
 					}
 				}),
@@ -198,33 +238,44 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 		}),
 		layout.Stacked(func() {
 			gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
-			layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx,
-				layout.Rigid(func() {
+			buttons := []layout.FlexChild{}
+			buttons = append(buttons, layout.Rigid(func() {
+				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+					material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
+				})
+			}))
+			if c.Selected != nil && c.ReplyingTo == nil {
+				buttons = append(buttons, layout.Rigid(func() {
 					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
+						material.IconButton(c.Theme, icons.ReplyIcon).Layout(gtx, &c.CreateReplyButton)
 					})
-				}),
-				layout.Rigid(func() {
-					if c.Selected != nil {
-						if c.ReplyingTo == nil {
-							layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-								material.IconButton(c.Theme, icons.ReplyIcon).Layout(gtx, &c.CreateReplyButton)
-							})
-						} else {
-							layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-								material.IconButton(c.Theme, icons.CancelReplyIcon).Layout(gtx, &c.CancelReplyButton)
-							})
-						}
-					}
-				}),
-				layout.Rigid(func() {
-					if c.Selected != nil {
+				}))
+			}
+			if c.ReplyingTo != nil || c.CreatingConversation {
+				buttons = append(buttons, layout.Rigid(func() {
+					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+						material.IconButton(c.Theme, icons.CancelReplyIcon).Layout(gtx, &c.CancelReplyButton)
+					})
+				}))
+			}
+			if !c.CreatingConversation {
+				buttons = append(buttons,
+					layout.Rigid(func() {
+						layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+							material.IconButton(c.Theme, icons.CreateConversationIcon).Layout(gtx, &c.CreateConversationButton)
+						})
+					}))
+			}
+			if c.Selected != nil {
+				buttons = append(buttons,
+					layout.Rigid(func() {
 						layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
 							material.IconButton(c.Theme, icons.ClearIcon).Layout(gtx, &c.DeselectButton)
 						})
-					}
-				}),
-			)
+					}))
+			}
+
+			layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, buttons...)
 		}),
 	)
 }
@@ -358,12 +409,25 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 					layout.Flex{}.Layout(gtx,
 						layout.Rigid(func() {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
-								material.Body1(c.Theme, "Replying to:").Layout(gtx)
+								if c.CreatingConversation {
+									material.Body1(c.Theme, "New Conversation in:").Layout(gtx)
+								} else {
+									material.Body1(c.Theme, "Replying to:").Layout(gtx)
+								}
 							})
 						}),
 						layout.Flexed(1, func() {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
-								sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor)
+								if c.CreatingConversation {
+									comms := c.ArborState.communities
+									c.CommunitList.Axis = layout.Vertical
+									c.CommunitList.Layout(gtx, len(comms), func(index int) {
+										community := comms[index]
+										material.RadioButton(c.Theme, community.ID().String(), string(community.Name.Blob)).Layout(gtx, &c.CommunityChoice)
+									})
+								} else {
+									sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor)
+								}
 							})
 						}),
 					)
