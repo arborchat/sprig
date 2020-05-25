@@ -40,3 +40,13 @@ tasks:
  - build_apk: |
     cd sprig
     make sprig.apk
+ - build_windows: |
+    cd sprig
+    env GOOS=windows go build -o sprig.exe .
+    zip sprig-windows.zip sprig.exe
+    rm sprig.exe
+ - build_linux: |
+    cd sprig
+    env GOOS=linux go build -o sprig .
+    tar cjf sprig.tar.xz sprig
+    rm sprig
