@@ -11,6 +11,8 @@ packages:
     - libxkbcommon-x11-dev
     - libgles2-mesa-dev
     - libegl1-mesa-dev
+secrets:
+    - c36d8148-24ea-4c82-843d-6223649368bb
 sources:
     - https://git.sr.ht/~whereswaldon/sprig
 environment:
@@ -55,9 +57,12 @@ tasks:
     cd sprig
     if ! git describe --tags --exact-match HEAD; then exit 0; fi
     tag=$(git describe --exact-match HEAD)
+    source ~/.srht_token
+    set -x
     for artifact in sprig.apk sprig-windows.zip sprig-linux.tar.xz ; do
-        artifact_name=$(echo "$artifact" | sed -E "s|sprig|sprig-$tag|")
-        mv -v "$artifact" "$artifact_name"
+        artifact_versioned=$(echo "$artifact" | sed -E "s|sprig|sprig-$tag|")
+        mv -v "$artifact" "$artifact_versioned"
+        artifact="$artifact_versioned"
         set +x
         echo curl -H "Authorization: token <token>" -F "file=@$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag"
         curl -H "Authorization: token $SRHT_TOKEN" -F "file=@$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag"
