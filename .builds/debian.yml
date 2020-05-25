@@ -49,5 +49,5 @@ tasks:
  - build_linux: |
     cd sprig
     env GOOS=linux go build -o sprig .
-    tar cjf sprig.tar.xz sprig
+    tar cJf sprig.tar.xz sprig
     rm sprig
