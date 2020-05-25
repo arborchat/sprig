@@ -1,0 +1,41 @@
+image: debian/testing
+packages:
+    - golang
+    - unzip
+    - default-jdk-headless
+	- libwayland-dev
+	- libx11-dev
+	- libx11-xcb-dev
+	- libxkbcommon-x11-dev
+	- libgles2-mesa-dev
+	- libegl1-mesa-dev
+sources:
+    - https://git.sr.ht/~whereswaldon/sprig
+environment:
+    - PATH: /usr/bin:/home/build/go/bin:/home/build/android/tools/bin
+    - ANDROID_HOME: /home/build/android
+    - android_sdk_tools_zip: sdk-tools-linux-3859397.zip
+    - android_ndk_zip: android-ndk-r20-linux-x86_64.zip
+    - android_target_platform: "platforms;android-28"
+    - android_target_build_tools: "build-tools;28.0.2"
+    - GO111MODULE: on
+tasks:
+ - test: |
+    cd sprig
+    go test -v -cover ./...
+ - install_android: |
+    mkdir android
+    cd android
+    curl -so sdk-tools.zip "https://dl.google.com/android/repository/$android_sdk_tools_zip"
+    unzip -q sdk-tools.zip
+    rm sdk-tools.zip
+    curl -so ndk.zip "https://dl.google.com/android/repository/$android_ndk_zip"
+    unzip -q ndk.zip
+    rm ndk.zip
+    mv android-ndk-* ndk-bundle
+    yes | sdkmanager --licenses
+    sdkmanager "$android_target_platform" "$android_target_build_tools"
+ - install_gogio: go get git.sr.ht/~eliasnaur/gio/cmd/gogio
+ - build_apk: |
+    cd sprig
+    make sprig.apk
