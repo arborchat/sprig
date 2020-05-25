@@ -19,7 +19,6 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/ds"
-	"git.sr.ht/~whereswaldon/wisteria/replylist"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -108,11 +107,11 @@ func NewAppState(dataDir string) (*AppState, error) {
 		baseStore = store.NewMemoryStore()
 	}
 	archive := store.NewArchive(baseStore)
-	rl, err := replylist.New(archive)
+	rl, err := ds.NewReplyList(archive)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct replylist: %w", err)
 	}
-	cl, err := ds.New(archive)
+	cl, err := ds.NewCommunityList(archive)
 	if err != nil {
 		return nil, fmt.Errorf("failed to construct communitylist: %w", err)
 	}
