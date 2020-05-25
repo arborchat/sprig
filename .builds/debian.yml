@@ -2,6 +2,7 @@ image: debian/testing
 packages:
     - curl
     - golang
+    - zip
     - unzip
     - default-jdk-headless
     - libwayland-dev
