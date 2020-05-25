@@ -1,6 +1,6 @@
 .PHONY: android_install
 
-SOURCE = main.go go.mod go.sum
+SOURCE = $(shell find . -name '*\.go') go.mod go.sum
 APPID = chat.arbor.sprig
 
 sprig.apk: $(SOURCE)
