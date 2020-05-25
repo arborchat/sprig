@@ -1,5 +1,6 @@
 image: debian/testing
 packages:
+    - curl
     - golang
     - unzip
     - default-jdk-headless
