@@ -49,5 +49,17 @@ tasks:
  - build_linux: |
     cd sprig
     env GOOS=linux go build -o sprig .
-    tar cJf sprig.tar.xz sprig
+    tar cJf sprig-linux.tar.xz sprig
     rm sprig
+ - release: |
+    cd sprig
+    if ! git describe --tags --exact-match HEAD; then exit 0; fi
+    tag=$(git describe --exact-match HEAD)
+    for artifact in sprig.apk sprig-windows.zip sprig-linux.tar.xz ; do
+        artifact_name=$(echo "$artifact" | sed -E "s|sprig|sprig-$tag|")
+        mv -v "$artifact" "$artifact_name"
+        set +x
+        echo curl -H "Authorization: token <token>" -F "file=@$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag"
+        curl -H "Authorization: token $SRHT_TOKEN" -F "file=@$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag"
+        set -x
+    done
