@@ -13,9 +13,9 @@ packages:
 sources:
     - https://git.sr.ht/~whereswaldon/sprig
 environment:
-    PATH: /usr/bin:/home/build/go/bin:/home/build/android/tools/bin
+    PATH: /usr/bin:/home/build/go/bin:/home/build/android/tools/cmdline-tools/bin
     ANDROID_HOME: /home/build/android
-    android_sdk_tools_zip: sdk-tools-linux-3859397.zip
+    android_sdk_tools_zip: commandlinetools-linux-6200805_latest.zip
     android_ndk_zip: android-ndk-r20-linux-x86_64.zip
     android_target_platform: "platforms;android-28"
     android_target_build_tools: "build-tools;28.0.2"
