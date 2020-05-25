@@ -18,7 +18,7 @@ environment:
     android_ndk_zip: android-ndk-r20-linux-x86_64.zip
     android_target_platform: "platforms;android-28"
     android_target_build_tools: "build-tools;28.0.2"
-    GO111MODULE: on
+    GO111MODULE: "on"
 tasks:
  - test: |
     cd sprig
