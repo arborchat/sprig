@@ -25,11 +25,12 @@ tasks:
     cd sprig
     go test -v -cover ./...
  - install_android: |
-    mkdir android
-    cd android
+    mkdir -p android/cmdline-tools
+    cd android/cmdline-tools
     curl -so sdk-tools.zip "https://dl.google.com/android/repository/$android_sdk_tools_zip"
     unzip -q sdk-tools.zip
     rm sdk-tools.zip
+    cd ..
     curl -so ndk.zip "https://dl.google.com/android/repository/$android_ndk_zip"
     unzip -q ndk.zip
     rm ndk.zip
