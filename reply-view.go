@@ -130,12 +130,14 @@ func (c *ReplyListView) updateReplyEditState(gtx *layout.Context) {
 			if c.CommunityChoice.Value != "" {
 				var chosen *forest.Community
 				chosenString := c.CommunityChoice.Value
-				for _, community := range c.ArborState.communities {
-					if community.ID().String() == chosenString {
-						chosen = community
-						break
+				c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
+					for _, community := range communities {
+						if community.ID().String() == chosenString {
+							chosen = community
+							break
+						}
 					}
-				}
+				})
 				nodeBuilder, err := c.Settings.Builder()
 				if err != nil {
 					log.Printf("failed acquiring node builder: %v", err)
@@ -419,11 +421,12 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 						layout.Flexed(1, func() {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
 								if c.CreatingConversation {
-									comms := c.ArborState.communities
-									c.CommunitList.Axis = layout.Vertical
-									c.CommunitList.Layout(gtx, len(comms), func(index int) {
-										community := comms[index]
-										material.RadioButton(c.Theme, community.ID().String(), string(community.Name.Blob)).Layout(gtx, &c.CommunityChoice)
+									c.ArborState.CommunityList.WithCommunities(func(comms []*forest.Community) {
+										c.CommunitList.Axis = layout.Vertical
+										c.CommunitList.Layout(gtx, len(comms), func(index int) {
+											community := comms[index]
+											material.RadioButton(c.Theme, community.ID().String(), string(community.Name.Blob)).Layout(gtx, &c.CommunityChoice)
+										})
 									})
 								} else {
 									sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor)

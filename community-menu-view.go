@@ -7,6 +7,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 )
 
@@ -79,37 +80,39 @@ func (c *CommunityMenuView) Layout(gtx *layout.Context) {
 				})
 			}),
 			layout.Rigid(func() {
-				gtx.Constraints.Width.Max = width
-				newCommunities := len(c.ArborState.communities) - len(c.CommunityBoxes)
-				for ; newCommunities > 0; newCommunities-- {
-					c.CommunityBoxes = append(c.CommunityBoxes, widget.Bool{})
-				}
-				c.CommunityList.Layout(gtx, len(c.ArborState.communities), func(index int) {
+				c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
 					gtx.Constraints.Width.Max = width
-					community := c.ArborState.communities[index]
-					checkbox := &c.CommunityBoxes[index]
-					layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-						layout.Rigid(func() {
-							layout.Flex{}.Layout(gtx,
-								layout.Rigid(func() {
-									layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-										box := material.CheckBox(theme, "")
-										box.Layout(gtx, checkbox)
-									})
-								}),
-								layout.Rigid(func() {
-									layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-										material.H6(theme, string(community.Name.Blob)).Layout(gtx)
-									})
-								}),
-							)
-						}),
-						layout.Rigid(func() {
-							layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-								material.Body2(theme, community.ID().String()).Layout(gtx)
-							})
-						}),
-					)
+					newCommunities := len(communities) - len(c.CommunityBoxes)
+					for ; newCommunities > 0; newCommunities-- {
+						c.CommunityBoxes = append(c.CommunityBoxes, widget.Bool{})
+					}
+					c.CommunityList.Layout(gtx, len(communities), func(index int) {
+						gtx.Constraints.Width.Max = width
+						community := communities[index]
+						checkbox := &c.CommunityBoxes[index]
+						layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+							layout.Rigid(func() {
+								layout.Flex{}.Layout(gtx,
+									layout.Rigid(func() {
+										layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
+											box := material.CheckBox(theme, "")
+											box.Layout(gtx, checkbox)
+										})
+									}),
+									layout.Rigid(func() {
+										layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
+											material.H6(theme, string(community.Name.Blob)).Layout(gtx)
+										})
+									}),
+								)
+							}),
+							layout.Rigid(func() {
+								layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
+									material.Body2(theme, community.ID().String()).Layout(gtx)
+								})
+							}),
+						)
+					})
 				})
 			}),
 			layout.Rigid(func() {
