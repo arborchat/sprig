@@ -37,7 +37,6 @@ tasks:
     mv android-ndk-* ndk-bundle
     yes | sdkmanager --licenses
     sdkmanager "$android_target_platform" "$android_target_build_tools"
- - install_gogio: go get gioui.org/cmd/gogio
  - build_apk: |
     cd sprig
     make sprig.apk
