@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"log"
 
 	"gioui.org/layout"
@@ -36,90 +37,92 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *mat
 	return c
 }
 
-func (c *CommunityMenuView) Update(gtx *layout.Context) {
-	if c.BackButton.Clicked(gtx) {
+func (c *CommunityMenuView) Update(gtx layout.Context) {
+	if c.BackButton.Clicked() {
 		c.manager.RequestViewSwitch(ConnectForm)
 	}
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
-		if box.Update(gtx) {
+		if box.Changed() {
 			log.Println("updated")
 		}
 	}
-	if c.ViewButton.Clicked(gtx) {
+	if c.ViewButton.Clicked() {
 		c.manager.RequestViewSwitch(ReplyView)
 	}
-	if c.IdentityButton.Clicked(gtx) {
+	if c.IdentityButton.Clicked() {
 		c.manager.RequestViewSwitch(IdentityForm)
 	}
 }
 
-func (c *CommunityMenuView) Layout(gtx *layout.Context) {
+func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme
 	c.CommunityList.Axis = layout.Vertical
-	layout.NW.Layout(gtx, func() {
-		layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-			material.IconButton(theme, icons.BackIcon).Layout(gtx, &c.BackButton)
-		})
+	layout.NW.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		return layout.UniformInset(unit.Dp(4)).Layout(
+			gtx,
+			material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
+		)
 	})
-	width := gtx.Constraints.Width.Constrain(gtx.Px(unit.Dp(200)))
-	layout.Center.Layout(gtx, func() {
-		gtx.Constraints.Width.Max = width
-		layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-			layout.Rigid(func() {
+	width := gtx.Constraints.Constrain(image.Point{X: gtx.Px(unit.Dp(200))}).X
+	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		gtx.Constraints.Max.X = width
+		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				if c.Settings.ActiveIdentity != nil {
-					material.Body1(c.Theme, "Identity: "+c.Settings.ActiveIdentity.String()).Layout(gtx)
+					return material.Body1(c.Theme, "Identity: "+c.Settings.ActiveIdentity.String()).Layout(gtx)
 				} else {
-					material.Button(c.Theme, "Create new Identity").Layout(gtx, &c.IdentityButton)
+					return material.Button(c.Theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
 				}
 			}),
-			layout.Rigid(func() {
-				gtx.Constraints.Width.Max = width
-				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-					material.Body1(theme, "Choose communities to join:").Layout(gtx)
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				gtx.Constraints.Max.X = width
+				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return material.Body1(theme, "Choose communities to join:").Layout(gtx)
 				})
 			}),
-			layout.Rigid(func() {
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				var dims layout.Dimensions
 				c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
-					gtx.Constraints.Width.Max = width
+					gtx.Constraints.Max.X = width
 					newCommunities := len(communities) - len(c.CommunityBoxes)
 					for ; newCommunities > 0; newCommunities-- {
 						c.CommunityBoxes = append(c.CommunityBoxes, widget.Bool{})
 					}
-					c.CommunityList.Layout(gtx, len(communities), func(index int) {
-						gtx.Constraints.Width.Max = width
+					dims = c.CommunityList.Layout(gtx, len(communities), func(gtx layout.Context, index int) layout.Dimensions {
+						gtx.Constraints.Max.X = width
 						community := communities[index]
 						checkbox := &c.CommunityBoxes[index]
-						layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-							layout.Rigid(func() {
-								layout.Flex{}.Layout(gtx,
-									layout.Rigid(func() {
-										layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-											box := material.CheckBox(theme, "")
-											box.Layout(gtx, checkbox)
-										})
+						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								return layout.Flex{}.Layout(gtx,
+									layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+										return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+											material.CheckBox(theme, checkbox, "").Layout,
+										)
 									}),
-									layout.Rigid(func() {
-										layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-											material.H6(theme, string(community.Name.Blob)).Layout(gtx)
-										})
+									layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+										return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+											material.H6(theme, string(community.Name.Blob)).Layout,
+										)
 									}),
 								)
 							}),
-							layout.Rigid(func() {
-								layout.UniformInset(unit.Dp(8)).Layout(gtx, func() {
-									material.Body2(theme, community.ID().String()).Layout(gtx)
-								})
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+									material.Body2(theme, community.ID().String()).Layout,
+								)
 							}),
 						)
 					})
 				})
+				return dims
 			}),
-			layout.Rigid(func() {
-				gtx.Constraints.Width.Max = width
-				layout.Center.Layout(gtx, func() {
-					gtx.Constraints.Width.Max = width
-					material.Button(theme, "View These Communities").Layout(gtx, &c.ViewButton)
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				gtx.Constraints.Max.X = width
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					gtx.Constraints.Max.X = width
+					return material.Button(theme, &c.ViewButton, "View These Communities").Layout(gtx)
 				})
 			}),
 		)

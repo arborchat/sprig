@@ -29,43 +29,43 @@ func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *mate
 	return c
 }
 
-func (c *IdentityFormView) Update(gtx *layout.Context) {
-	if c.CreateButton.Clicked(gtx) {
+func (c *IdentityFormView) Update(gtx layout.Context) {
+	if c.CreateButton.Clicked() {
 		c.Settings.CreateIdentity(c.Editor.Text())
 		c.manager.RequestViewSwitch(CommunityMenu)
 	}
 }
 
-func (c *IdentityFormView) Layout(gtx *layout.Context) {
+func (c *IdentityFormView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme
-	layout.Center.Layout(gtx, func() {
-		layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-			layout.Rigid(func() {
-				layout.Center.Layout(gtx, func() {
-					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.Body1(theme, "Your Arbor Username:").Layout(gtx)
-					})
+	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Body1(theme, "Your Arbor Username:").Layout,
+					)
 				})
 			}),
-			layout.Rigid(func() {
-				layout.Center.Layout(gtx, func() {
-					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.Editor(theme, "username").Layout(gtx, &(c.Editor))
-					})
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Editor(theme, &(c.Editor), "username").Layout,
+					)
 				})
 			}),
-			layout.Rigid(func() {
-				layout.Center.Layout(gtx, func() {
-					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.Body2(theme, "Your username is public, and cannot currently be changed once it is chosen.").Layout(gtx)
-					})
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Body2(theme, "Your username is public, and cannot currently be changed once it is chosen.").Layout,
+					)
 				})
 			}),
-			layout.Rigid(func() {
-				layout.Center.Layout(gtx, func() {
-					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.Button(theme, "Create").Layout(gtx, &(c.CreateButton))
-					})
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Button(theme, &(c.CreateButton), "Create").Layout,
+					)
 				})
 			}),
 		)

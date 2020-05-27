@@ -5,7 +5,7 @@ import "gioui.org/layout"
 type ViewManager interface {
 	RequestViewSwitch(ViewID)
 	RegisterView(ViewID, View)
-	Layout(gtx *layout.Context)
+	Layout(gtx layout.Context) layout.Dimensions
 }
 
 type viewManager struct {
@@ -29,7 +29,7 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 	vm.current = id
 }
 
-func (vm *viewManager) Layout(gtx *layout.Context) {
+func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 	vm.views[vm.current].Update(gtx)
-	vm.views[vm.current].Layout(gtx)
+	return vm.views[vm.current].Layout(gtx)
 }

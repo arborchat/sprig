@@ -13,6 +13,7 @@ import (
 	"gioui.org/font/gofont"
 	"gioui.org/io/system"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -61,19 +62,17 @@ func eventLoop(w *app.Window) error {
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
 	})
-	gtx := new(layout.Context)
+	var ops op.Ops
 	for {
 		switch event := (<-w.Events()).(type) {
 		case system.DestroyEvent:
 			return event.Err
 		case system.FrameEvent:
-			gtx.Reset(event.Queue, event.Config, event.Size)
+			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
 			layout.Inset{
 				Bottom: event.Insets.Bottom,
 				Top:    event.Insets.Top,
-			}.Layout(gtx, func() {
-				viewManager.Layout(gtx)
-			})
+			}.Layout(gtx, viewManager.Layout)
 			event.Frame(gtx.Ops)
 		}
 	}
