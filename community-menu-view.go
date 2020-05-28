@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"log"
 
 	"gioui.org/layout"
@@ -65,9 +66,9 @@ func (c *CommunityMenuView) Layout(gtx *layout.Context) {
 			material.IconButton(theme, icons.BackIcon).Layout(gtx, &c.BackButton)
 		})
 	})
-	width := gtx.Constraints.Width.Constrain(gtx.Px(unit.Dp(200)))
+	width := gtx.Constraints.Constrain(image.Point{X: gtx.Px(unit.Dp(200))}).X
 	layout.Center.Layout(gtx, func() {
-		gtx.Constraints.Width.Max = width
+		gtx.Constraints.Max.X = width
 		layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func() {
 				if c.Settings.ActiveIdentity != nil {
@@ -77,20 +78,20 @@ func (c *CommunityMenuView) Layout(gtx *layout.Context) {
 				}
 			}),
 			layout.Rigid(func() {
-				gtx.Constraints.Width.Max = width
+				gtx.Constraints.Max.X = width
 				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
 					material.Body1(theme, "Choose communities to join:").Layout(gtx)
 				})
 			}),
 			layout.Rigid(func() {
 				c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
-					gtx.Constraints.Width.Max = width
+					gtx.Constraints.Max.X = width
 					newCommunities := len(communities) - len(c.CommunityBoxes)
 					for ; newCommunities > 0; newCommunities-- {
 						c.CommunityBoxes = append(c.CommunityBoxes, widget.Bool{})
 					}
 					c.CommunityList.Layout(gtx, len(communities), func(index int) {
-						gtx.Constraints.Width.Max = width
+						gtx.Constraints.Max.X = width
 						community := communities[index]
 						checkbox := &c.CommunityBoxes[index]
 						layout.Flex{Axis: layout.Vertical}.Layout(gtx,
@@ -119,9 +120,9 @@ func (c *CommunityMenuView) Layout(gtx *layout.Context) {
 				})
 			}),
 			layout.Rigid(func() {
-				gtx.Constraints.Width.Max = width
+				gtx.Constraints.Max.X = width
 				layout.Center.Layout(gtx, func() {
-					gtx.Constraints.Width.Max = width
+					gtx.Constraints.Max.X = width
 					material.Button(theme, "View These Communities").Layout(gtx, &c.ViewButton)
 				})
 			}),

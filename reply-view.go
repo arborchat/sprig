@@ -113,10 +113,10 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 			c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
 		}
 	}
-	if c.PasteIntoReplyButton.Clicked() {
+	if c.PasteIntoReplyButton.Clicked(gtx) {
 		c.manager.RequestClipboardPaste()
 	}
-	if c.Selected != nil && c.CreateReplyButton.Clicked() {
+	if c.Selected != nil && c.CreateReplyButton.Clicked(gtx) {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
@@ -252,7 +252,7 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 			)
 		}),
 		layout.Stacked(func() {
-			gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			buttons := []layout.FlexChild{}
 			buttons = append(buttons, layout.Rigid(func() {
 				layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
@@ -315,8 +315,8 @@ var (
 )
 
 func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
-	gtx.Constraints.Height.Min = gtx.Constraints.Height.Max
-	gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+	gtx.Constraints.Min.Y = gtx.Constraints.Max.Y
+	gtx.Constraints.Min.X = gtx.Constraints.Max.X
 
 	theme := c.Theme
 	c.ReplyList.Axis = layout.Vertical
@@ -372,18 +372,18 @@ func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 				background.B += 10
 				textColor = black
 			}
-			messageWidth := gtx.Constraints.Width.Max - gtx.Px(unit.Dp(36))
+			messageWidth := gtx.Constraints.Max.X - gtx.Px(unit.Dp(36))
 			layout.Stack{}.Layout(gtx,
 				layout.Stacked(func() {
-					gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+					gtx.Constraints.Min.X = gtx.Constraints.Max.X
 					layout.Stack{}.Layout(gtx,
 						layout.Expanded(func() {
 							paintOp := paint.ColorOp{Color: color.RGBA{G: 128, B: 128, A: 255}}
 							paintOp.Add(gtx.Ops)
 							paint.PaintOp{Rect: f32.Rectangle{
 								Max: f32.Point{
-									X: float32(gtx.Constraints.Width.Max),
-									Y: float32(gtx.Constraints.Height.Max),
+									X: float32(gtx.Constraints.Max.X),
+									Y: float32(gtx.Constraints.Max.Y),
 								},
 							}}.Add(gtx.Ops)
 						}),
@@ -393,7 +393,7 @@ func (c *ReplyListView) layoutReplyList(gtx *layout.Context) {
 								margin = unit.Dp(3)
 							}
 							layout.Inset{Left: leftInset, Top: margin, Right: sideInset}.Layout(gtx, func() {
-								gtx.Constraints.Width.Max = messageWidth
+								gtx.Constraints.Max.X = messageWidth
 								replyWidget := sprigTheme.Reply(theme)
 								replyWidget.Background = background
 								replyWidget.TextColor = textColor
@@ -420,8 +420,8 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
 				Max: f32.Point{
-					X: float32(gtx.Constraints.Width.Max),
-					Y: float32(gtx.Constraints.Height.Max),
+					X: float32(gtx.Constraints.Max.X),
+					Y: float32(gtx.Constraints.Max.Y),
 				},
 			}}.Add(gtx.Ops)
 		}),
@@ -475,8 +475,8 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 										paintOp.Add(gtx.Ops)
 										bounds := f32.Rectangle{
 											Max: f32.Point{
-												X: float32(gtx.Constraints.Width.Max),
-												Y: float32(gtx.Constraints.Height.Min),
+												X: float32(gtx.Constraints.Max.X),
+												Y: float32(gtx.Constraints.Min.Y),
 											},
 										}
 										radii := float32(gtx.Px(unit.Dp(5)))
@@ -501,8 +501,8 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 						layout.Rigid(func() {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
 								sendButton := material.IconButton(c.Theme, icons.SendReplyIcon)
-								sendButton.Size = unit.Dp(40)
-								sendButton.Padding = unit.Dp(10)
+								sendButton.Inset = layout.UniformInset(unit.Dp(4))
+								sendButton.Size = unit.Dp(20)
 								sendButton.Layout(gtx, &c.SendReplyButton)
 							})
 						}),
