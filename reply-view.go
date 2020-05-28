@@ -28,7 +28,8 @@ type ReplyListView struct {
 
 	BackButton widget.Clickable
 
-	DeselectButton widget.Clickable
+	DeselectButton  widget.Clickable
+	CopyReplyButton widget.Clickable
 
 	ReplyList    layout.List
 	ReplyStates  []sprigWidget.Reply
@@ -99,11 +100,15 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 	if c.DeselectButton.Clicked(gtx) {
 		c.Selected = nil
 	}
-	c.updateReplyEditState(gtx)
-}
-
-func (c *ReplyListView) updateReplyEditState(gtx *layout.Context) {
-	if c.Selected != nil && c.CreateReplyButton.Clicked(gtx) {
+	if c.Selected != nil && c.CopyReplyButton.Clicked(gtx) {
+		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
+		if err != nil {
+			log.Printf("failed looking up selected message: %v", err)
+		} else {
+			window.WriteClipboard(string(reply.(*forest.Reply).Content.Blob))
+		}
+	}
+	if c.Selected != nil && c.CreateReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
@@ -246,10 +251,17 @@ func (c *ReplyListView) Layout(gtx *layout.Context) {
 					material.IconButton(c.Theme, icons.BackIcon).Layout(gtx, &c.BackButton)
 				})
 			}))
-			if c.Selected != nil && c.ReplyingTo == nil {
+			if c.Selected != nil {
+				if c.ReplyingTo == nil {
+					buttons = append(buttons, layout.Rigid(func() {
+						layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+							material.IconButton(c.Theme, icons.ReplyIcon).Layout(gtx, &c.CreateReplyButton)
+						})
+					}))
+				}
 				buttons = append(buttons, layout.Rigid(func() {
 					layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
-						material.IconButton(c.Theme, icons.ReplyIcon).Layout(gtx, &c.CreateReplyButton)
+						material.IconButton(c.Theme, icons.CopyIcon).Layout(gtx, &c.CopyReplyButton)
 					})
 				}))
 			}

@@ -1,6 +1,8 @@
 package main
 
-import "gioui.org/layout"
+import (
+	"gioui.org/layout"
+)
 
 type View interface {
 	SetManager(ViewManager)
