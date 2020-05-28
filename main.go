@@ -52,7 +52,7 @@ func eventLoop(w *app.Window) error {
 		appState.Settings.Address = *address
 	}
 
-	viewManager := NewViewManager()
+	viewManager := NewViewManager(w)
 	viewManager.RegisterView(ConnectForm, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(CommunityMenu, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ReplyView, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))

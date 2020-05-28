@@ -34,3 +34,8 @@ var CreateConversationIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ContentCreate)
 	return icon
 }()
+
+var CopyIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ContentContentCopy)
+	return icon
+}()

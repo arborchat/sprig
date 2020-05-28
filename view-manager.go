@@ -1,6 +1,9 @@
 package main
 
-import "gioui.org/layout"
+import (
+	"gioui.org/app"
+	"gioui.org/layout"
+)
 
 type ViewManager interface {
 	RequestViewSwitch(ViewID)
@@ -11,11 +14,13 @@ type ViewManager interface {
 type viewManager struct {
 	views   map[ViewID]View
 	current ViewID
+	window  *app.Window
 }
 
-func NewViewManager() ViewManager {
+func NewViewManager(window *app.Window) ViewManager {
 	vm := &viewManager{
-		views: make(map[ViewID]View),
+		views:  make(map[ViewID]View),
+		window: window,
 	}
 	return vm
 }
@@ -30,6 +35,6 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 }
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
-	vm.views[vm.current].Update(gtx)
+	vm.views[vm.current].Update(gtx, vm.window)
 	return vm.views[vm.current].Layout(gtx)
 }

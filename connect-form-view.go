@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gioui.org/app"
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -35,7 +36,7 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *mater
 	return c
 }
 
-func (c *ConnectFormView) Update(gtx layout.Context) {
+func (c *ConnectFormView) Update(gtx layout.Context, window *app.Window) {
 	switch {
 	case c.ConnectButton.Clicked():
 		c.Settings.Address = c.Editor.Text()

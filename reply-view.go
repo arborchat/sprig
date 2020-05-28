@@ -4,6 +4,7 @@ import (
 	"image/color"
 	"log"
 
+	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -28,7 +29,8 @@ type ReplyListView struct {
 
 	BackButton widget.Clickable
 
-	DeselectButton widget.Clickable
+	DeselectButton  widget.Clickable
+	CopyReplyButton widget.Clickable
 
 	ReplyList    layout.List
 	ReplyStates  []sprigWidget.Reply
@@ -73,7 +75,7 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *materia
 	return c
 }
 
-func (c *ReplyListView) Update(gtx layout.Context) {
+func (c *ReplyListView) Update(gtx layout.Context, window *app.Window) {
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
@@ -99,10 +101,14 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.DeselectButton.Clicked() {
 		c.Selected = nil
 	}
-	c.updateReplyEditState(gtx)
-}
-
-func (c *ReplyListView) updateReplyEditState(gtx layout.Context) {
+	if c.Selected != nil && c.CopyReplyButton.Clicked() {
+		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
+		if err != nil {
+			log.Printf("failed looking up selected message: %v", err)
+		} else {
+			window.WriteClipboard(string(reply.(*forest.Reply).Content.Blob))
+		}
+	}
 	if c.Selected != nil && c.CreateReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
@@ -247,10 +253,17 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					material.IconButton(c.Theme, &c.BackButton, icons.BackIcon).Layout,
 				)
 			}))
-			if c.Selected != nil && c.ReplyingTo == nil {
+			if c.Selected != nil {
+				if c.ReplyingTo == nil {
+					buttons = append(buttons, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+							material.IconButton(c.Theme, &c.CreateReplyButton, icons.ReplyIcon).Layout,
+						)
+					}))
+				}
 				buttons = append(buttons, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.IconButton(c.Theme, &c.CreateReplyButton, icons.ReplyIcon).Layout,
+						material.IconButton(c.Theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
 					)
 				}))
 			}
