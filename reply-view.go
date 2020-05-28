@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image"
 	"image/color"
 	"log"
 
@@ -409,7 +408,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 					Y: float32(gtx.Constraints.Max.Y),
 				},
 			}}.Add(gtx.Ops)
-			return layout.Dimensions{Size: gtx.Constraints.Max}
+			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
@@ -468,7 +467,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 										}.Op(gtx.Ops).Add(gtx.Ops)
 										paint.PaintOp{Rect: bounds}.Add(gtx.Ops)
 										stack.Pop()
-										return layout.Dimensions{Size: image.Point{X: gtx.Constraints.Max.X, Y: gtx.Constraints.Min.Y}}
+										return layout.Dimensions{}
 									}),
 									layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 										return layout.UniformInset(unit.Dp(4)).Layout(gtx,
@@ -481,7 +480,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								sendButton := material.IconButton(c.Theme, &c.SendReplyButton, icons.SendReplyIcon)
-								sendButton.Size = unit.Dp(40)
+								sendButton.Size = unit.Dp(20)
+								sendButton.Inset = layout.UniformInset(unit.Dp(4))
 								return sendButton.Layout(gtx)
 							})
 						}),
