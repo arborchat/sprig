@@ -48,6 +48,7 @@ type ReplyListView struct {
 	CancelReplyButton        widget.Clickable
 	CreateReplyButton        widget.Clickable
 	SendReplyButton          widget.Clickable
+	PasteIntoReplyButton     widget.Clickable
 	CreateConversationButton widget.Clickable
 	CommunityChoice          widget.Enum
 	CommunitList             layout.List
@@ -72,6 +73,10 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *materia
 	c.ReplyList.ScrollToEnd = true
 	c.ReplyList.Position.BeforeEnd = false
 	return c
+}
+
+func (c *ReplyListView) HandleClipboard(contents string) {
+	c.ReplyEditor.Insert(contents)
 }
 
 func (c *ReplyListView) Update(gtx *layout.Context) {
@@ -105,8 +110,11 @@ func (c *ReplyListView) Update(gtx *layout.Context) {
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
 		} else {
-			window.WriteClipboard(string(reply.(*forest.Reply).Content.Blob))
+			c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
 		}
+	}
+	if c.PasteIntoReplyButton.Clicked() {
+		c.manager.RequestClipboardPaste()
 	}
 	if c.Selected != nil && c.CreateReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
@@ -449,6 +457,14 @@ func (c *ReplyListView) layoutEditor(gtx *layout.Context) {
 				}),
 				layout.Rigid(func() {
 					layout.Flex{}.Layout(gtx,
+						layout.Rigid(func() {
+							layout.UniformInset(unit.Dp(4)).Layout(gtx, func() {
+								pasteButton := material.IconButton(c.Theme, icons.PasteIcon)
+								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
+								pasteButton.Size = unit.Dp(20)
+								pasteButton.Layout(gtx, &c.PasteIntoReplyButton)
+							})
+						}),
 						layout.Flexed(1, func() {
 							layout.UniformInset(unit.Dp(6)).Layout(gtx, func() {
 								layout.Stack{}.Layout(gtx,

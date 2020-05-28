@@ -36,6 +36,9 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *mat
 	return c
 }
 
+func (c *CommunityMenuView) HandleClipboard(contents string) {
+}
+
 func (c *CommunityMenuView) Update(gtx *layout.Context) {
 	if c.BackButton.Clicked(gtx) {
 		c.manager.RequestViewSwitch(ConnectForm)

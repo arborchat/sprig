@@ -48,7 +48,7 @@ func (r ReplyStyle) Layout(gtx *layout.Context, reply *forest.Reply, author *for
 			paintOp.Add(gtx.Ops)
 			bounds := f32.Rectangle{
 				Max: f32.Point{
-					X: float32(gtx.Constraints.Width.Max),
+					X: float32(gtx.Constraints.Max.X),
 					Y: float32(height),
 				},
 			}
@@ -70,7 +70,7 @@ func (r ReplyStyle) Layout(gtx *layout.Context, reply *forest.Reply, author *for
 				if !r.CollapseMetadata {
 					layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 						layout.Rigid(func() {
-							gtx.Constraints.Width.Min = gtx.Constraints.Width.Max
+							gtx.Constraints.Min.X = gtx.Constraints.Max.X
 							layout.NW.Layout(gtx, func() {
 								r.layoutAuthor(gtx, author)
 							})

@@ -35,6 +35,9 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *mater
 	return c
 }
 
+func (c *ConnectFormView) HandleClipboard(contents string) {
+}
+
 func (c *ConnectFormView) Update(gtx *layout.Context) {
 	switch {
 	case c.ConnectButton.Clicked(gtx):

@@ -9,6 +9,9 @@ type ViewManager interface {
 	RequestViewSwitch(ViewID)
 	RegisterView(ViewID, View)
 	Layout(gtx *layout.Context)
+	RequestClipboardPaste()
+	HandleClipboard(contents string)
+	UpdateClipboard(string)
 }
 
 type viewManager struct {
@@ -37,4 +40,16 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 func (vm *viewManager) Layout(gtx *layout.Context) {
 	vm.views[vm.current].Update(gtx)
 	vm.views[vm.current].Layout(gtx)
+}
+
+func (vm *viewManager) RequestClipboardPaste() {
+	vm.window.ReadClipboard()
+}
+
+func (vm *viewManager) UpdateClipboard(contents string) {
+	vm.window.WriteClipboard(contents)
+}
+
+func (vm *viewManager) HandleClipboard(contents string) {
+	vm.views[vm.current].HandleClipboard(contents)
 }

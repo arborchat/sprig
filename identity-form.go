@@ -29,6 +29,9 @@ func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *mate
 	return c
 }
 
+func (c *IdentityFormView) HandleClipboard(contents string) {
+}
+
 func (c *IdentityFormView) Update(gtx *layout.Context) {
 	if c.CreateButton.Clicked(gtx) {
 		c.Settings.CreateIdentity(c.Editor.Text())
