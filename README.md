@@ -1,6 +1,6 @@
 ## sprig
 
-Sprig is a highly experimental [Arbor](https://arbor.chat) chat client. It currently is readonly and missing most of the features you would expect from a client. It has been tested on Linux and Android. In theory, it should work across mainstream OSes and on iOS, but I actually can't test that.
+Sprig is an [Arbor](https://arbor.chat) chat client focused on mobile devices. 
 
 ### Try it
 
