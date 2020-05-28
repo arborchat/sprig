@@ -8,6 +8,9 @@ import (
 type ViewManager interface {
 	RequestViewSwitch(ViewID)
 	RegisterView(ViewID, View)
+	RequestClipboardPaste()
+	HandleClipboard(contents string)
+	UpdateClipboard(string)
 	Layout(gtx layout.Context) layout.Dimensions
 }
 
@@ -34,7 +37,19 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 	vm.current = id
 }
 
+func (vm *viewManager) RequestClipboardPaste() {
+	vm.window.ReadClipboard()
+}
+
+func (vm *viewManager) UpdateClipboard(contents string) {
+	vm.window.WriteClipboard(contents)
+}
+
+func (vm *viewManager) HandleClipboard(contents string) {
+	vm.views[vm.current].HandleClipboard(contents)
+}
+
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
-	vm.views[vm.current].Update(gtx, vm.window)
+	vm.views[vm.current].Update(gtx)
 	return vm.views[vm.current].Layout(gtx)
 }

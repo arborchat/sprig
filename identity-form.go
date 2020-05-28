@@ -1,7 +1,6 @@
 package main
 
 import (
-	"gioui.org/app"
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -30,7 +29,10 @@ func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *mate
 	return c
 }
 
-func (c *IdentityFormView) Update(gtx layout.Context, window *app.Window) {
+func (c *IdentityFormView) HandleClipboard(contents string) {
+}
+
+func (c *IdentityFormView) Update(gtx layout.Context) {
 	if c.CreateButton.Clicked() {
 		c.Settings.CreateIdentity(c.Editor.Text())
 		c.manager.RequestViewSwitch(CommunityMenu)

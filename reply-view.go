@@ -4,7 +4,6 @@ import (
 	"image/color"
 	"log"
 
-	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -49,6 +48,7 @@ type ReplyListView struct {
 	CancelReplyButton        widget.Clickable
 	CreateReplyButton        widget.Clickable
 	SendReplyButton          widget.Clickable
+	PasteIntoReplyButton     widget.Clickable
 	CreateConversationButton widget.Clickable
 	CommunityChoice          widget.Enum
 	CommunitList             layout.List
@@ -75,7 +75,11 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *materia
 	return c
 }
 
-func (c *ReplyListView) Update(gtx layout.Context, window *app.Window) {
+func (c *ReplyListView) HandleClipboard(contents string) {
+	c.ReplyEditor.Insert(contents)
+}
+
+func (c *ReplyListView) Update(gtx layout.Context) {
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
@@ -106,8 +110,11 @@ func (c *ReplyListView) Update(gtx layout.Context, window *app.Window) {
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
 		} else {
-			window.WriteClipboard(string(reply.(*forest.Reply).Content.Blob))
+			c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
 		}
+	}
+	if c.PasteIntoReplyButton.Clicked() {
+		c.manager.RequestClipboardPaste()
 	}
 	if c.Selected != nil && c.CreateReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
@@ -456,6 +463,14 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+								pasteButton := material.IconButton(c.Theme, &c.PasteIntoReplyButton, icons.PasteIcon)
+								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
+								pasteButton.Size = unit.Dp(20)
+								return pasteButton.Layout(gtx)
+							})
+						}),
 						layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								return layout.Stack{}.Layout(gtx,

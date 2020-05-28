@@ -67,6 +67,8 @@ func eventLoop(w *app.Window) error {
 		switch event := (<-w.Events()).(type) {
 		case system.DestroyEvent:
 			return event.Err
+		case system.ClipboardEvent:
+			viewManager.HandleClipboard(event.Text)
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
 			layout.Inset{

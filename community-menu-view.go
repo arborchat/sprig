@@ -4,7 +4,6 @@ import (
 	"image"
 	"log"
 
-	"gioui.org/app"
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -38,7 +37,10 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *mat
 	return c
 }
 
-func (c *CommunityMenuView) Update(gtx layout.Context, window *app.Window) {
+func (c *CommunityMenuView) HandleClipboard(contents string) {
+}
+
+func (c *CommunityMenuView) Update(gtx layout.Context) {
 	if c.BackButton.Clicked() {
 		c.manager.RequestViewSwitch(ConnectForm)
 	}
