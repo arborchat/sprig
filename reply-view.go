@@ -339,6 +339,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			if err != nil || !found {
 				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
 			}
+			var community *forest.Community
 			author := authorNode.(*forest.Identity)
 			sideInset := unit.Dp(3)
 			var (
@@ -351,6 +352,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				background = white
 				textColor = black
 				collapseMetadata = false
+				communityNode, found, err := c.ArborState.SubscribableStore.GetCommunity(&reply.CommunityID)
+				if err != nil || !found {
+					log.Printf("failed finding community %s for node %s", &reply.CommunityID, reply.ID())
+				}
+				community = communityNode.(*forest.Community)
 			case ancestor:
 				leftInset = unit.Dp(15)
 				background = lightLightGray
@@ -401,7 +407,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								replyWidget.Background = background
 								replyWidget.TextColor = textColor
 								replyWidget.CollapseMetadata = collapseMetadata
-								return replyWidget.Layout(gtx, reply, author)
+								return replyWidget.Layout(gtx, reply, author, community)
 							})
 						}),
 					)
@@ -456,7 +462,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
-								return sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor)
+								return sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
 						}),
 					)

@@ -36,7 +36,7 @@ func Reply(th *material.Theme) ReplyStyle {
 	}
 }
 
-func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity) layout.Dimensions {
+func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {
 	// higher-level state to track the height of the dynamic content. This
 	// is set by the Stacked layout function, but used by the Expanded one.
 	// It's counterintuitive, but it works because the stacked child is
@@ -80,6 +80,11 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 							textDim := layout.NW.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								return r.layoutAuthor(gtx, author)
 							})
+							if community != nil {
+								layout.N.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+									return r.layoutCommunity(gtx, community)
+								})
+							}
 							dim.Size.Y = textDim.Size.Y
 							textDim = layout.NE.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								return r.layoutDate(gtx, reply)
@@ -119,6 +124,29 @@ func (r ReplyStyle) layoutAuthor(gtx layout.Context, author *forest.Identity) la
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			suffix := author.ID().Blob
+			suffix = suffix[len(suffix)-2:]
+			suffixLabel := material.Body2(r.Theme, "#"+hex.EncodeToString(suffix))
+			suffixLabel.Color.A = 150
+			return suffixLabel.Layout(gtx)
+		}),
+	)
+}
+
+func (r ReplyStyle) layoutCommunity(gtx layout.Context, community *forest.Community) layout.Dimensions {
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			prefixLabel := material.Body2(r.Theme, "in:")
+			prefixLabel.Color.A = 150
+			return prefixLabel.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			name := material.Body2(r.Theme, string(community.Name.Blob))
+			name.Font.Weight = text.Bold
+			name.Color = r.TextColor
+			return name.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			suffix := community.ID().Blob
 			suffix = suffix[len(suffix)-2:]
 			suffixLabel := material.Body2(r.Theme, "#"+hex.EncodeToString(suffix))
 			suffixLabel.Color.A = 150
