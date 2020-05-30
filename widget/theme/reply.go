@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"encoding/hex"
 	"image"
 	"image/color"
 
@@ -109,10 +110,21 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 }
 
 func (r ReplyStyle) layoutAuthor(gtx layout.Context, author *forest.Identity) layout.Dimensions {
-	name := material.Body2(r.Theme, string(author.Name.Blob))
-	name.Font.Weight = text.Bold
-	name.Color = r.TextColor
-	return name.Layout(gtx)
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			name := material.Body2(r.Theme, string(author.Name.Blob))
+			name.Font.Weight = text.Bold
+			name.Color = r.TextColor
+			return name.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			suffix := author.ID().Blob
+			suffix = suffix[len(suffix)-2:]
+			suffixLabel := material.Body2(r.Theme, "#"+hex.EncodeToString(suffix))
+			suffixLabel.Color.A = 150
+			return suffixLabel.Layout(gtx)
+		}),
+	)
 }
 
 func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
