@@ -100,7 +100,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Selected)
 	}
 	if c.BackButton.Clicked() {
-		c.manager.RequestViewSwitch(CommunityMenu)
+		c.manager.RequestViewSwitch(CommunityMenuID)
 	}
 	if c.DeselectButton.Clicked() {
 		c.Selected = nil

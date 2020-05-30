@@ -42,7 +42,7 @@ func (c *CommunityMenuView) HandleClipboard(contents string) {
 
 func (c *CommunityMenuView) Update(gtx layout.Context) {
 	if c.BackButton.Clicked() {
-		c.manager.RequestViewSwitch(ConnectForm)
+		c.manager.RequestViewSwitch(ConnectFormID)
 	}
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
@@ -51,10 +51,10 @@ func (c *CommunityMenuView) Update(gtx layout.Context) {
 		}
 	}
 	if c.ViewButton.Clicked() {
-		c.manager.RequestViewSwitch(ReplyView)
+		c.manager.RequestViewSwitch(ReplyViewID)
 	}
 	if c.IdentityButton.Clicked() {
-		c.manager.RequestViewSwitch(IdentityForm)
+		c.manager.RequestViewSwitch(IdentityFormID)
 	}
 }
 

@@ -53,11 +53,16 @@ func eventLoop(w *app.Window) error {
 	}
 
 	viewManager := NewViewManager(w)
-	viewManager.RegisterView(ConnectForm, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RegisterView(CommunityMenu, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RegisterView(ReplyView, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RegisterView(IdentityForm, NewIdentityFormView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RequestViewSwitch(ConnectForm)
+	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
+	viewManager.RegisterView(CommunityMenuID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
+	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
+	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(&appState.Settings, &appState.ArborState, appState.Theme))
+	viewManager.RegisterView(ConsentViewID, NewConsentView(&appState.Settings, &appState.ArborState, appState.Theme))
+	if appState.Settings.AcknowledgedNoticeVersion < NoticeVersion {
+		viewManager.RequestViewSwitch(ConsentViewID)
+	} else {
+		viewManager.RequestViewSwitch(ConnectFormID)
+	}
 
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
@@ -230,6 +235,8 @@ type Settings struct {
 	Address        string
 	ActiveIdentity *fields.QualifiedHash
 
+	AcknowledgedNoticeVersion int
+
 	dataDir string
 
 	// state used for authoring messages
@@ -317,8 +324,9 @@ func (s Settings) Persist() {
 type ViewID int
 
 const (
-	ConnectForm ViewID = iota
-	IdentityForm
-	CommunityMenu
-	ReplyView
+	ConnectFormID ViewID = iota
+	IdentityFormID
+	CommunityMenuID
+	ReplyViewID
+	ConsentViewID
 )

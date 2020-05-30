@@ -46,7 +46,7 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 		fallthrough
 	case !c.initialized && c.Settings.Address != "":
 		c.ArborState.RestartWorker(c.Settings.Address)
-		c.manager.RequestViewSwitch(CommunityMenu)
+		c.manager.RequestViewSwitch(CommunityMenuID)
 	}
 	c.initialized = true
 }
