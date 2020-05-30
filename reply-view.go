@@ -278,13 +278,6 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					)
 				}))
 			}
-			if c.ReplyingTo != nil || c.CreatingConversation {
-				buttons = append(buttons, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.IconButton(c.Theme, &c.CancelReplyButton, icons.CancelReplyIcon).Layout,
-					)
-				}))
-			}
 			if !c.CreatingConversation {
 				buttons = append(buttons,
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -465,6 +458,15 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								}
 								return sprigTheme.Reply(c.Theme).Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
+						}),
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+								func(gtx layout.Context) layout.Dimensions {
+									cancelButton := material.IconButton(c.Theme, &c.CancelReplyButton, icons.CancelReplyIcon)
+									cancelButton.Size = unit.Dp(20)
+									cancelButton.Inset = layout.UniformInset(unit.Dp(4))
+									return cancelButton.Layout(gtx)
+								})
 						}),
 					)
 				}),
