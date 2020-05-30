@@ -44,3 +44,8 @@ var PasteIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ContentContentPaste)
 	return icon
 }()
+
+var FilterIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ContentFilterList)
+	return icon
+}()

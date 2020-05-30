@@ -45,6 +45,7 @@ type ReplyListView struct {
 	ReplyingTo               *forest.Reply
 	ReplyingToAuthor         *forest.Identity
 	ReplyEditor              widget.Editor
+	FilterButton             widget.Clickable
 	CancelReplyButton        widget.Clickable
 	CreateReplyButton        widget.Clickable
 	SendReplyButton          widget.Clickable
@@ -90,7 +91,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 			} else {
-				c.Filtered = !c.Filtered
+				c.Selected = nil
 			}
 		}
 	}
@@ -104,6 +105,9 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	if c.DeselectButton.Clicked() {
 		c.Selected = nil
+	}
+	if c.FilterButton.Clicked() {
+		c.Filtered = !c.Filtered
 	}
 	if c.Selected != nil && c.CopyReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
@@ -278,19 +282,19 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					)
 				}))
 			}
+			if c.Selected != nil {
+				buttons = append(buttons,
+					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+							material.IconButton(c.Theme, &c.FilterButton, icons.FilterIcon).Layout,
+						)
+					}))
+			}
 			if !c.CreatingConversation {
 				buttons = append(buttons,
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
 							material.IconButton(c.Theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
-						)
-					}))
-			}
-			if c.Selected != nil {
-				buttons = append(buttons,
-					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-							material.IconButton(c.Theme, &c.DeselectButton, icons.ClearIcon).Layout,
 						)
 					}))
 			}
