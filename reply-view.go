@@ -384,7 +384,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			stateIndex++
 			var flexChildren []layout.FlexChild
 			flexChildren = append(flexChildren, layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-				messageWidth := gtx.Constraints.Max.X - gtx.Px(unit.Dp(36))
+				extraWidth := gtx.Px(unit.Dp(36))
+				messageWidth := gtx.Constraints.Max.X - extraWidth
 				return layout.Stack{}.Layout(gtx,
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 						gtx.Constraints.Min.X = gtx.Constraints.Max.X
@@ -410,9 +411,12 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			}))
 			if status == selected {
 				flexChildren = append(flexChildren, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.IconButton(c.Theme, &c.CreateReplyButton, icons.ReplyIcon).Layout,
-					)
+					return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						replyButton := material.IconButton(c.Theme, &c.CreateReplyButton, icons.ReplyIcon)
+						replyButton.Size = unit.Dp(20)
+						replyButton.Inset = layout.UniformInset(unit.Dp(9))
+						return replyButton.Layout(gtx)
+					})
 				}))
 			}
 			return layout.Flex{}.Layout(gtx, flexChildren...)
