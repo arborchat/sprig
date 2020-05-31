@@ -52,7 +52,7 @@ type ReplyListView struct {
 	PasteIntoReplyButton     widget.Clickable
 	CreateConversationButton widget.Clickable
 	CommunityChoice          widget.Enum
-	CommunitList             layout.List
+	CommunityList            layout.List
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -452,8 +452,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								if c.CreatingConversation {
 									var dims layout.Dimensions
 									c.ArborState.CommunityList.WithCommunities(func(comms []*forest.Community) {
-										c.CommunitList.Axis = layout.Vertical
-										dims = c.CommunitList.Layout(gtx, len(comms), func(gtx layout.Context, index int) layout.Dimensions {
+										dims = c.CommunityList.Layout(gtx, len(comms), func(gtx layout.Context, index int) layout.Dimensions {
 											community := comms[index]
 											return material.RadioButton(c.Theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob)).Layout(gtx)
 										})
@@ -464,13 +463,12 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							})
 						}),
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-								func(gtx layout.Context) layout.Dimensions {
-									cancelButton := material.IconButton(c.Theme, &c.CancelReplyButton, icons.CancelReplyIcon)
-									cancelButton.Size = unit.Dp(20)
-									cancelButton.Inset = layout.UniformInset(unit.Dp(4))
-									return cancelButton.Layout(gtx)
-								})
+							return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+								cancelButton := material.IconButton(c.Theme, &c.CancelReplyButton, icons.CancelReplyIcon)
+								cancelButton.Size = unit.Dp(20)
+								cancelButton.Inset = layout.UniformInset(unit.Dp(4))
+								return cancelButton.Layout(gtx)
+							})
 						}),
 					)
 				}),
