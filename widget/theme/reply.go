@@ -155,6 +155,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 
 type CommunityNameStyle struct {
 	*forest.Community
+	Prefix string
 	*material.Theme
 }
 
@@ -168,7 +169,7 @@ func CommunityName(theme *material.Theme, community *forest.Community) Community
 func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Flex{}.Layout(gtx,
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			prefixLabel := material.Body2(a.Theme, "in:")
+			prefixLabel := material.Body2(a.Theme, a.Prefix)
 			prefixLabel.Color.A = 150
 			return prefixLabel.Layout(gtx)
 		}),

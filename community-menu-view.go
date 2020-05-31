@@ -10,6 +10,7 @@ import (
 	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/icons"
+	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type CommunityMenuView struct {
@@ -73,7 +74,16 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				if c.Settings.ActiveIdentity != nil {
-					return material.Body1(c.Theme, "Identity: "+c.Settings.ActiveIdentity.String()).Layout(gtx)
+					id, _ := c.Settings.Identity()
+					return layout.Flex{}.Layout(gtx,
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return material.Body1(c.Theme, "Identity:").Layout(gtx)
+						}),
+						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+							return layout.Inset{Left: unit.Dp(12)}.Layout(gtx,
+								sprigTheme.AuthorName(c.Theme, id).Layout)
+						}),
+					)
 				} else {
 					return material.Button(c.Theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
 				}
@@ -96,24 +106,15 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 						gtx.Constraints.Max.X = width
 						community := communities[index]
 						checkbox := &c.CommunityBoxes[index]
-						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+						return layout.Flex{}.Layout(gtx,
 							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-								return layout.Flex{}.Layout(gtx,
-									layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-										return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-											material.CheckBox(theme, checkbox, "").Layout,
-										)
-									}),
-									layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-										return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-											material.H6(theme, string(community.Name.Blob)).Layout,
-										)
-									}),
+								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+									material.CheckBox(theme, checkbox, "").Layout,
 								)
 							}),
 							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-									material.Body2(theme, community.ID().String()).Layout,
+									sprigTheme.CommunityName(c.Theme, community).Layout,
 								)
 							}),
 						)
