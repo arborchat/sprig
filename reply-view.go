@@ -463,7 +463,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							})
 						}),
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								cancelButton := material.IconButton(c.Theme, &c.CancelReplyButton, icons.CancelReplyIcon)
 								cancelButton.Size = unit.Dp(20)
 								cancelButton.Inset = layout.UniformInset(unit.Dp(4))
@@ -475,7 +475,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								pasteButton := material.IconButton(c.Theme, &c.PasteIntoReplyButton, icons.PasteIcon)
 								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
 								pasteButton.Size = unit.Dp(20)
@@ -509,7 +509,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 										return layout.Dimensions{}
 									}),
 									layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-										return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+										return layout.UniformInset(unit.Dp(6)).Layout(gtx,
 											material.Editor(c.Theme, &c.ReplyEditor, "type your reply here").Layout,
 										)
 									}),
