@@ -77,13 +77,9 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 							var dim layout.Dimensions
 							gtx.Constraints.Min.X = gtx.Constraints.Max.X
 							dim.Size.X = gtx.Constraints.Max.X
-							textDim := layout.NW.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-								return r.layoutAuthor(gtx, author)
-							})
+							textDim := layout.NW.Layout(gtx, AuthorName(r.Theme, author).Layout)
 							if community != nil {
-								layout.N.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-									return r.layoutCommunity(gtx, community)
-								})
+								layout.N.Layout(gtx, CommunityName(r.Theme, community).Layout)
 							}
 							dim.Size.Y = textDim.Size.Y
 							textDim = layout.NE.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
@@ -114,47 +110,6 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 	)
 }
 
-func (r ReplyStyle) layoutAuthor(gtx layout.Context, author *forest.Identity) layout.Dimensions {
-	return layout.Flex{}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			name := material.Body2(r.Theme, string(author.Name.Blob))
-			name.Font.Weight = text.Bold
-			name.Color = r.TextColor
-			return name.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			suffix := author.ID().Blob
-			suffix = suffix[len(suffix)-2:]
-			suffixLabel := material.Body2(r.Theme, "#"+hex.EncodeToString(suffix))
-			suffixLabel.Color.A = 150
-			return suffixLabel.Layout(gtx)
-		}),
-	)
-}
-
-func (r ReplyStyle) layoutCommunity(gtx layout.Context, community *forest.Community) layout.Dimensions {
-	return layout.Flex{}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			prefixLabel := material.Body2(r.Theme, "in:")
-			prefixLabel.Color.A = 150
-			return prefixLabel.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			name := material.Body2(r.Theme, string(community.Name.Blob))
-			name.Font.Weight = text.Bold
-			name.Color = r.TextColor
-			return name.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			suffix := community.ID().Blob
-			suffix = suffix[len(suffix)-2:]
-			suffixLabel := material.Body2(r.Theme, "#"+hex.EncodeToString(suffix))
-			suffixLabel.Color.A = 150
-			return suffixLabel.Layout(gtx)
-		}),
-	)
-}
-
 func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
 	date := material.Body2(r.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
 	date.Color = r.TextColor
@@ -167,4 +122,67 @@ func (r ReplyStyle) layoutContent(gtx layout.Context, reply *forest.Reply) layou
 	content := material.Body1(r.Theme, string(reply.Content.Blob))
 	content.Color = r.TextColor
 	return content.Layout(gtx)
+}
+
+type AuthorNameStyle struct {
+	*forest.Identity
+	*material.Theme
+}
+
+func AuthorName(theme *material.Theme, identity *forest.Identity) AuthorNameStyle {
+	return AuthorNameStyle{
+		Identity: identity,
+		Theme:    theme,
+	}
+}
+
+func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			name := material.Body2(a.Theme, string(a.Identity.Name.Blob))
+			name.Font.Weight = text.Bold
+			return name.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			suffix := a.Identity.ID().Blob
+			suffix = suffix[len(suffix)-2:]
+			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
+			suffixLabel.Color.A = 150
+			return suffixLabel.Layout(gtx)
+		}),
+	)
+}
+
+type CommunityNameStyle struct {
+	*forest.Community
+	*material.Theme
+}
+
+func CommunityName(theme *material.Theme, community *forest.Community) CommunityNameStyle {
+	return CommunityNameStyle{
+		Community: community,
+		Theme:     theme,
+	}
+}
+
+func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			prefixLabel := material.Body2(a.Theme, "in:")
+			prefixLabel.Color.A = 150
+			return prefixLabel.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			name := material.Body2(a.Theme, string(a.Community.Name.Blob))
+			name.Font.Weight = text.Bold
+			return name.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			suffix := a.Community.ID().Blob
+			suffix = suffix[len(suffix)-2:]
+			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
+			suffixLabel.Color.A = 150
+			return suffixLabel.Layout(gtx)
+		}),
+	)
 }
