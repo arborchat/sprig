@@ -3,7 +3,7 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20200524174833-ad93e3212824
+	gioui.org v0.0.0-20200530141830-d2c67cdf8039
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8
 	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
