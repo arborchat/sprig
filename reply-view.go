@@ -490,8 +490,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 								return layout.Stack{}.Layout(gtx,
 									layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-										var stack op.StackOp
-										stack.Push(gtx.Ops)
+										stack := op.Push(gtx.Ops)
 										paintOp := paint.ColorOp{Color: white}
 										paintOp.Add(gtx.Ops)
 										bounds := f32.Rectangle{
