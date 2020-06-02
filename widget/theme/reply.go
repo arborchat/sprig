@@ -117,27 +117,40 @@ func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, auth
 
 						gtx.Constraints.Min.Y = max(nameDim.Size.Y, communityDim.Size.Y, dateDim.Size.Y)
 						gtx.Constraints.Min.X = gtx.Constraints.Max.X
-						dims := layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx,
+
+						shouldDisplayDate := gtx.Constraints.Max.X-nameDim.Size.X > dateDim.Size.X
+						shouldDisplayCommunity := shouldDisplayDate && gtx.Constraints.Max.X-(nameDim.Size.X+dateDim.Size.X) > communityDim.Size.X
+
+						flexChildren := []layout.FlexChild{
 							layout.Rigid(func(gtx C) D {
 								return layout.S.Layout(gtx, func(gtx C) D {
 									nameWidget.Add(gtx.Ops)
 									return nameDim
 								})
 							}),
-							layout.Rigid(func(gtx C) D {
-								return layout.S.Layout(gtx, func(gtx C) D {
-									communityWidget.Add(gtx.Ops)
-									return communityDim
-								})
-							}),
-							layout.Rigid(func(gtx C) D {
-								return layout.S.Layout(gtx, func(gtx C) D {
-									dateWidget.Add(gtx.Ops)
-									return dateDim
-								})
-							}),
-						)
-						return dims
+						}
+						if shouldDisplayCommunity {
+							flexChildren = append(flexChildren,
+								layout.Rigid(func(gtx C) D {
+									return layout.S.Layout(gtx, func(gtx C) D {
+										communityWidget.Add(gtx.Ops)
+										return communityDim
+									})
+								}),
+							)
+						}
+						if shouldDisplayDate {
+							flexChildren = append(flexChildren,
+								layout.Rigid(func(gtx C) D {
+									return layout.S.Layout(gtx, func(gtx C) D {
+										dateWidget.Add(gtx.Ops)
+										return dateDim
+									})
+								}),
+							)
+						}
+
+						return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, flexChildren...)
 					})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -157,6 +170,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, auth
 
 func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
 	date := material.Body2(r.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+	date.MaxLines = 1
 	date.Color = r.TextColor
 	date.Color.A = 200
 	date.TextSize = unit.Dp(12)
@@ -189,6 +203,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			name := material.Body2(a.Theme, string(a.Identity.Name.Blob))
 			name.Font.Weight = text.Bold
+			name.MaxLines = 1
 			return name.Layout(gtx)
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -196,6 +211,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 			suffix = suffix[len(suffix)-2:]
 			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
 			suffixLabel.Color.A = 150
+			suffixLabel.MaxLines = 1
 			return suffixLabel.Layout(gtx)
 		}),
 	)
@@ -223,11 +239,13 @@ func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			prefixLabel := material.Body2(a.Theme, a.Prefix)
 			prefixLabel.Color.A = 150
+			prefixLabel.MaxLines = 1
 			return prefixLabel.Layout(gtx)
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			name := material.Body2(a.Theme, string(a.Community.Name.Blob))
 			name.Font.Weight = text.Bold
+			name.MaxLines = 1
 			return name.Layout(gtx)
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -235,6 +253,7 @@ func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 			suffix = suffix[len(suffix)-2:]
 			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
 			suffixLabel.Color.A = 150
+			suffixLabel.MaxLines = 1
 			return suffixLabel.Layout(gtx)
 		}),
 	)
