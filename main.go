@@ -169,6 +169,9 @@ func NewAppState(dataDir string) (*AppState, error) {
 	if appState.Settings.Address != "" {
 		appState.RestartWorker()
 	}
+	if err := appState.Settings.DiscoverIdentities(); err != nil {
+		log.Printf("failed to automatically discover existing identities: %v", err)
+	}
 
 	return appState, nil
 }
@@ -191,6 +194,25 @@ func (a *AppState) CreateIdentity(name string) {
 		log.Printf("failed adding identity to store: %v", err)
 		return
 	}
+}
+
+func (s *Settings) DiscoverIdentities() error {
+	idsDir, err := os.Open(s.IdentitiesDir())
+	if err != nil {
+		return fmt.Errorf("failed opening identities directory: %w", err)
+	}
+	names, err := idsDir.Readdirnames(0)
+	if err != nil {
+		return fmt.Errorf("failed listing identities directory: %w", err)
+	}
+	name := names[0]
+	id := &fields.QualifiedHash{}
+	err = id.UnmarshalText([]byte(name))
+	if err != nil {
+		return fmt.Errorf("failed unmarshalling name of first identity %s: %w", name, err)
+	}
+	s.ActiveIdentity = id
+	return nil
 }
 
 func (s Settings) SettingsFile() string {
