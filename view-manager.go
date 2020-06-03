@@ -50,6 +50,7 @@ func (vm *viewManager) HandleClipboard(contents string) {
 }
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
+	gtx.Constraints.Min = gtx.Constraints.Max
 	vm.views[vm.current].Update(gtx)
 	return vm.views[vm.current].Layout(gtx)
 }

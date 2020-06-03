@@ -4,12 +4,14 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"image/color"
 	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
 
 	"gioui.org/app"
+	"gioui.org/f32"
 	"gioui.org/font/gofont"
 	"gioui.org/io/system"
 	"gioui.org/layout"
@@ -20,8 +22,14 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/ds"
+	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
+)
+
+type (
+	C = layout.Context
+	D = layout.Dimensions
 )
 
 func main() {
@@ -79,12 +87,26 @@ func eventLoop(w *app.Window) error {
 			viewManager.HandleClipboard(event.Text)
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
-			layout.Inset{
-				Bottom: event.Insets.Bottom,
-				Left:   event.Insets.Left,
-				Right:  event.Insets.Right,
-				Top:    event.Insets.Top,
-			}.Layout(gtx, viewManager.Layout)
+			layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					return sprigTheme.DrawRect(gtx, color.RGBA{A: 255}, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+				}),
+				layout.Stacked(func(gtx C) D {
+					return layout.Inset{
+						Bottom: event.Insets.Bottom,
+						Left:   event.Insets.Left,
+						Right:  event.Insets.Right,
+						Top:    event.Insets.Top,
+					}.Layout(gtx, func(gtx C) D {
+						return layout.Stack{}.Layout(gtx,
+							layout.Expanded(func(gtx C) D {
+								return sprigTheme.DrawRect(gtx, color.RGBA{R: 255, G: 255, B: 255, A: 255}, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+							}),
+							layout.Stacked(viewManager.Layout),
+						)
+					})
+				}),
+			)
 			event.Frame(gtx.Ops)
 		}
 	}

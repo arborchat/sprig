@@ -2,14 +2,11 @@ package theme
 
 import (
 	"encoding/hex"
-	"image"
 	"image/color"
 
 	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
@@ -20,27 +17,6 @@ type (
 	C = layout.Context
 	D = layout.Dimensions
 )
-
-func drawRect(gtx C, background color.RGBA, max f32.Point, radii float32) D {
-	stack := op.Push(gtx.Ops)
-	paintOp := paint.ColorOp{Color: background}
-	paintOp.Add(gtx.Ops)
-	bounds := f32.Rectangle{
-		Max: max,
-	}
-	clip.Rect{
-		Rect: bounds,
-		NW:   radii,
-		NE:   radii,
-		SE:   radii,
-		SW:   radii,
-	}.Op(gtx.Ops).Add(gtx.Ops)
-	paint.PaintOp{
-		Rect: bounds,
-	}.Add(gtx.Ops)
-	stack.Pop()
-	return layout.Dimensions{Size: image.Pt(int(max.X), int(max.Y))}
-}
 
 type ReplyStyle struct {
 	*material.Theme
@@ -75,7 +51,7 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 				Y: float32(height),
 			}
 			radii := float32(gtx.Px(unit.Dp(5)))
-			return drawRect(gtx, r.Background, max, radii)
+			return DrawRect(gtx, r.Background, max, radii)
 		}),
 		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 			dim := layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
