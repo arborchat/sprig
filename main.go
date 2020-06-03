@@ -78,6 +78,8 @@ func eventLoop(w *app.Window) error {
 			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
 			layout.Inset{
 				Bottom: event.Insets.Bottom,
+				Left:   event.Insets.Left,
+				Right:  event.Insets.Right,
 				Top:    event.Insets.Top,
 			}.Layout(gtx, viewManager.Layout)
 			event.Frame(gtx.Ops)
