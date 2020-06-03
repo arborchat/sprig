@@ -15,11 +15,6 @@ type ConnectFormView struct {
 	*Settings
 	*ArborState
 	*material.Theme
-
-	// initialized tracks whether or not the view has been updated at least once.
-	// this is used to determine whether or not the Update method should immediately
-	// switch to the CommunityMenu view if an address has already been provided.
-	initialized bool
 }
 
 var _ View = &ConnectFormView{}
@@ -39,16 +34,12 @@ func (c *ConnectFormView) HandleClipboard(contents string) {
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
-	switch {
-	case c.ConnectButton.Clicked():
+	if c.ConnectButton.Clicked() {
 		c.Settings.Address = c.Editor.Text()
 		go c.Settings.Persist()
-		fallthrough
-	case !c.initialized && c.Settings.Address != "":
 		c.ArborState.RestartWorker(c.Settings.Address)
 		c.manager.RequestViewSwitch(CommunityMenuID)
 	}
-	c.initialized = true
 }
 
 func (c *ConnectFormView) Layout(gtx layout.Context) layout.Dimensions {

@@ -50,6 +50,7 @@ func eventLoop(w *app.Window) error {
 	}
 	if *address != "" {
 		appState.Settings.Address = *address
+		appState.RestartWorker()
 	}
 
 	viewManager := NewViewManager(w)
@@ -60,8 +61,10 @@ func eventLoop(w *app.Window) error {
 	viewManager.RegisterView(ConsentViewID, NewConsentView(&appState.Settings, &appState.ArborState, appState.Theme))
 	if appState.Settings.AcknowledgedNoticeVersion < NoticeVersion {
 		viewManager.RequestViewSwitch(ConsentViewID)
-	} else {
+	} else if appState.Settings.Address == "" {
 		viewManager.RequestViewSwitch(ConnectFormID)
+	} else {
+		viewManager.RequestViewSwitch(CommunityMenuID)
 	}
 
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
@@ -141,9 +144,15 @@ func NewAppState(dataDir string) (*AppState, error) {
 			log.Printf("couldn't parse json settings: %v", err)
 		}
 	}
-	// make sure this is still set properly after JSON unmarshalling
-	appState.Settings.dataDir = dataDir
+	if appState.Settings.Address != "" {
+		appState.RestartWorker()
+	}
+
 	return appState, nil
+}
+
+func (a *AppState) RestartWorker() {
+	a.ArborState.RestartWorker(a.Settings.Address)
 }
 
 func (a *AppState) CreateIdentity(name string) {
