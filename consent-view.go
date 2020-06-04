@@ -35,7 +35,11 @@ func (c *ConsentView) Update(gtx layout.Context) {
 	if c.AgreeButton.Clicked() {
 		c.Settings.AcknowledgedNoticeVersion = NoticeVersion
 		go c.Settings.Persist()
-		c.manager.RequestViewSwitch(CommunityMenuID)
+		if c.Settings.Address == "" {
+			c.manager.RequestViewSwitch(ConnectFormID)
+		} else {
+			c.manager.RequestViewSwitch(CommunityMenuID)
+		}
 	}
 }
 
