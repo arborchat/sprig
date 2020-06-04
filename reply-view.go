@@ -389,11 +389,16 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				return layout.Stack{}.Layout(gtx,
 					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
 						gtx.Constraints.Min.X = gtx.Constraints.Max.X
-						margin := unit.Dp(6)
+						margin := unit.Dp(3)
 						if collapseMetadata {
-							margin = unit.Dp(3)
+							margin = unit.Dp(0)
 						}
-						return layout.Inset{Left: leftInset, Top: margin, Right: sideInset}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						return layout.Inset{
+							Top:    margin,
+							Bottom: unit.Dp(3),
+							Left:   leftInset,
+							Right:  sideInset,
+						}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 							gtx.Constraints.Max.X = messageWidth
 							replyWidget := sprigTheme.Reply(theme)
 							replyWidget.Background = background
