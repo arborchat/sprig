@@ -20,11 +20,12 @@ type CommunityMenuView struct {
 	*ArborState
 	*material.Theme
 
-	BackButton     widget.Clickable
-	IdentityButton widget.Clickable
-	CommunityList  layout.List
-	CommunityBoxes []widget.Bool
-	ViewButton     widget.Clickable
+	BackButton      widget.Clickable
+	IdentityButton  widget.Clickable
+	CommunityList   layout.List
+	CommunityBoxes  []widget.Bool
+	ViewButton      widget.Clickable
+	ProfilingSwitch widget.Bool
 }
 
 var _ View = &CommunityMenuView{}
@@ -56,6 +57,9 @@ func (c *CommunityMenuView) Update(gtx layout.Context) {
 	}
 	if c.IdentityButton.Clicked() {
 		c.manager.RequestViewSwitch(IdentityFormID)
+	}
+	if c.ProfilingSwitch.Changed() {
+		c.manager.SetProfiling(c.ProfilingSwitch.Value)
 	}
 }
 
@@ -127,6 +131,21 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					gtx.Constraints.Max.X = width
 					return material.Button(theme, &c.ViewButton, "View These Communities").Layout(gtx)
+				})
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				gtx.Constraints.Max.X = width
+				in := layout.UniformInset(unit.Dp(8))
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					gtx.Constraints.Max.X = width
+					return layout.Flex{}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return in.Layout(gtx, material.Body1(c.Theme, "Profile layout:").Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return in.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
+						}),
+					)
 				})
 			}),
 		)

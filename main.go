@@ -46,6 +46,7 @@ func main() {
 
 func eventLoop(w *app.Window) error {
 	address := flag.String("address", "", "arbor relay address to connect to")
+	profile := flag.Bool("profile", false, "log profiling data")
 	flag.Parse()
 	dataDir, err := app.DataDir()
 	if err != nil {
@@ -61,7 +62,7 @@ func eventLoop(w *app.Window) error {
 		appState.RestartWorker()
 	}
 
-	viewManager := NewViewManager(w)
+	viewManager := NewViewManager(w, *profile)
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(CommunityMenuID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
