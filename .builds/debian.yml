@@ -43,6 +43,7 @@ tasks:
     sdkmanager "$android_target_platform" "$android_target_build_tools"
  - build_apk: |
     cd sprig
+    mv appicon-release.png appicon.png
     make APPID=chat.arbor.sprig sprig.apk
  - build_windows: |
     cd sprig
