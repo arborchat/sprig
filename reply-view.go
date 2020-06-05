@@ -453,7 +453,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									c.ArborState.CommunityList.WithCommunities(func(comms []*forest.Community) {
 										dims = c.CommunityList.Layout(gtx, len(comms), func(gtx layout.Context, index int) layout.Dimensions {
 											community := comms[index]
-											return material.RadioButton(theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob)).Layout(gtx)
+											radio := material.RadioButton(theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
+											radio.IconColor = c.Theme.Secondary.Default
+											return radio.Layout(gtx)
 										})
 									})
 									return dims
