@@ -5,12 +5,14 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"git.sr.ht/~whereswaldon/sprig/icons"
 )
 
 type ConnectFormView struct {
 	manager ViewManager
 	widget.Editor
 	ConnectButton widget.Clickable
+	PasteButton   widget.Clickable
 
 	*Settings
 	*ArborState
@@ -31,6 +33,7 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *mater
 }
 
 func (c *ConnectFormView) HandleClipboard(contents string) {
+	c.Editor.Insert(contents)
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
@@ -40,29 +43,45 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 		c.ArborState.RestartWorker(c.Settings.Address)
 		c.manager.RequestViewSwitch(CommunityMenuID)
 	}
+	if c.PasteButton.Clicked() {
+		c.manager.RequestClipboardPaste()
+	}
 }
 
 func (c *ConnectFormView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme
-	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+	inset := layout.UniformInset(unit.Dp(4))
+	return layout.Center.Layout(gtx, func(gtx C) D {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					return inset.Layout(gtx,
 						material.Body1(theme, "Arbor Relay Address:").Layout,
 					)
 				})
 			}),
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.Editor(theme, &(c.Editor), "HOST:PORT").Layout,
+			layout.Rigid(func(gtx C) D {
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					return layout.Flex{}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return inset.Layout(gtx, func(gtx C) D {
+								pasteButton := material.IconButton(theme, &c.PasteButton, icons.PasteIcon)
+								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
+								pasteButton.Size = unit.Dp(20)
+								return pasteButton.Layout(gtx)
+							})
+						}),
+						layout.Rigid(func(gtx C) D {
+							return inset.Layout(gtx,
+								material.Editor(theme, &(c.Editor), "HOST:PORT").Layout,
+							)
+						}),
 					)
 				})
 			}),
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					return inset.Layout(gtx,
 						material.Button(theme, &(c.ConnectButton), "Connect").Layout,
 					)
 				})
