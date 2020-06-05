@@ -6,6 +6,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/sprig/icons"
+	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type ConnectFormView struct {
@@ -16,12 +17,12 @@ type ConnectFormView struct {
 
 	*Settings
 	*ArborState
-	*material.Theme
+	*sprigTheme.Theme
 }
 
 var _ View = &ConnectFormView{}
 
-func NewConnectFormView(settings *Settings, arborState *ArborState, theme *material.Theme) View {
+func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
 	c := &ConnectFormView{
 		Settings:   settings,
 		ArborState: arborState,
@@ -49,7 +50,7 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 }
 
 func (c *ConnectFormView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme
+	theme := c.Theme.Theme
 	inset := layout.UniformInset(unit.Dp(4))
 	return layout.Center.Layout(gtx, func(gtx C) D {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,

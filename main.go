@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"image/color"
 	"io/ioutil"
 	"log"
 	"os"
@@ -16,7 +15,6 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
@@ -62,7 +60,7 @@ func eventLoop(w *app.Window) error {
 		appState.RestartWorker()
 	}
 
-	viewManager := NewViewManager(w, *profile)
+	viewManager := NewViewManager(w, appState.Theme, *profile)
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(CommunityMenuID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
@@ -90,7 +88,7 @@ func eventLoop(w *app.Window) error {
 			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
 			layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
-					return sprigTheme.DrawRect(gtx, color.RGBA{A: 255}, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+					return sprigTheme.DrawRect(gtx, appState.Theme.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
 				}),
 				layout.Stacked(func(gtx C) D {
 					return layout.Inset{
@@ -101,7 +99,7 @@ func eventLoop(w *app.Window) error {
 					}.Layout(gtx, func(gtx C) D {
 						return layout.Stack{}.Layout(gtx,
 							layout.Expanded(func(gtx C) D {
-								return sprigTheme.DrawRect(gtx, color.RGBA{R: 255, G: 255, B: 255, A: 255}, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+								return sprigTheme.DrawRect(gtx, appState.Theme.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
 							}),
 							layout.Stacked(viewManager.Layout),
 						)
@@ -116,7 +114,7 @@ func eventLoop(w *app.Window) error {
 type AppState struct {
 	Settings
 	ArborState
-	*material.Theme
+	*sprigTheme.Theme
 	DataDir string
 }
 
@@ -156,7 +154,7 @@ func NewAppState(dataDir string) (*AppState, error) {
 			CommunityList:     cl,
 		},
 		DataDir: dataDir,
-		Theme:   material.NewTheme(),
+		Theme:   sprigTheme.New(),
 	}
 	appState.Settings.dataDir = dataDir
 	jsonSettings, err := ioutil.ReadFile(appState.Settings.SettingsFile())

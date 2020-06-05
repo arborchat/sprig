@@ -18,7 +18,7 @@ type CommunityMenuView struct {
 
 	*Settings
 	*ArborState
-	*material.Theme
+	*sprigTheme.Theme
 
 	BackButton      widget.Clickable
 	IdentityButton  widget.Clickable
@@ -30,7 +30,7 @@ type CommunityMenuView struct {
 
 var _ View = &CommunityMenuView{}
 
-func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *material.Theme) View {
+func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
 	c := &CommunityMenuView{
 		Settings:   settings,
 		ArborState: arborState,
@@ -64,7 +64,7 @@ func (c *CommunityMenuView) Update(gtx layout.Context) {
 }
 
 func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme
+	theme := c.Theme.Theme
 	c.CommunityList.Axis = layout.Vertical
 	layout.NW.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.UniformInset(unit.Dp(4)).Layout(
@@ -81,15 +81,15 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 					id, _ := c.Settings.Identity()
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return material.Body1(c.Theme, "Identity:").Layout(gtx)
+							return material.Body1(theme, "Identity:").Layout(gtx)
 						}),
 						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 							return layout.Inset{Left: unit.Dp(12)}.Layout(gtx,
-								sprigTheme.AuthorName(c.Theme, id).Layout)
+								sprigTheme.AuthorName(theme, id).Layout)
 						}),
 					)
 				} else {
-					return material.Button(c.Theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
+					return material.Button(theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
 				}
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -118,7 +118,7 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 							}),
 							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-									sprigTheme.CommunityName(c.Theme, community).Layout,
+									sprigTheme.CommunityName(theme, community).Layout,
 								)
 							}),
 						)
@@ -140,7 +140,7 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 					gtx.Constraints.Max.X = width
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
-							return in.Layout(gtx, material.Body1(c.Theme, "Profile layout:").Layout)
+							return in.Layout(gtx, material.Body1(theme, "Profile layout:").Layout)
 						}),
 						layout.Rigid(func(gtx C) D {
 							return in.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)

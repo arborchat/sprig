@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/color"
 	"runtime"
 
 	"gioui.org/app"
@@ -28,7 +27,7 @@ type viewManager struct {
 	views   map[ViewID]View
 	current ViewID
 	window  *app.Window
-	theme   *material.Theme
+	Theme   *sprigTheme.Theme
 
 	// runtime profiling data
 	profiling   bool
@@ -36,12 +35,12 @@ type viewManager struct {
 	lastMallocs uint64
 }
 
-func NewViewManager(window *app.Window, profile bool) ViewManager {
+func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) ViewManager {
 	vm := &viewManager{
 		views:     make(map[ViewID]View),
 		window:    window,
 		profiling: profile,
-		theme:     material.NewTheme(),
+		Theme:     theme,
 	}
 	return vm
 }
@@ -93,7 +92,7 @@ func (vm *viewManager) profileTimings(gtx layout.Context) {
 		return layout.Stack{}.Layout(gtx,
 			layout.Expanded(func(gtx C) D {
 				return sprigTheme.DrawRect(gtx,
-					color.RGBA{A: 100, R: 255, G: 255, B: 255},
+					vm.Theme.Background.Default,
 					f32.Point{
 						X: float32(gtx.Constraints.Min.X),
 						Y: float32(gtx.Constraints.Min.Y),
@@ -101,7 +100,7 @@ func (vm *viewManager) profileTimings(gtx layout.Context) {
 					0)
 			}),
 			layout.Stacked(func(gtx C) D {
-				return material.Body1(vm.theme, text).Layout(gtx)
+				return material.Body1(vm.Theme.Theme, text).Layout(gtx)
 			}),
 		)
 	})

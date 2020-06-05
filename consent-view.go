@@ -5,6 +5,8 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+
+	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type ConsentView struct {
@@ -13,12 +15,12 @@ type ConsentView struct {
 
 	*Settings
 	*ArborState
-	*material.Theme
+	*sprigTheme.Theme
 }
 
 var _ View = &ConsentView{}
 
-func NewConsentView(settings *Settings, arborState *ArborState, theme *material.Theme) View {
+func NewConsentView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
 	c := &ConsentView{
 		Settings:   settings,
 		ArborState: arborState,
@@ -50,7 +52,7 @@ const (
 )
 
 func (c *ConsentView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme
+	theme := c.Theme.Theme
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
