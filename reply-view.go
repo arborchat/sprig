@@ -245,7 +245,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-			paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
+			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
 				Max: f32.Point{
@@ -308,6 +308,11 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
+	selbackground := *c.Theme.Selected
+	ancbackground := *c.Theme.Ancestors
+	desbackground := *c.Theme.Descendants
+	sibbackground := *c.Theme.Siblings
+	unsbackground := *c.Theme.Unselected
 	theme := c.Theme.Theme
 	c.ReplyList.Axis = layout.Vertical
 	stateIndex := 0
@@ -340,7 +345,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			switch status {
 			case selected:
 				leftInset = unit.Dp(15)
-				background = c.Theme.Background.Light
+				background = selbackground
 				textColor = c.Theme.Theme.Color.Text
 				collapseMetadata = false
 				communityNode, found, err := c.ArborState.SubscribableStore.GetCommunity(&reply.CommunityID)
@@ -350,22 +355,26 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				community = communityNode.(*forest.Community)
 			case ancestor:
 				leftInset = unit.Dp(15)
-				background = c.Theme.Background.Default
+				background = ancbackground
 				textColor = c.Theme.Theme.Color.Text
 			case descendant:
 				leftInset = unit.Dp(30)
-				background = c.Theme.Background.Default
+				background = desbackground
 				textColor = c.Theme.Theme.Color.Text
 			case sibling:
-				fallthrough
+				if c.Filtered {
+					// do not render
+					return layout.Dimensions{}
+				}
+				background = sibbackground
+				textColor = c.Theme.Color.Text
 			default:
 				if c.Filtered {
 					// do not render
 					return layout.Dimensions{}
 				}
 				leftInset = sideInset
-				background = c.Theme.Primary.Light
-				background.A -= 100
+				background = unsbackground
 				textColor = c.Theme.Color.Text
 			}
 			stateIndex++

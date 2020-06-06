@@ -5,6 +5,7 @@ import (
 
 	"gioui.org/f32"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/unit"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 
@@ -33,6 +34,15 @@ type ThemeEditorView struct {
 	ColorsList layout.List
 	listElems  []colorListElement
 
+	AncestorMux    colorpicker.MuxState
+	DescendantMux  colorpicker.MuxState
+	SelectedMux    colorpicker.MuxState
+	SiblingMux     colorpicker.MuxState
+	NonselectedMux colorpicker.MuxState
+
+	MuxList      layout.List
+	muxListElems []muxListElement
+
 	*sprigTheme.Theme
 }
 
@@ -40,6 +50,12 @@ type colorListElement struct {
 	*colorpicker.State
 	Label        string
 	TargetColors []*color.RGBA
+}
+
+type muxListElement struct {
+	*colorpicker.MuxState
+	Label       string
+	TargetColor **color.RGBA
 }
 
 var _ View = &ThemeEditorView{}
@@ -147,11 +163,46 @@ func NewThemeEditorView(theme *sprigTheme.Theme) View {
 		},
 	}
 
+	muxOptions := []colorpicker.MuxOption{}
 	for _, elem := range c.listElems {
 		if len(elem.TargetColors) < 1 || elem.TargetColors[0] == nil {
 			continue
 		}
 		elem.SetColor(*elem.TargetColors[0])
+		muxOptions = append(muxOptions, colorpicker.MuxOption{
+			Label: elem.Label,
+			Value: elem.TargetColors[0],
+		})
+	}
+	c.muxListElems = []muxListElement{
+		{
+			Label:       "Ancestors",
+			MuxState:    &c.AncestorMux,
+			TargetColor: &c.Theme.Ancestors,
+		},
+		{
+			Label:       "Descendants",
+			MuxState:    &c.DescendantMux,
+			TargetColor: &c.Theme.Descendants,
+		},
+		{
+			Label:       "Selected",
+			MuxState:    &c.SelectedMux,
+			TargetColor: &c.Theme.Selected,
+		},
+		{
+			Label:       "Siblings",
+			MuxState:    &c.SiblingMux,
+			TargetColor: &c.Theme.Siblings,
+		},
+		{
+			Label:       "Unselected",
+			MuxState:    &c.NonselectedMux,
+			TargetColor: &c.Theme.Unselected,
+		},
+	}
+	for _, mux := range c.muxListElems {
+		*mux.MuxState = colorpicker.NewMuxState(muxOptions...)
 	}
 
 	return c
@@ -166,12 +217,26 @@ func (c *ThemeEditorView) Update(gtx layout.Context) {
 			for _, target := range elem.TargetColors {
 				*target = elem.Color()
 			}
+			op.InvalidateOp{}.Add(gtx.Ops)
+		}
+	}
+	for _, elem := range c.muxListElems {
+		if elem.Changed() {
+			*elem.TargetColor = elem.Color()
+			op.InvalidateOp{}.Add(gtx.Ops)
 		}
 	}
 }
 
 func (c *ThemeEditorView) Layout(gtx layout.Context) layout.Dimensions {
-	return c.ColorsList.Layout(gtx, len(c.listElems), func(gtx C, index int) D {
+	return c.layoutPickers(gtx)
+}
+
+func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
+	return c.ColorsList.Layout(gtx, len(c.listElems)+1, func(gtx C, index int) D {
+		if index == len(c.listElems) {
+			return c.layoutMuxes(gtx)
+		}
 		return layout.Stack{}.Layout(gtx,
 			layout.Expanded(func(gtx C) D {
 				return sprigTheme.DrawRect(gtx, color.RGBA{A: 255}, f32.Point{
@@ -196,6 +261,13 @@ func (c *ThemeEditorView) Layout(gtx layout.Context) layout.Dimensions {
 				})
 			}),
 		)
+	})
+}
+
+func (c *ThemeEditorView) layoutMuxes(gtx layout.Context) layout.Dimensions {
+	return c.MuxList.Layout(gtx, len(c.muxListElems), func(gtx C, index int) D {
+		element := c.muxListElems[index]
+		return colorpicker.Mux(c.Theme.Theme, element.MuxState, element.Label).Layout(gtx)
 	})
 }
 

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/f32"
@@ -21,6 +22,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
+	"github.com/pkg/profile"
 	"golang.org/x/crypto/openpgp"
 	"golang.org/x/crypto/openpgp/packet"
 )
@@ -43,6 +45,11 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
+	profiling := profile.Start(profile.MemProfileAllocs(), profile.MemProfileRate(8))
+	go func() {
+		time.Sleep(time.Second * 10)
+		profiling.Stop()
+	}()
 	address := flag.String("address", "", "arbor relay address to connect to")
 	profile := flag.Bool("profile", false, "log profiling data")
 	flag.Parse()

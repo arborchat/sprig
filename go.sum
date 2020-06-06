@@ -1,6 +1,8 @@
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200606124432-47e49a53a785 h1:oQGHyim73X9PDSrmSrqab4PRUiKuXYQ5labbEDSbVLM=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200606124432-47e49a53a785/go.mod h1:cQLEU+VaobujuTVNmpI/3qlmwlvBVqlecu/FAlZso5I=
+git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200606173539-6db27b96eeeb h1:TrlDXTIdASnvjhEEVr8UWKxlvOhfnxzNikwFHOFY33w=
+git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200606173539-6db27b96eeeb/go.mod h1:cQLEU+VaobujuTVNmpI/3qlmwlvBVqlecu/FAlZso5I=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93 h1:DXtB8FXojNZAj7+sqXhvVKM6Az36a18B1WuqvjG0D1Q=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/gio v0.0.0-20200605203753-d456e9629aa1 h1:e2rd8dTcoPcSxIX6jQ+ck6luA0JTzBe3FVkxPQQNBdY=
@@ -13,6 +15,8 @@ github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c/go.mod h1:Pxr7w4
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/go-gl/glfw v0.0.0-20190409004039-e6da0acd62b1/go.mod h1:vR7hzQXu2zJy9AVAgeJqvqgH9Q5CA+iKCZ2gyEVpxRU=
 github.com/go-gl/glfw/v3.3/glfw v0.0.0-20200222043503-6f7a984d4dc4/go.mod h1:tQ2UAYgL5IevRw8kRxooKSPJfGvJ9fJQFa0TUsXzTg8=
+github.com/pkg/profile v1.5.0 h1:042Buzk+NhDI+DeSAA62RwJL8VAuZUMQZUjCsRz1Mug=
+github.com/pkg/profile v1.5.0/go.mod h1:qBsxPvzyUincmltOk6iyRVxHYg4adc0OFOv72ZdLa18=
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3/go.mod h1:NOZ3BPKG0ec/BKJQgnvsSFpcKLM5xXVWnvZS97DWHgE=
 golang.org/x/exp v0.0.0-20200331195152-e8c3332aa8e5 h1:FR+oGxGfbQu1d+jglI3rCkjAjUnhRSZcUxr+DqlDLNo=

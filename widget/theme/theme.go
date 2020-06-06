@@ -38,6 +38,11 @@ func New() *Theme {
 		Dark:    black,
 	}
 	t.Theme.Color.Primary = t.Primary.Default
+	t.Ancestors = &t.Primary.Default
+	t.Descendants = &t.Primary.Default
+	t.Selected = &t.Primary.Light
+	t.Unselected = &t.Background.Default
+	t.Siblings = t.Selected
 	return &t
 }
 
@@ -46,6 +51,8 @@ type Theme struct {
 	Primary    Colors
 	Secondary  Colors
 	Background Colors
+
+	Ancestors, Descendants, Selected, Siblings, Unselected *color.RGBA
 }
 
 type Colors struct {
