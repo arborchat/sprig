@@ -21,6 +21,7 @@ type ViewManager interface {
 	UpdateClipboard(string)
 	Layout(gtx layout.Context) layout.Dimensions
 	SetProfiling(bool)
+	SetThemeing(bool)
 }
 
 type viewManager struct {
@@ -33,6 +34,10 @@ type viewManager struct {
 	profiling   bool
 	profile     profile.Event
 	lastMallocs uint64
+
+	// runtime themeing state
+	themeing  bool
+	themeView View
 }
 
 func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) ViewManager {
@@ -41,6 +46,7 @@ func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) V
 		window:    window,
 		profiling: profile,
 		Theme:     theme,
+		themeView: NewThemeEditorView(theme),
 	}
 	return vm
 }
@@ -67,15 +73,27 @@ func (vm *viewManager) HandleClipboard(contents string) {
 }
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
-	defer vm.layoutProfileTimings(gtx)
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			return vm.layoutProfileTimings(gtx)
 		}),
 		layout.Rigid(func(gtx C) D {
-			gtx.Constraints.Min = gtx.Constraints.Max
-			vm.views[vm.current].Update(gtx)
-			return vm.views[vm.current].Layout(gtx)
+			if !vm.themeing {
+				gtx.Constraints.Min = gtx.Constraints.Max
+				vm.views[vm.current].Update(gtx)
+				return vm.views[vm.current].Layout(gtx)
+			}
+			return layout.Flex{}.Layout(gtx,
+				layout.Rigid(func(gtx C) D {
+					gtx.Constraints.Max.X /= 2
+					gtx.Constraints.Min = gtx.Constraints.Max
+					vm.views[vm.current].Update(gtx)
+					return vm.views[vm.current].Layout(gtx)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return vm.layoutThemeing(gtx)
+				}),
+			)
 		}),
 	)
 }
@@ -115,4 +133,13 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 
 func (vm *viewManager) SetProfiling(isProfiling bool) {
 	vm.profiling = isProfiling
+}
+
+func (vm *viewManager) SetThemeing(isThemeing bool) {
+	vm.themeing = isThemeing
+}
+
+func (vm *viewManager) layoutThemeing(gtx C) D {
+	vm.themeView.Update(gtx)
+	return vm.themeView.Layout(gtx)
 }
