@@ -268,10 +268,20 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 }
 
 func (c *ThemeEditorView) layoutMuxes(gtx layout.Context) layout.Dimensions {
-	return c.MuxList.Layout(gtx, len(c.muxListElems), func(gtx C, index int) D {
-		element := c.muxListElems[index]
-		return colorpicker.Mux(c.widgetTheme, element.MuxState, element.Label).Layout(gtx)
-	})
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(func(gtx C) D {
+			return sprigTheme.DrawRect(gtx, color.RGBA{R: 255, G: 255, B: 255, A: 255}, f32.Point{
+				X: float32(gtx.Constraints.Min.X),
+				Y: float32(gtx.Constraints.Min.Y),
+			}, 0)
+		}),
+		layout.Stacked(func(gtx C) D {
+			return c.MuxList.Layout(gtx, len(c.muxListElems), func(gtx C, index int) D {
+				element := c.muxListElems[index]
+				return colorpicker.Mux(c.widgetTheme, element.MuxState, element.Label).Layout(gtx)
+			})
+		}),
+	)
 }
 
 func (c *ThemeEditorView) SetManager(mgr ViewManager) {
