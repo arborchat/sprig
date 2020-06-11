@@ -32,7 +32,7 @@ tasks:
     go test -v -cover ./...
  - install_android_and_mirror: |
     # mirror to github while we wait for android
-    ssh-keyscan github.com > "$HOME"/.ssh/known_hosts && git push --mirror "$github_mirror" &
+    ssh-keyscan github.com > "$HOME"/.ssh/known_hosts && cd sprig && git push --mirror "$github_mirror" &
     mkdir -p android/cmdline-tools
     cd android/cmdline-tools
     curl -so sdk-tools.zip "https://dl.google.com/android/repository/$android_sdk_tools_zip"
