@@ -14,6 +14,7 @@ packages:
 secrets:
     - c36d8148-24ea-4c82-843d-6223649368bb
     - 536ae4e3-5a52-4d4f-a48c-daa63ed9819a
+    - dfa34fc4-a789-4cbd-bfcf-edfe02a7eec0
 sources:
     - https://git.sr.ht/~whereswaldon/sprig
 environment:
@@ -24,11 +25,14 @@ environment:
     android_target_platform: "platforms;android-28"
     android_target_build_tools: "build-tools;28.0.2"
     GO111MODULE: "on"
+    github_mirror: git@github.com:arborchat/sprig
 tasks:
  - test: |
     cd sprig
     go test -v -cover ./...
- - install_android: |
+ - install_android_and_mirror: |
+    # mirror to github while we wait for android
+    ssh-keyscan github.com > "$HOME"/.ssh/known_hosts && git push --mirror "$github_mirror" &
     mkdir -p android/cmdline-tools
     cd android/cmdline-tools
     curl -so sdk-tools.zip "https://dl.google.com/android/repository/$android_sdk_tools_zip"
