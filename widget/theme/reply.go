@@ -39,26 +39,19 @@ func Reply(th *material.Theme) ReplyStyle {
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {
-	// higher-level state to track the height of the dynamic content. This
-	// is set by the Stacked layout function, but used by the Expanded one.
-	// It's counterintuitive, but it works because the stacked child is
-	// evaluated first by the layout.
-	var height float32
 	return layout.Stack{}.Layout(gtx,
-		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+		layout.Expanded(func(gtx C) D {
 			max := f32.Point{
-				X: float32(gtx.Constraints.Max.X),
-				Y: float32(height),
+				X: float32(gtx.Constraints.Min.X),
+				Y: float32(gtx.Constraints.Min.Y),
 			}
 			radii := float32(gtx.Px(unit.Dp(5)))
 			return DrawRect(gtx, r.Background, max, radii)
 		}),
-		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-			dim := layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		layout.Stacked(func(gtx C) D {
+			return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
 				return r.layoutContents(gtx, reply, author, community)
 			})
-			height = float32(dim.Size.Y)
-			return dim
 		}),
 	)
 }
@@ -175,14 +168,14 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 	if a.Identity == nil {
 		return layout.Dimensions{}
 	}
-	dims := layout.Flex{}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
 			name := material.Body2(a.Theme, string(a.Identity.Name.Blob))
 			name.Font.Weight = text.Bold
 			name.MaxLines = 1
 			return name.Layout(gtx)
 		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+		layout.Rigid(func(gtx C) D {
 			suffix := a.Identity.ID().Blob
 			suffix = suffix[len(suffix)-2:]
 			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
@@ -191,7 +184,6 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 			return suffixLabel.Layout(gtx)
 		}),
 	)
-	return dims
 }
 
 type CommunityNameStyle struct {
