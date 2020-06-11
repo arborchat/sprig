@@ -7,6 +7,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/unit"
+	"gioui.org/widget/material"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 
 	"git.sr.ht/~whereswaldon/colorpicker"
@@ -44,6 +45,7 @@ type ThemeEditorView struct {
 	muxListElems []muxListElement
 
 	*sprigTheme.Theme
+	widgetTheme *material.Theme
 }
 
 type colorListElement struct {
@@ -62,7 +64,8 @@ var _ View = &ThemeEditorView{}
 
 func NewThemeEditorView(theme *sprigTheme.Theme) View {
 	c := &ThemeEditorView{
-		Theme: theme,
+		Theme:       theme,
+		widgetTheme: material.NewTheme(),
 	}
 	c.PrimaryDefault.SetColor(c.Theme.Primary.Default)
 	c.PrimaryDark.SetColor(c.Theme.Primary.Dark)
@@ -255,7 +258,7 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Stacked(func(gtx C) D {
 							elem := c.listElems[index]
-							return colorpicker.Picker(c.Theme.Theme, elem.State, elem.Label).Layout(gtx)
+							return colorpicker.Picker(c.widgetTheme, elem.State, elem.Label).Layout(gtx)
 						}),
 					)
 				})
@@ -267,7 +270,7 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 func (c *ThemeEditorView) layoutMuxes(gtx layout.Context) layout.Dimensions {
 	return c.MuxList.Layout(gtx, len(c.muxListElems), func(gtx C, index int) D {
 		element := c.muxListElems[index]
-		return colorpicker.Mux(c.Theme.Theme, element.MuxState, element.Label).Layout(gtx)
+		return colorpicker.Mux(c.widgetTheme, element.MuxState, element.Label).Layout(gtx)
 	})
 }
 
