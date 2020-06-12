@@ -100,7 +100,7 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				gtx.Constraints.Max.X = width
 				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return material.Body1(theme, "Choose communities to join:").Layout(gtx)
+					return material.Body1(theme, "Known communities:").Layout(gtx)
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
@@ -114,19 +114,19 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 					dims = c.CommunityList.Layout(gtx, len(communities), func(gtx layout.Context, index int) layout.Dimensions {
 						gtx.Constraints.Max.X = width
 						community := communities[index]
-						checkbox := &c.CommunityBoxes[index]
-						return layout.Flex{}.Layout(gtx,
-							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-									material.CheckBox(theme, checkbox, "").Layout,
-								)
-							}),
-							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-								return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-									sprigTheme.CommunityName(theme, community).Layout,
-								)
-							}),
+						// checkbox := &c.CommunityBoxes[index]
+						// return layout.Flex{}.Layout(gtx,
+						// 	layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						// 		return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+						// 			material.CheckBox(theme, checkbox, "").Layout,
+						// 		)
+						// 	}),
+						// layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+						return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+							sprigTheme.CommunityName(theme, community).Layout,
 						)
+						// 	}),
+						// )
 					})
 				})
 				return dims
