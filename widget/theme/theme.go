@@ -39,11 +39,11 @@ func New() *Theme {
 		Dark:    black,
 	}
 	t.Theme.Color.Primary = t.Primary.Default
-	t.Ancestors = &t.Primary.Default
-	t.Descendants = &t.Primary.Default
-	t.Selected = &t.Primary.Light
-	t.Unselected = &t.Background.Default
-	t.Siblings = t.Selected
+	t.Ancestors = &t.Secondary.Dark
+	t.Descendants = &t.Secondary.Dark
+	t.Selected = &t.Secondary.Default
+	t.Unselected = &t.Background.Light
+	t.Siblings = t.Unselected
 	return &t
 }
 
