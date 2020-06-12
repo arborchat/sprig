@@ -31,7 +31,7 @@ type (
 
 func main() {
 	go func() {
-		w := app.NewWindow()
+		w := app.NewWindow(app.Title("Sprig"))
 		if err := eventLoop(w); err != nil {
 			log.Println(err)
 			return
