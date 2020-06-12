@@ -56,7 +56,8 @@ type ReplyListView struct {
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
-	Filtered bool
+	Filtered          bool
+	PrefilterPosition layout.Position
 }
 
 var _ View = &ReplyListView{}
@@ -107,6 +108,11 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.Selected = nil
 	}
 	if c.FilterButton.Clicked() {
+		if c.Filtered {
+			c.ReplyList.Position = c.PrefilterPosition
+		} else {
+			c.PrefilterPosition = c.ReplyList.Position
+		}
 		c.Filtered = !c.Filtered
 	}
 	if c.Selected != nil && c.CopyReplyButton.Clicked() {
