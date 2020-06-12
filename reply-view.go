@@ -366,6 +366,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 					// do not render
 					return layout.Dimensions{}
 				}
+				leftInset = sideInset
 				background = sibbackground
 				textColor = c.Theme.Color.Text
 			default:
