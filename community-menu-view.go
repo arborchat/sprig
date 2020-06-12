@@ -79,27 +79,30 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 	})
 	width := gtx.Constraints.Constrain(image.Point{X: gtx.Px(unit.Dp(200))}).X
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		inset := layout.UniformInset(unit.Dp(4))
 		gtx.Constraints.Max.X = width
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				if c.Settings.ActiveIdentity != nil {
-					id, _ := c.Settings.Identity()
-					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return material.Body1(theme, "Identity:").Layout(gtx)
-						}),
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.Inset{Left: unit.Dp(12)}.Layout(gtx,
-								sprigTheme.AuthorName(theme, id).Layout)
-						}),
-					)
-				} else {
-					return material.Button(theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
-				}
+				return inset.Layout(gtx, func(gtx C) D {
+					if c.Settings.ActiveIdentity != nil {
+						id, _ := c.Settings.Identity()
+						return layout.Flex{Alignment: layout.Baseline}.Layout(gtx,
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								return material.Body1(theme, "Identity:").Layout(gtx)
+							}),
+							layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+								return layout.Inset{Left: unit.Dp(12)}.Layout(gtx,
+									sprigTheme.AuthorName(theme, id).Layout)
+							}),
+						)
+					} else {
+						return material.Button(theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
+					}
+				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				gtx.Constraints.Max.X = width
-				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				return inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return material.Body1(theme, "Known communities:").Layout(gtx)
 				})
 			}),
@@ -122,7 +125,7 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 						// 		)
 						// 	}),
 						// layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						return layout.UniformInset(unit.Dp(8)).Layout(gtx,
+						return inset.Layout(gtx,
 							sprigTheme.CommunityName(theme, community).Layout,
 						)
 						// 	}),
@@ -132,10 +135,12 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 				return dims
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				gtx.Constraints.Max.X = width
-				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+				return inset.Layout(gtx, func(gtx C) D {
 					gtx.Constraints.Max.X = width
-					return material.Button(theme, &c.ViewButton, "View These Communities").Layout(gtx)
+					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						gtx.Constraints.Max.X = width
+						return material.Button(theme, &c.ViewButton, "View These Communities").Layout(gtx)
+					})
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
