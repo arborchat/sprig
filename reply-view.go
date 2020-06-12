@@ -218,7 +218,7 @@ const (
 
 func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
 	if c.Selected == nil {
-		return ancestor
+		return none
 	}
 	if c.Selected != nil && reply.ID().Equals(c.Selected) {
 		return selected
