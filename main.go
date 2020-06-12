@@ -11,7 +11,6 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
-	"gioui.org/font/gofont"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -31,7 +30,6 @@ type (
 )
 
 func main() {
-	gofont.Register()
 	go func() {
 		w := app.NewWindow()
 		if err := eventLoop(w); err != nil {
@@ -85,7 +83,7 @@ func eventLoop(w *app.Window) error {
 		case system.ClipboardEvent:
 			viewManager.HandleClipboard(event.Text)
 		case system.FrameEvent:
-			gtx := layout.NewContext(&ops, event.Queue, event.Config, event.Size)
+			gtx := layout.NewContext(&ops, event)
 			layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
 					return sprigTheme.DrawRect(gtx, appState.Theme.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)

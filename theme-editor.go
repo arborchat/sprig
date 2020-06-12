@@ -4,6 +4,7 @@ import (
 	"image/color"
 
 	"gioui.org/f32"
+	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/unit"
@@ -65,7 +66,7 @@ var _ View = &ThemeEditorView{}
 func NewThemeEditorView(theme *sprigTheme.Theme) View {
 	c := &ThemeEditorView{
 		Theme:       theme,
-		widgetTheme: material.NewTheme(),
+		widgetTheme: material.NewTheme(gofont.Collection()),
 	}
 	c.PrimaryDefault.SetColor(c.Theme.Primary.Default)
 	c.PrimaryDark.SetColor(c.Theme.Primary.Dark)

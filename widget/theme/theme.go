@@ -3,6 +3,7 @@ package theme
 import (
 	"image/color"
 
+	"gioui.org/font/gofont"
 	"gioui.org/widget/material"
 )
 
@@ -19,7 +20,7 @@ var (
 )
 
 func New() *Theme {
-	gioTheme := material.NewTheme()
+	gioTheme := material.NewTheme(gofont.Collection())
 	var t Theme
 	t.Theme = gioTheme
 	t.Primary = Colors{
