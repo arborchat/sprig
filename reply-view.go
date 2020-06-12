@@ -292,9 +292,14 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 			if c.Selected != nil {
 				buttons = append(buttons,
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-							material.IconButton(theme, &c.FilterButton, icons.FilterIcon).Layout,
-						)
+						return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+							btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
+							if c.Filtered {
+								btn.Background = theme.Color.InvText
+								btn.Color = theme.Color.Primary
+							}
+							return btn.Layout(gtx)
+						})
 					}))
 			}
 			if !c.CreatingConversation {
