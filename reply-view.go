@@ -379,7 +379,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				}
 				leftInset = sideInset
 				background = sibbackground
-				textColor = c.Theme.Color.Text
+				textColor = c.Theme.Theme.Color.Text
 			default:
 				if c.Filtered {
 					// do not render
@@ -428,7 +428,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 						replyButton := material.IconButton(theme, &c.CreateReplyButton, icons.ReplyIcon)
 						replyButton.Size = unit.Dp(20)
 						replyButton.Inset = layout.UniformInset(unit.Dp(9))
-						replyButton.Background = c.Theme.Secondary.Default
+						replyButton.Background = c.Theme.Secondary.Light
 						replyButton.Color = c.Theme.Background.Dark
 						return replyButton.Layout(gtx)
 					})
@@ -444,7 +444,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-			paintOp := paint.ColorOp{Color: c.Theme.Primary.Default}
+			paintOp := paint.ColorOp{Color: c.Theme.Primary.Light}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
 				Max: f32.Point{
@@ -485,7 +485,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									return dims
 								}
 								reply := sprigTheme.Reply(theme)
-								reply.Background = c.Theme.Primary.Light
+								reply.Background = c.Theme.Primary.Default
 								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
 						}),
@@ -547,8 +547,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								sendButton := material.IconButton(theme, &c.SendReplyButton, icons.SendReplyIcon)
 								sendButton.Size = unit.Dp(20)
 								sendButton.Inset = layout.UniformInset(unit.Dp(4))
-								sendButton.Background = c.Theme.Secondary.Default
-								sendButton.Color = c.Theme.Background.Dark
+								sendButton.Background = c.Theme.Primary.Default
+								sendButton.Color = c.Theme.Background.Light
 								return sendButton.Layout(gtx)
 							})
 						}),
