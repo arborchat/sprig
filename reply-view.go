@@ -93,6 +93,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 			} else {
 				c.Selected = nil
+				c.Filtered = false
 			}
 		}
 	}
@@ -289,7 +290,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					)
 				}))
 			}
-			if c.Selected != nil {
+			if c.Selected != nil || c.Filtered {
 				buttons = append(buttons,
 					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
