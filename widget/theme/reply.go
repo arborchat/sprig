@@ -18,6 +18,16 @@ type (
 	D = layout.Dimensions
 )
 
+type ReplyStatus int
+
+const (
+	None ReplyStatus = iota
+	Sibling
+	Selected
+	Ancestor
+	Descendant
+)
+
 type ReplyStyle struct {
 	*material.Theme
 	Background color.RGBA
@@ -28,14 +38,32 @@ type ReplyStyle struct {
 	CollapseMetadata bool
 }
 
-func Reply(th *material.Theme) ReplyStyle {
+func Reply(th *Theme, status ReplyStatus) ReplyStyle {
 	defaultBackground := color.RGBA{R: 250, G: 250, B: 250, A: 255}
 	defaultTextColor := color.RGBA{A: 255}
-	return ReplyStyle{
-		Theme:      th,
+	rs := ReplyStyle{
+		Theme:      th.Theme,
 		Background: defaultBackground,
 		TextColor:  defaultTextColor,
 	}
+	switch status {
+	case Selected:
+		rs.Background = *th.Selected
+		rs.TextColor = th.Theme.Color.Text
+	case Ancestor:
+		rs.Background = *th.Ancestors
+		rs.TextColor = th.Theme.Color.Text
+	case Descendant:
+		rs.Background = *th.Descendants
+		rs.TextColor = th.Theme.Color.Text
+	case Sibling:
+		rs.Background = *th.Siblings
+		rs.TextColor = th.Theme.Color.Text
+	default:
+		rs.Background = *th.Unselected
+		rs.TextColor = th.Theme.Color.Text
+	}
+	return rs
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {

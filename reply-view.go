@@ -1,7 +1,6 @@
 package main
 
 import (
-	"image/color"
 	"log"
 
 	"gioui.org/f32"
@@ -68,6 +67,7 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *sprigTh
 		ArborState: arborState,
 		Theme:      theme,
 	}
+	c.ReplyList.Axis = layout.Vertical
 	// ensure that we are notified when we need to refresh the state of visible nodes
 	c.ArborState.SubscribableStore.SubscribeToNewMessages(func(forest.Node) {
 		c.StateRefreshNeeded = true
@@ -213,39 +213,29 @@ func (c *ReplyListView) resetReplyState() {
 	c.ReplyEditor.SetText("")
 }
 
-type replyStatus int
-
-const (
-	none replyStatus = iota
-	sibling
-	selected
-	ancestor
-	descendant
-)
-
-func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
+func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 	if c.Selected == nil {
-		return none
+		return sprigTheme.None
 	}
 	if c.Selected != nil && reply.ID().Equals(c.Selected) {
-		return selected
+		return sprigTheme.Selected
 	}
 	for _, id := range c.Ancestry {
 		if id.Equals(reply.ID()) {
-			return ancestor
+			return sprigTheme.Ancestor
 		}
 	}
 	for _, id := range c.Descendants {
 		if id.Equals(reply.ID()) {
-			return descendant
+			return sprigTheme.Descendant
 		}
 	}
 	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
 		if c.Conversation.Equals(&reply.ConversationID) {
-			return sibling
+			return sprigTheme.Sibling
 		}
 	}
-	return none
+	return sprigTheme.None
 }
 
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
@@ -320,13 +310,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
-	selbackground := *c.Theme.Selected
-	ancbackground := *c.Theme.Ancestors
-	desbackground := *c.Theme.Descendants
-	sibbackground := *c.Theme.Siblings
-	unsbackground := *c.Theme.Unselected
 	theme := c.Theme.Theme
-	c.ReplyList.Axis = layout.Vertical
 	stateIndex := 0
 	var dims layout.Dimensions
 	c.ArborState.ReplyList.WithReplies(func(replies []*forest.Reply) {
@@ -349,46 +333,30 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			var community *forest.Community
 			author := authorNode.(*forest.Identity)
 			sideInset := unit.Dp(3)
-			var (
-				background, textColor color.RGBA
-				leftInset             unit.Value
-			)
+			var leftInset unit.Value
+
 			status := c.statusOf(reply)
 			switch status {
-			case selected:
+			case sprigTheme.Selected:
 				leftInset = unit.Dp(15)
-				background = selbackground
-				textColor = c.Theme.Theme.Color.Text
 				collapseMetadata = false
 				communityNode, found, err := c.ArborState.SubscribableStore.GetCommunity(&reply.CommunityID)
 				if err != nil || !found {
 					log.Printf("failed finding community %s for node %s", &reply.CommunityID, reply.ID())
 				}
 				community = communityNode.(*forest.Community)
-			case ancestor:
+			case sprigTheme.Ancestor:
 				leftInset = unit.Dp(15)
-				background = ancbackground
-				textColor = c.Theme.Theme.Color.Text
-			case descendant:
+			case sprigTheme.Descendant:
 				leftInset = unit.Dp(30)
-				background = desbackground
-				textColor = c.Theme.Theme.Color.Text
-			case sibling:
-				if c.Filtered {
-					// do not render
-					return layout.Dimensions{}
-				}
+			case sprigTheme.Sibling:
 				leftInset = sideInset
-				background = sibbackground
-				textColor = c.Theme.Theme.Color.Text
 			default:
-				if c.Filtered {
-					// do not render
-					return layout.Dimensions{}
-				}
 				leftInset = sideInset
-				background = unsbackground
-				textColor = c.Theme.Color.Text
+			}
+			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None) {
+				// do not render
+				return layout.Dimensions{}
 			}
 			stateIndex++
 			return layout.Flex{}.Layout(gtx,
@@ -409,9 +377,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Right:  sideInset,
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								replyWidget := sprigTheme.Reply(theme)
-								replyWidget.Background = background
-								replyWidget.TextColor = textColor
+								replyWidget := sprigTheme.Reply(c.Theme, status)
 								replyWidget.CollapseMetadata = collapseMetadata
 								return replyWidget.Layout(gtx, reply, author, community)
 							})
@@ -425,7 +391,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx C) D {
 					return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-						if status != selected {
+						if status != sprigTheme.Selected {
 							return D{}
 						}
 						replyButton := material.IconButton(theme, &c.CreateReplyButton, icons.ReplyIcon)
@@ -486,7 +452,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
-								reply := sprigTheme.Reply(theme)
+								reply := sprigTheme.Reply(c.Theme, sprigTheme.None)
 								reply.Background = c.Theme.Primary.Default
 								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
