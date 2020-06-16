@@ -251,7 +251,7 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) replyStatus {
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
-		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+		layout.Expanded(func(gtx C) D {
 			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
@@ -262,12 +262,12 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 			}}.Add(gtx.Ops)
 			return layout.Dimensions{}
 		}),
-		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+		layout.Stacked(func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
+				layout.Flexed(1, func(gtx C) D {
 					return c.layoutReplyList(gtx)
 				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					if c.ReplyingTo != nil || c.CreatingConversation {
 						return c.layoutEditor(gtx)
 					}
@@ -275,16 +275,16 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 			)
 		}),
-		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			buttons := []layout.FlexChild{}
-			buttons = append(buttons, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+			buttons = append(buttons, layout.Rigid(func(gtx C) D {
 				return layout.UniformInset(unit.Dp(4)).Layout(gtx,
 					material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
 				)
 			}))
 			if c.Selected != nil {
-				buttons = append(buttons, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				buttons = append(buttons, layout.Rigid(func(gtx C) D {
 					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
 						material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
 					)
@@ -292,7 +292,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 			}
 			if c.Selected != nil || c.Filtered {
 				buttons = append(buttons,
-					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					layout.Rigid(func(gtx C) D {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
 							btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
 							if c.Filtered {
@@ -305,7 +305,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 			}
 			if !c.CreatingConversation {
 				buttons = append(buttons,
-					layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+					layout.Rigid(func(gtx C) D {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
 							material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
 						)
@@ -391,41 +391,43 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				textColor = c.Theme.Color.Text
 			}
 			stateIndex++
-			var flexChildren []layout.FlexChild
-			flexChildren = append(flexChildren, layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-				extraWidth := gtx.Px(unit.Dp(36))
-				messageWidth := gtx.Constraints.Max.X - extraWidth
-				return layout.Stack{}.Layout(gtx,
-					layout.Stacked(func(gtx layout.Context) layout.Dimensions {
-						gtx.Constraints.Min.X = gtx.Constraints.Max.X
-						margin := unit.Dp(3)
-						if collapseMetadata {
-							margin = unit.Dp(0)
+			return layout.Flex{}.Layout(gtx,
+				layout.Flexed(1, func(gtx C) D {
+					extraWidth := gtx.Px(unit.Dp(36))
+					messageWidth := gtx.Constraints.Max.X - extraWidth
+					return layout.Stack{}.Layout(gtx,
+						layout.Stacked(func(gtx C) D {
+							gtx.Constraints.Min.X = gtx.Constraints.Max.X
+							margin := unit.Dp(3)
+							if collapseMetadata {
+								margin = unit.Dp(0)
+							}
+							return layout.Inset{
+								Top:    margin,
+								Bottom: unit.Dp(3),
+								Left:   leftInset,
+								Right:  sideInset,
+							}.Layout(gtx, func(gtx C) D {
+								gtx.Constraints.Max.X = messageWidth
+								replyWidget := sprigTheme.Reply(theme)
+								replyWidget.Background = background
+								replyWidget.TextColor = textColor
+								replyWidget.CollapseMetadata = collapseMetadata
+								return replyWidget.Layout(gtx, reply, author, community)
+							})
+						}),
+						layout.Expanded(func(gtx C) D {
+							dims := state.Clickable.Layout(gtx)
+							state.Reply = reply.ID()
+							return dims
+						}),
+					)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
+						if status != selected {
+							return D{}
 						}
-						return layout.Inset{
-							Top:    margin,
-							Bottom: unit.Dp(3),
-							Left:   leftInset,
-							Right:  sideInset,
-						}.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-							gtx.Constraints.Max.X = messageWidth
-							replyWidget := sprigTheme.Reply(theme)
-							replyWidget.Background = background
-							replyWidget.TextColor = textColor
-							replyWidget.CollapseMetadata = collapseMetadata
-							return replyWidget.Layout(gtx, reply, author, community)
-						})
-					}),
-					layout.Expanded(func(gtx layout.Context) layout.Dimensions {
-						dims := state.Clickable.Layout(gtx)
-						state.Reply = reply.ID()
-						return dims
-					}),
-				)
-			}))
-			if status == selected {
-				flexChildren = append(flexChildren, layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						replyButton := material.IconButton(theme, &c.CreateReplyButton, icons.ReplyIcon)
 						replyButton.Size = unit.Dp(20)
 						replyButton.Inset = layout.UniformInset(unit.Dp(9))
@@ -433,9 +435,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 						replyButton.Color = c.Theme.Background.Dark
 						return replyButton.Layout(gtx)
 					})
-				}))
-			}
-			return layout.Flex{}.Layout(gtx, flexChildren...)
+				}),
+			)
 		})
 	})
 	return dims
@@ -444,7 +445,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
-		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+		layout.Expanded(func(gtx C) D {
 			paintOp := paint.ColorOp{Color: c.Theme.Primary.Light}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
@@ -455,12 +456,12 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 			}}.Add(gtx.Ops)
 			return layout.Dimensions{}
 		}),
-		layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+		layout.Stacked(func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Rigid(func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								if c.CreatingConversation {
 									return material.Body1(theme, "New Conversation in:").Layout(gtx)
 								}
@@ -468,8 +469,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 
 							})
 						}),
-						layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Flexed(1, func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								if c.CreatingConversation {
 									var dims layout.Dimensions
 									c.ArborState.CommunityList.WithCommunities(func(comms []*forest.Community) {
@@ -490,8 +491,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
 						}),
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Rigid(func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								cancelButton := material.IconButton(theme, &c.CancelReplyButton, icons.CancelReplyIcon)
 								cancelButton.Size = unit.Dp(20)
 								cancelButton.Inset = layout.UniformInset(unit.Dp(4))
@@ -500,20 +501,20 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						}),
 					)
 				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				layout.Rigid(func(gtx C) D {
 					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Rigid(func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								pasteButton := material.IconButton(theme, &c.PasteIntoReplyButton, icons.PasteIcon)
 								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
 								pasteButton.Size = unit.Dp(20)
 								return pasteButton.Layout(gtx)
 							})
 						}),
-						layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Flexed(1, func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return layout.Stack{}.Layout(gtx,
-									layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+									layout.Expanded(func(gtx C) D {
 										stack := op.Push(gtx.Ops)
 										paintOp := paint.ColorOp{Color: c.Theme.Background.Light}
 										paintOp.Add(gtx.Ops)
@@ -535,7 +536,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 										stack.Pop()
 										return layout.Dimensions{}
 									}),
-									layout.Stacked(func(gtx layout.Context) layout.Dimensions {
+									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx,
 											material.Editor(theme, &c.ReplyEditor, "type your reply here").Layout,
 										)
@@ -543,8 +544,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								)
 							})
 						}),
-						layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+						layout.Rigid(func(gtx C) D {
+							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								sendButton := material.IconButton(theme, &c.SendReplyButton, icons.SendReplyIcon)
 								sendButton.Size = unit.Dp(20)
 								sendButton.Inset = layout.UniformInset(unit.Dp(4))
