@@ -82,6 +82,10 @@ func eventLoop(w *app.Window) error {
 			return event.Err
 		case system.ClipboardEvent:
 			viewManager.HandleClipboard(event.Text)
+		case *system.CommandEvent:
+			if event.Type == system.CommandBack {
+				viewManager.HandleBackNavigation(event)
+			}
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, event)
 			layout.Stack{}.Layout(gtx,

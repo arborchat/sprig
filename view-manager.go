@@ -7,6 +7,7 @@ import (
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/profile"
+	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
@@ -19,6 +20,7 @@ type ViewManager interface {
 	RequestClipboardPaste()
 	HandleClipboard(contents string)
 	UpdateClipboard(string)
+	HandleBackNavigation(*system.CommandEvent)
 	Layout(gtx layout.Context) layout.Dimensions
 	SetProfiling(bool)
 	SetThemeing(bool)
@@ -29,6 +31,9 @@ type viewManager struct {
 	current ViewID
 	window  *app.Window
 	Theme   *sprigTheme.Theme
+
+	// tracking the handling of "back" events
+	viewStack []ViewID
 
 	// runtime profiling data
 	profiling   bool
@@ -57,6 +62,7 @@ func (vm *viewManager) RegisterView(id ViewID, view View) {
 }
 
 func (vm *viewManager) RequestViewSwitch(id ViewID) {
+	vm.Push(vm.current)
 	vm.current = id
 }
 
@@ -70,6 +76,25 @@ func (vm *viewManager) UpdateClipboard(contents string) {
 
 func (vm *viewManager) HandleClipboard(contents string) {
 	vm.views[vm.current].HandleClipboard(contents)
+}
+
+func (vm *viewManager) HandleBackNavigation(event *system.CommandEvent) {
+	if len(vm.viewStack) < 1 {
+		event.Cancel = false
+		return
+	}
+	vm.Pop()
+	event.Cancel = true
+}
+
+func (vm *viewManager) Push(id ViewID) {
+	vm.viewStack = append(vm.viewStack, id)
+}
+
+func (vm *viewManager) Pop() {
+	finalIndex := len(vm.viewStack) - 1
+	vm.current, vm.viewStack = vm.viewStack[finalIndex], vm.viewStack[:finalIndex]
+	vm.window.Invalidate()
 }
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
