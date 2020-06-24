@@ -18,6 +18,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/store"
+	"git.sr.ht/~whereswaldon/niotify"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 	"golang.org/x/crypto/openpgp"
@@ -72,8 +73,34 @@ func eventLoop(w *app.Window) error {
 		viewManager.RequestViewSwitch(CommunityMenuID)
 	}
 
+	mgr, err := niotify.NewManager()
+	if err != nil {
+		log.Printf("failed constructing notification manager: %v", err)
+	}
+
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
+		if asReply, ok := n.(*forest.Reply); ok {
+			go func(reply *forest.Reply) {
+				var title, authorName string
+				author, _, err := appState.SubscribableStore.GetIdentity(&reply.Author)
+				if err != nil {
+					authorName = "???"
+				} else {
+					authorName = string(author.(*forest.Identity).Name.Blob)
+				}
+				switch {
+				case reply.Depth == 1:
+					title = fmt.Sprintf("New conversation by %s", authorName)
+				default:
+					title = fmt.Sprintf("New reply from %s", authorName)
+				}
+				_, err = mgr.CreateNotification(title, string(reply.Content.Blob))
+				if err != nil {
+					log.Printf("failed sending notification: %v", err)
+				}
+			}(asReply)
+		}
 	})
 	var ops op.Ops
 	for {
