@@ -144,7 +144,7 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				if runtime.GOOS == "linux" {
+				if runtime.GOOS == "linux" || runtime.GOOS == "android" {
 					gtx.Constraints.Max.X = width
 					in := layout.UniformInset(unit.Dp(8))
 					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
