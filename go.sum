@@ -15,8 +15,8 @@ git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8/go.mod h1:a
 git.wow.st/gmp/jni v0.0.0-20200623180511-2e7d20a1b472 h1:YlBjj/ZrWg1Vs/h7ibZSXBpX9GUtvZ1ATNUVs+jhcXg=
 git.wow.st/gmp/jni v0.0.0-20200623180511-2e7d20a1b472/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c h1:DAvlgde2Stu18slmjwikiMPs/CKPV35wSvmJS34z0FU=
-github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
+github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602 h1:ainph8zAAGO7yqxvgyiZhV/kzDL/l5bXmhePsEuhKSA=
+github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602/go.mod h1:Pxr7w4gA2ikI4sWyYwEffm+oew1WAJHzG1SiDpQMkrI=
 github.com/esiqveland/notify v0.9.1 h1:hX6ZD3FCQJXI46AzUM/iWekcMfnZ9TPE4uIu9Hrn1D4=
 github.com/esiqveland/notify v0.9.1/go.mod h1:63UbVSaeJwF0LVJARHFuPgUAoM7o1BEvCZyknsuonBc=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=

@@ -13,4 +13,4 @@ require (
 	golang.org/x/text v0.3.2 // indirect
 )
 
-replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200416114516-1fa7f403fb9c
+replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
