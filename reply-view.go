@@ -453,7 +453,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									return dims
 								}
 								reply := sprigTheme.Reply(c.Theme, sprigTheme.None)
-								reply.Background = c.Theme.Primary.Default
+								reply.Highlight = c.Theme.Primary.Default
 								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
 						}),

@@ -4,7 +4,6 @@ import (
 	"encoding/hex"
 	"image/color"
 
-	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
@@ -29,7 +28,8 @@ const (
 )
 
 type ReplyStyle struct {
-	*material.Theme
+	*Theme
+	Highlight  color.RGBA
 	Background color.RGBA
 	TextColor  color.RGBA
 
@@ -39,28 +39,25 @@ type ReplyStyle struct {
 }
 
 func Reply(th *Theme, status ReplyStatus) ReplyStyle {
-	defaultBackground := color.RGBA{R: 250, G: 250, B: 250, A: 255}
-	defaultTextColor := color.RGBA{A: 255}
 	rs := ReplyStyle{
-		Theme:      th.Theme,
-		Background: defaultBackground,
-		TextColor:  defaultTextColor,
+		Theme:      th,
+		Background: th.Background.Light,
 	}
 	switch status {
 	case Selected:
-		rs.Background = *th.Selected
+		rs.Highlight = *th.Selected
 		rs.TextColor = th.Theme.Color.Text
 	case Ancestor:
-		rs.Background = *th.Ancestors
+		rs.Highlight = *th.Ancestors
 		rs.TextColor = th.Theme.Color.Text
 	case Descendant:
-		rs.Background = *th.Descendants
+		rs.Highlight = *th.Descendants
 		rs.TextColor = th.Theme.Color.Text
 	case Sibling:
-		rs.Background = *th.Siblings
+		rs.Highlight = *th.Siblings
 		rs.TextColor = th.Theme.Color.Text
 	default:
-		rs.Background = *th.Unselected
+		rs.Highlight = *th.Unselected
 		rs.TextColor = th.Theme.Color.Text
 	}
 	return rs
@@ -69,17 +66,27 @@ func Reply(th *Theme, status ReplyStatus) ReplyStyle {
 func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			max := f32.Point{
-				X: float32(gtx.Constraints.Min.X),
-				Y: float32(gtx.Constraints.Min.Y),
-			}
+			max := layout.FPt(gtx.Constraints.Min)
 			radii := float32(gtx.Px(unit.Dp(5)))
 			return DrawRect(gtx, r.Background, max, radii)
 		}),
 		layout.Stacked(func(gtx C) D {
-			return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-				return r.layoutContents(gtx, reply, author, community)
-			})
+			barWidth := unit.Dp(10)
+			return layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					max := layout.FPt(gtx.Constraints.Min)
+					max.X = float32(gtx.Px(barWidth))
+					radii := float32(gtx.Px(unit.Dp(5)))
+					return DrawRect(gtx, r.Highlight, max, radii)
+				}),
+				layout.Stacked(func(gtx C) D {
+					inset := layout.UniformInset(unit.Dp(4))
+					inset.Left = unit.Add(gtx.Metric, barWidth, inset.Left)
+					return inset.Layout(gtx, func(gtx C) D {
+						return r.layoutContents(gtx, reply, author, community)
+					})
+				}),
+			)
 		}),
 	)
 }
@@ -101,11 +108,11 @@ func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, auth
 				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx,
 					func(gtx layout.Context) layout.Dimensions {
 						nameMacro := op.Record(gtx.Ops)
-						nameDim := AuthorName(r.Theme, author).Layout(gtx)
+						nameDim := AuthorName(r.Theme.Theme, author).Layout(gtx)
 						nameWidget := nameMacro.Stop()
 
 						communityMacro := op.Record(gtx.Ops)
-						communityDim := CommunityName(r.Theme, community).Layout(gtx)
+						communityDim := CommunityName(r.Theme.Theme, community).Layout(gtx)
 						communityWidget := communityMacro.Stop()
 
 						dateMacro := op.Record(gtx.Ops)
@@ -166,7 +173,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, auth
 }
 
 func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
-	date := material.Body2(r.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+	date := material.Body2(r.Theme.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
 	date.MaxLines = 1
 	date.Color = r.TextColor
 	date.Color.A = 200
@@ -175,7 +182,7 @@ func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.D
 }
 
 func (r ReplyStyle) layoutContent(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
-	content := material.Body1(r.Theme, string(reply.Content.Blob))
+	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
 	content.Color = r.TextColor
 	return content.Layout(gtx)
 }
