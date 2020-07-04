@@ -29,9 +29,10 @@ const (
 
 type ReplyStyle struct {
 	*Theme
-	Highlight  color.RGBA
-	Background color.RGBA
-	TextColor  color.RGBA
+	Highlight      color.RGBA
+	Background     color.RGBA
+	TextColor      color.RGBA
+	highlightWidth unit.Value
 
 	// CollapseMetadata should be set to true if this reply can be rendered
 	// without the author being displayed.
@@ -40,25 +41,24 @@ type ReplyStyle struct {
 
 func Reply(th *Theme, status ReplyStatus) ReplyStyle {
 	rs := ReplyStyle{
-		Theme:      th,
-		Background: th.Background.Light,
+		Theme:          th,
+		Background:     th.Background.Light,
+		TextColor:      th.Theme.Color.Text,
+		highlightWidth: unit.Dp(10),
 	}
 	switch status {
 	case Selected:
 		rs.Highlight = *th.Selected
-		rs.TextColor = th.Theme.Color.Text
 	case Ancestor:
 		rs.Highlight = *th.Ancestors
-		rs.TextColor = th.Theme.Color.Text
 	case Descendant:
 		rs.Highlight = *th.Descendants
-		rs.TextColor = th.Theme.Color.Text
 	case Sibling:
 		rs.Highlight = *th.Siblings
-		rs.TextColor = th.Theme.Color.Text
+		rs.highlightWidth = unit.Dp(0)
 	default:
 		rs.Highlight = *th.Unselected
-		rs.TextColor = th.Theme.Color.Text
+		rs.highlightWidth = unit.Dp(0)
 	}
 	return rs
 }
@@ -71,17 +71,16 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 			return DrawRect(gtx, r.Background, max, radii)
 		}),
 		layout.Stacked(func(gtx C) D {
-			barWidth := unit.Dp(10)
 			return layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
 					max := layout.FPt(gtx.Constraints.Min)
-					max.X = float32(gtx.Px(barWidth))
+					max.X = float32(gtx.Px(r.highlightWidth))
 					radii := float32(gtx.Px(unit.Dp(5)))
 					return DrawRect(gtx, r.Highlight, max, radii)
 				}),
 				layout.Stacked(func(gtx C) D {
 					inset := layout.UniformInset(unit.Dp(4))
-					inset.Left = unit.Add(gtx.Metric, barWidth, inset.Left)
+					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
 					return inset.Layout(gtx, func(gtx C) D {
 						return r.layoutContents(gtx, reply, author, community)
 					})
