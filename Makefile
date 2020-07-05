@@ -12,6 +12,7 @@ WINDOWS_ARCHIVE = sprig-windows.zip
 
 LINUX_BIN = sprig
 LINUX_ARCHIVE = sprig-linux.tar.xz
+LINUX_FILES = $(LINUX_BIN) ./desktop-assets ./install-linux.sh ./appicon.png ./LICENSE.txt
 
 MACOS_BIN = sprig-mac
 MACOS_ARCHIVE = sprig-macos.tar.gz
@@ -36,7 +37,7 @@ $(WINDOWS_BIN): $(SOURCE)
 linux: $(LINUX_ARCHIVE)
 
 $(LINUX_ARCHIVE): $(LINUX_BIN)
-	tar cJf $(LINUX_ARCHIVE) $(LINUX_BIN)
+	tar -cJf $(LINUX_ARCHIVE) $(LINUX_FILES)
 
 $(LINUX_BIN): $(SOURCE)
 	env GOOS=linux go build -o $(LINUX_BIN) .

@@ -4,5 +4,5 @@ Name=Sprig
 Exec=sprig
 Terminal=false
 Type=Application
-Icon=Arbor
-Categories=Chat;
+Icon={ICON_PATH}/sprig.png
+Categories=Chat;Network;InstantMessaging;
