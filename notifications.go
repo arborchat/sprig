@@ -26,14 +26,17 @@ func NewNotificationManager(state *AppState) (*NotificationManager, error) {
 }
 
 func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
+	if reply.TreeDepth() == 1 {
+		// Notify of new conversation
+		return true
+	}
+	if n.AppState.Settings.ActiveIdentity == nil {
+		return false
+	}
 	if reply.Author.Equals(n.AppState.Settings.ActiveIdentity) {
 		// Do not send notifications for replies created by the local
 		// user's identity.
 		return false
-	}
-	if reply.TreeDepth() == 1 {
-		// Notify of new conversation
-		return true
 	}
 	parent, known, err := n.AppState.ArborState.SubscribableStore.Get(reply.ParentID())
 	if err != nil || !known {
