@@ -29,9 +29,12 @@ const (
 
 type ReplyStyle struct {
 	*Theme
-	Highlight      color.RGBA
-	Background     color.RGBA
-	TextColor      color.RGBA
+	Highlight  color.RGBA
+	Background color.RGBA
+	TextColor  color.RGBA
+	// MaxLines limits the maximum number of lines of content text that should
+	// be displayed. Values less than 1 indicate unlimited.
+	MaxLines       int
 	highlightWidth unit.Value
 
 	// CollapseMetadata should be set to true if this reply can be rendered
@@ -182,6 +185,7 @@ func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.D
 
 func (r ReplyStyle) layoutContent(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
 	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
+	content.MaxLines = r.MaxLines
 	content.Color = r.TextColor
 	return content.Layout(gtx)
 }

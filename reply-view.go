@@ -472,6 +472,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								}
 								reply := sprigTheme.Reply(c.Theme, sprigTheme.None)
 								reply.Highlight = c.Theme.Primary.Default
+								reply.MaxLines = 5
 								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
 							})
 						}),
