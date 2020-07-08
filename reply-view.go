@@ -238,73 +238,91 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 	return sprigTheme.None
 }
 
-func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
+func (c *ReplyListView) layoutButtons(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
+	buttons := []layout.FlexChild{}
+	buttons = append(buttons, layout.Rigid(func(gtx C) D {
+		return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+			material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
+		)
+	}))
+	if c.Selected != nil {
+		buttons = append(buttons, layout.Rigid(func(gtx C) D {
+			return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+				material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
+			)
+		}))
+	}
+	if c.Selected != nil || c.Filtered {
+		buttons = append(buttons,
+			layout.Rigid(func(gtx C) D {
+				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+					btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
+					if c.Filtered {
+						btn.Background = theme.Color.InvText
+						btn.Color = theme.Color.Primary
+					}
+					return btn.Layout(gtx)
+				})
+			}))
+	}
+	if !c.CreatingConversation {
+		buttons = append(buttons,
+			layout.Rigid(func(gtx C) D {
+				return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+					material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
+				)
+			}))
+	}
+
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
+			paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
-				Max: f32.Point{
-					X: float32(gtx.Constraints.Max.X),
-					Y: float32(gtx.Constraints.Max.Y),
-				},
+				Max: layout.FPt(gtx.Constraints.Min),
 			}}.Add(gtx.Ops)
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Flexed(1, func(gtx C) D {
-					return c.layoutReplyList(gtx)
-				}),
-				layout.Rigid(func(gtx C) D {
-					if c.ReplyingTo != nil || c.CreatingConversation {
-						return c.layoutEditor(gtx)
-					}
-					return layout.Dimensions{}
-				}),
-			)
-		}),
-		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
-			buttons := []layout.FlexChild{}
-			buttons = append(buttons, layout.Rigid(func(gtx C) D {
-				return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-					material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
-				)
-			}))
-			if c.Selected != nil {
-				buttons = append(buttons, layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
-					)
-				}))
-			}
-			if c.Selected != nil || c.Filtered {
-				buttons = append(buttons,
-					layout.Rigid(func(gtx C) D {
-						return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-							btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
-							if c.Filtered {
-								btn.Background = theme.Color.InvText
-								btn.Color = theme.Color.Primary
-							}
-							return btn.Layout(gtx)
-						})
-					}))
-			}
-			if !c.CreatingConversation {
-				buttons = append(buttons,
-					layout.Rigid(func(gtx C) D {
-						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-							material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
-						)
-					}))
-			}
-
 			return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, buttons...)
 		}),
 	)
+}
+
+func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
+	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
+			return c.layoutButtons(gtx)
+		}),
+		layout.Flexed(1, func(gtx C) D {
+			return layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
+					paintOp.Add(gtx.Ops)
+					paint.PaintOp{Rect: f32.Rectangle{
+						Max: layout.FPt(gtx.Constraints.Max),
+					}}.Add(gtx.Ops)
+					return layout.Dimensions{}
+				}),
+				layout.Stacked(func(gtx C) D {
+					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+						layout.Flexed(1, func(gtx C) D {
+							return c.layoutReplyList(gtx)
+						}),
+						layout.Rigid(func(gtx C) D {
+							if c.ReplyingTo != nil || c.CreatingConversation {
+								return c.layoutEditor(gtx)
+							}
+							return layout.Dimensions{}
+						}),
+					)
+				}),
+			)
+		}),
+	)
+
 }
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
