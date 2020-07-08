@@ -280,7 +280,7 @@ func (c *ReplyListView) layoutButtons(gtx layout.Context) layout.Dimensions {
 			paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
-				Max: layout.FPt(gtx.Constraints.Min),
+				Max: layout.FPt(gtx.Constraints.Max),
 			}}.Add(gtx.Ops)
 			return layout.Dimensions{}
 		}),
