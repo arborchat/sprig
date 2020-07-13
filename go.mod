@@ -3,8 +3,8 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20200704155525-7bbe0da0c75f
-	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200623144228-204ef64b5ef8
+	gioui.org v0.0.0-20200712204002-a54b46059540
+	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200713202823-5e7385dc5102
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200625210621-d3d4a318419f
 	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200704211112-2f9aea91c0f3
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8

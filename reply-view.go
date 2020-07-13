@@ -510,13 +510,13 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 											},
 										}
 										radii := float32(gtx.Px(unit.Dp(5)))
-										clip.Rect{
+										clip.RRect{
 											Rect: bounds,
 											NW:   radii,
 											NE:   radii,
 											SE:   radii,
 											SW:   radii,
-										}.Op(gtx.Ops).Add(gtx.Ops)
+										}.Add(gtx.Ops)
 										paint.PaintOp{Rect: bounds}.Add(gtx.Ops)
 										stack.Pop()
 										return layout.Dimensions{}

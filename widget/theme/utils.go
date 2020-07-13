@@ -21,13 +21,13 @@ func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 	bounds := f32.Rectangle{
 		Max: size,
 	}
-	clip.Rect{
+	clip.RRect{
 		Rect: bounds,
 		NW:   radii,
 		NE:   radii,
 		SE:   radii,
 		SW:   radii,
-	}.Op(gtx.Ops).Add(gtx.Ops)
+	}.Add(gtx.Ops)
 	paint.PaintOp{
 		Rect: bounds,
 	}.Add(gtx.Ops)

@@ -1,12 +1,10 @@
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-gioui.org v0.0.0-20200622185735-5bd0ecea5e43 h1:Nu7QkX+EakW4tOkSB5JqPJ+kxX45Pkme+1hx1BGl9d4=
-gioui.org v0.0.0-20200622185735-5bd0ecea5e43/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
 gioui.org v0.0.0-20200626142042-6a9a87046221 h1:E3YNhsdzdBYXX3ewLaOnQsDDPsTnsohh40JX+1jwXfY=
 gioui.org v0.0.0-20200626142042-6a9a87046221/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
-gioui.org v0.0.0-20200704155525-7bbe0da0c75f h1:EmnQOCpWFpXdQxgMDrvd+v/1N1Te/cQEn8B0wRntXuw=
-gioui.org v0.0.0-20200704155525-7bbe0da0c75f/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
-git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200623144228-204ef64b5ef8 h1:X+qBz5lwot20yoVPeajmJtQh4AOIGkxNtCAslTSO3k0=
-git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200623144228-204ef64b5ef8/go.mod h1:egc59Y+hA+os/Oo4IptpvOf9D53mAHqsma16jseEt+M=
+gioui.org v0.0.0-20200712204002-a54b46059540 h1:jigiEccc+d6Eji99nSkDIqUAyFtJQqjwQqryB+to2ac=
+gioui.org v0.0.0-20200712204002-a54b46059540/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
+git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200713202823-5e7385dc5102 h1:1PH+x+w0xX+BDSNCjoLurPOpknamFDXU+gDrAy7uSTQ=
+git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200713202823-5e7385dc5102/go.mod h1:Q006ILm5l/jcT/FSaN6FgMbdF/JjYBNbn5EjGFDy9Vc=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93 h1:DXtB8FXojNZAj7+sqXhvVKM6Az36a18B1WuqvjG0D1Q=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200625210621-d3d4a318419f h1:GQDJ9ExBSnPPh+gTt3YjA+dvJgbhM/Y9Zp/LCNVlueQ=
