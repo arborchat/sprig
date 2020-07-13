@@ -577,6 +577,7 @@ const scrollSlotWidthDp = 12
 func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.ReplyStatus) bool {
 	return c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot)
 }
+
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
 		stateIndex = 0
@@ -597,6 +598,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				reply            = replies[index]
 				status           = c.statusOf(reply.Reply)
 				collapseMetadata = func() bool {
+					// This conflicts with animation feature, so we're removing the feature for now.
 					// if index > 0 {
 					// 	if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
 					// 		return true
