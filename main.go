@@ -33,9 +33,9 @@ func main() {
 	go func() {
 		w := app.NewWindow(app.Title("Sprig"))
 		if err := eventLoop(w); err != nil {
-			log.Println(err)
-			return
+			log.Fatalf("exiting due to error: %v", err)
 		}
+		os.Exit(0)
 	}()
 	app.Main()
 }
