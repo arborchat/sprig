@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/f32"
@@ -120,11 +121,15 @@ type AppState struct {
 	Settings
 	ArborState
 	*sprigTheme.Theme
-	DataDir string
+	DataDir      string
+	TimeLaunched uint64
 }
 
 func NewAppState(dataDir string) (*AppState, error) {
 	dataDir = filepath.Join(dataDir, "sprig")
+	// NOTE: time has to be converted from nanoseconds to milliseconds for Arbor's specifications
+	TimeLocation, _ := time.LoadLocation("UTC")
+	TimeLaunched := uint64(time.Now().In(TimeLocation).UnixNano() / 1000000)
 	var baseStore forest.Store
 	var err error
 	if err = os.MkdirAll(dataDir, 0770); err != nil {
@@ -158,8 +163,9 @@ func NewAppState(dataDir string) (*AppState, error) {
 			ReplyList:         rl,
 			CommunityList:     cl,
 		},
-		DataDir: dataDir,
-		Theme:   sprigTheme.New(),
+		DataDir:      dataDir,
+		Theme:        sprigTheme.New(),
+		TimeLaunched: TimeLaunched,
 	}
 	appState.Settings.dataDir = dataDir
 	jsonSettings, err := ioutil.ReadFile(appState.Settings.SettingsFile())
