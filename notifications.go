@@ -26,6 +26,10 @@ func NewNotificationManager(state *AppState) (*NotificationManager, error) {
 }
 
 func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
+	if uint64(reply.Created) < n.AppState.TimeLaunched {
+		// do not send old notifications
+		return false
+	}
 	if reply.TreeDepth() == 1 {
 		// Notify of new conversation
 		return true
