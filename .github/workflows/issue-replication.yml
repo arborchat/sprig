@@ -1,0 +1,31 @@
+name: Issue Autoresponse
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  auto-response:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: derekprior/add-autoresponse@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        respondableId: ${{ github.event.issue.node_id }}
+        response: "Hello! Thank you for your interest in Arbor!\nWe've chosen to mirror this repo to GitHub so that it's easier to find, but our issue tracking is done using [sourcehut](https://sourcehut.org).\nWe've automatically created a ticket in our sourcehut issue tracker with the contents of your issue. We'll follow up with you there! You can find your ticket [here!](https://todo.sr.ht/~whereswaldon/arbor-dev)\nThanks!"
+        author: ${{ github.event.issue.user.login }}
+
+  mirror:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: athorp96/sourcehut_issue_mirror@master
+      with:
+        title: ${{ github.event.issue.title }}
+        body: ${{ github.event.issue.body }}
+        submitter: ${{ github.event.issue.user.login }}
+        tracker-owner: "~whereswaldon"
+        tracker-name: "arbor-dev"
+        oauth-token: ${{ secrets.SRHT_OAUTH_TOKEN }}
