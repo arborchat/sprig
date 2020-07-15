@@ -29,3 +29,4 @@ jobs:
         tracker-owner: "~whereswaldon"
         tracker-name: "arbor-dev"
         oauth-token: ${{ secrets.SRHT_OAUTH_TOKEN }}
+        label: ${{ github.event.repository.name }}
