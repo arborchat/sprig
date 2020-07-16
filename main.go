@@ -128,8 +128,7 @@ type AppState struct {
 func NewAppState(dataDir string) (*AppState, error) {
 	dataDir = filepath.Join(dataDir, "sprig")
 	// NOTE: time has to be converted from nanoseconds to milliseconds for Arbor's specifications
-	TimeLocation, _ := time.LoadLocation("UTC")
-	TimeLaunched := uint64(time.Now().In(TimeLocation).UnixNano() / 1000000)
+	TimeLaunched := uint64(time.Now().UnixNano() / 1000000)
 	var baseStore forest.Store
 	var err error
 	if err = os.MkdirAll(dataDir, 0770); err != nil {
