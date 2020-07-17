@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget"
@@ -28,6 +30,8 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprig
 		ArborState: arborState,
 		Theme:      theme,
 	}
+	c.Editor.SingleLine = true
+	c.Editor.Submit = true
 
 	c.Editor.SetText(settings.Address)
 	return c
@@ -38,7 +42,17 @@ func (c *ConnectFormView) HandleClipboard(contents string) {
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
+	submit := false
+	for _, e := range c.Editor.Events() {
+		if _, ok := e.(widget.SubmitEvent); ok {
+			submit = true
+		}
+		log.Printf("editor event: %v %T", e, e)
+	}
 	if c.ConnectButton.Clicked() {
+		submit = true
+	}
+	if submit {
 		c.Settings.Address = c.Editor.Text()
 		go c.Settings.Persist()
 		c.ArborState.RestartWorker(c.Settings.Address)
