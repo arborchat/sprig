@@ -95,13 +95,6 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 				State: &c.CreateConversationButton,
 			},
 		},
-		{
-			Icon: icons.FilterIcon,
-			OverflowAction: materials.OverflowAction{
-				Name:  "Filter by Selected",
-				State: &c.FilterButton,
-			},
-		},
 	}, []materials.OverflowAction{}
 }
 
@@ -114,12 +107,37 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
 			log.Printf("clicked %s", clickHandler.Reply)
+			c.manager.RequestContextualBar(gtx, "Message Operations", []materials.AppBarAction{
+				{
+					Icon: icons.ReplyIcon,
+					OverflowAction: materials.OverflowAction{
+						Name:  "Reply to selected",
+						State: &c.CreateReplyButton,
+					},
+				},
+				{
+					Icon: icons.CopyIcon,
+					OverflowAction: materials.OverflowAction{
+						Name:  "Copy reply text",
+						State: &c.CopyReplyButton,
+					},
+				},
+				{
+					Icon: icons.FilterIcon,
+					OverflowAction: materials.OverflowAction{
+						Name:  "Filter by selected",
+						State: &c.FilterButton,
+					},
+				},
+			}, []materials.OverflowAction{})
 			if c.Selected == nil || !clickHandler.Reply.Equals(c.Selected) {
 				c.StateRefreshNeeded = true
 				c.Selected = clickHandler.Reply
 				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 			} else {
+				c.manager.DismissContextualBar(gtx)
+				//op.InvalidateOp{}.Add(gtx.Ops)
 				c.Selected = nil
 				c.Filtered = false
 			}
@@ -140,6 +158,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			c.PrefilterPosition = c.ReplyList.Position
 		}
 		c.Filtered = !c.Filtered
+		c.manager.DismissOverflow(gtx)
 	}
 	if c.Selected != nil && c.CopyReplyButton.Clicked() {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
@@ -148,6 +167,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		} else {
 			c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
 		}
+		c.manager.DismissOverflow(gtx)
 	}
 	if c.PasteIntoReplyButton.Clicked() {
 		c.manager.RequestClipboardPaste()
@@ -165,9 +185,11 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				c.ReplyingToAuthor = author.(*forest.Identity)
 			}
 		}
+		c.manager.DismissOverflow(gtx)
 	}
 	if c.CreateConversationButton.Clicked() {
 		c.CreatingConversation = true
+		c.manager.DismissOverflow(gtx)
 	}
 	if c.CancelReplyButton.Clicked() {
 		c.resetReplyState()

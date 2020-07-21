@@ -18,14 +18,29 @@ import (
 )
 
 type ViewManager interface {
+	// request that the primary view be switched to the view with the given ID
 	RequestViewSwitch(ViewID)
+	// associate a view with an ID
 	RegisterView(id ViewID, view View)
+	// trigger an asynchronous paste operation
 	RequestClipboardPaste()
+	// handle a paste operation from the platform by dispatching it to a view
 	HandleClipboard(contents string)
+	// set the system clipboard to the value
 	UpdateClipboard(string)
+	// handle logical "back" navigation operations
 	HandleBackNavigation(*system.CommandEvent)
+	// trigger a contextual app menu with the given title and actions
+	RequestContextualBar(gtx layout.Context, title string, actions []materials.AppBarAction, overflow []materials.OverflowAction)
+	// request that any contextual menu disappear
+	DismissContextualBar(gtx layout.Context)
+	// request that an app bar overflow menu disappear
+	DismissOverflow(gtx layout.Context)
+	// render the interface
 	Layout(gtx layout.Context) layout.Dimensions
+	// enable graphics profiling
 	SetProfiling(bool)
+	// enable live theme editing
 	SetThemeing(bool)
 }
 
@@ -87,6 +102,19 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 		vm.AppBar.SetActions(actions, overflow)
 	}
 	view.BecomeVisible()
+}
+
+func (vm *viewManager) RequestContextualBar(gtx layout.Context, title string, actions []materials.AppBarAction, overflow []materials.OverflowAction) {
+	vm.AppBar.SetContextualActions(actions, overflow)
+	vm.AppBar.StartContextual(gtx.Now, title)
+}
+
+func (vm *viewManager) DismissContextualBar(gtx layout.Context) {
+	vm.AppBar.StopContextual(gtx.Now)
+}
+
+func (vm *viewManager) DismissOverflow(gtx layout.Context) {
+	vm.AppBar.CloseOverflowMenu(gtx.Now)
 }
 
 func (vm *viewManager) RequestClipboardPaste() {
@@ -154,6 +182,7 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	var barOp op.CallOp
 	view := vm.views[vm.current]
+	view.Update(gtx)
 	displayBar, _, _, _ := view.AppBarData()
 	dimensions := layout.Flex{
 		Axis: layout.Vertical,
@@ -170,7 +199,6 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 			return layout.Dimensions{}
 		}),
 		layout.Flexed(1, func(gtx C) D {
-			view.Update(gtx)
 			return view.Layout(gtx)
 		}),
 	)
