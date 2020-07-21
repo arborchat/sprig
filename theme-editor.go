@@ -214,6 +214,9 @@ func NewThemeEditorView(theme *sprigTheme.Theme) View {
 	return c
 }
 
+func (c *ThemeEditorView) BecomeVisible() {
+}
+
 func (c *ThemeEditorView) NavItem() *materials.NavItem {
 	return &materials.NavItem{
 		Name: "Theme",

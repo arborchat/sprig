@@ -86,6 +86,7 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 		vm.AppBar.Title = title
 		vm.AppBar.SetActions(actions, overflow)
 	}
+	view.BecomeVisible()
 }
 
 func (vm *viewManager) RequestClipboardPaste() {

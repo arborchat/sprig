@@ -29,6 +29,9 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprig
 	return c
 }
 
+func (c *ConnectFormView) BecomeVisible() {
+}
+
 func (c *ConnectFormView) NavItem() *materials.NavItem {
 	return nil
 }
@@ -42,12 +45,11 @@ func (c *ConnectFormView) HandleClipboard(contents string) {
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
-	c.Form.SetText(c.Settings.Address)
 	if c.Form.Submitted() {
 		c.Settings.Address = c.Form.Text()
 		go c.Settings.Persist()
 		c.ArborState.RestartWorker(c.Settings.Address)
-		c.manager.RequestViewSwitch(SettingsID)
+		c.manager.RequestViewSwitch(IdentityFormID)
 	}
 	if c.Form.PasteRequested() {
 		c.manager.RequestClipboardPaste()

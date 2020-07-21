@@ -31,6 +31,9 @@ func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *spri
 	return c
 }
 
+func (c *IdentityFormView) BecomeVisible() {
+}
+
 func (c *IdentityFormView) NavItem() *materials.NavItem {
 	return nil
 }
@@ -45,7 +48,7 @@ func (c *IdentityFormView) HandleClipboard(contents string) {
 func (c *IdentityFormView) Update(gtx layout.Context) {
 	if c.CreateButton.Clicked() {
 		c.Settings.CreateIdentity(c.Editor.Text())
-		c.manager.RequestViewSwitch(SettingsID)
+		c.manager.RequestViewSwitch(ReplyViewID)
 	}
 }
 

@@ -76,6 +76,9 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *sprigTh
 	return c
 }
 
+func (c *ReplyListView) BecomeVisible() {
+}
+
 func (c *ReplyListView) NavItem() *materials.NavItem {
 	return &materials.NavItem{
 		Name: "Messages",

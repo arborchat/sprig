@@ -31,6 +31,9 @@ func NewConsentView(settings *Settings, arborState *ArborState, theme *sprigThem
 	return c
 }
 
+func (c *ConsentView) BecomeVisible() {
+}
+
 func (c *ConsentView) NavItem() *materials.NavItem {
 	return nil
 }

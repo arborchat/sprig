@@ -38,6 +38,7 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *spr
 		Theme:      theme,
 	}
 	c.List.Axis = layout.Vertical
+	c.ConnectionForm.SetText(c.Settings.Address)
 	return c
 }
 
@@ -56,7 +57,6 @@ func (c *SettingsView) HandleClipboard(contents string) {
 }
 
 func (c *SettingsView) Update(gtx layout.Context) {
-	c.ConnectionForm.SetText(c.Settings.Address)
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
 		if box.Changed() {
@@ -72,6 +72,10 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	if c.ThemeingSwitch.Changed() {
 		c.manager.SetThemeing(c.ThemeingSwitch.Value)
 	}
+}
+
+func (c *SettingsView) BecomeVisible() {
+	c.ConnectionForm.SetText(c.Settings.Address)
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {

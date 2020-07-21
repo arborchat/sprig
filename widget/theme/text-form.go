@@ -34,6 +34,7 @@ func TextForm(th *Theme, state *widget.TextForm, submitText, formHint string) Te
 }
 
 func (t TextFormStyle) Layout(gtx layout.Context) layout.Dimensions {
+	t.State.Layout(gtx)
 	return layout.Flex{
 		Alignment: layout.Middle,
 	}.Layout(gtx,
