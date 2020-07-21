@@ -9,6 +9,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
+	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 
 	"git.sr.ht/~whereswaldon/colorpicker"
@@ -210,6 +212,17 @@ func NewThemeEditorView(theme *sprigTheme.Theme) View {
 	}
 
 	return c
+}
+
+func (c *ThemeEditorView) NavItem() *materials.NavItem {
+	return &materials.NavItem{
+		Name: "Theme",
+		Icon: icons.CancelReplyIcon,
+	}
+}
+
+func (c *ThemeEditorView) DisplayAppBar() bool {
+	return true
 }
 
 func (c *ThemeEditorView) HandleClipboard(contents string) {

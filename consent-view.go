@@ -6,6 +6,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 
+	"git.sr.ht/~whereswaldon/materials"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -28,6 +29,14 @@ func NewConsentView(settings *Settings, arborState *ArborState, theme *sprigThem
 	}
 
 	return c
+}
+
+func (c *ConsentView) NavItem() *materials.NavItem {
+	return nil
+}
+
+func (c *ConsentView) DisplayAppBar() bool {
+	return false
 }
 
 func (c *ConsentView) HandleClipboard(contents string) {

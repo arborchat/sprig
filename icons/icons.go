@@ -49,3 +49,28 @@ var FilterIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ContentFilterList)
 	return icon
 }()
+
+var MenuIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.NavigationMenu)
+	return icon
+}()
+
+var ServerIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ActionDNS)
+	return icon
+}()
+
+var SettingsIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ActionSettings)
+	return icon
+}()
+
+var ChatIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.CommunicationChat)
+	return icon
+}()
+
+var IdentityIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.ActionPermIdentity)
+	return icon
+}()

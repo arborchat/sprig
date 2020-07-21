@@ -10,6 +10,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -39,6 +40,17 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *spr
 		Theme:      theme,
 	}
 	return c
+}
+
+func (c *CommunityMenuView) DisplayAppBar() bool {
+	return true
+}
+
+func (c *CommunityMenuView) NavItem() *materials.NavItem {
+	return &materials.NavItem{
+		Name: "Settings",
+		Icon: icons.SettingsIcon,
+	}
 }
 
 func (c *CommunityMenuView) HandleClipboard(contents string) {

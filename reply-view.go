@@ -13,6 +13,7 @@ import (
 	"gioui.org/widget/material"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -75,6 +76,17 @@ func NewReplyListView(settings *Settings, arborState *ArborState, theme *sprigTh
 	c.ReplyList.ScrollToEnd = true
 	c.ReplyList.Position.BeforeEnd = false
 	return c
+}
+
+func (c *ReplyListView) NavItem() *materials.NavItem {
+	return &materials.NavItem{
+		Name: "Messages",
+		Icon: icons.ChatIcon,
+	}
+}
+
+func (c *ReplyListView) DisplayAppBar() bool {
+	return true
 }
 
 func (c *ReplyListView) HandleClipboard(contents string) {

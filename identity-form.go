@@ -5,6 +5,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"git.sr.ht/~whereswaldon/materials"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -28,6 +29,14 @@ func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *spri
 	}
 
 	return c
+}
+
+func (c *IdentityFormView) NavItem() *materials.NavItem {
+	return nil
+}
+
+func (c *IdentityFormView) DisplayAppBar() bool {
+	return false
 }
 
 func (c *IdentityFormView) HandleClipboard(contents string) {

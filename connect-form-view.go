@@ -7,6 +7,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -35,6 +36,17 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprig
 
 	c.Editor.SetText(settings.Address)
 	return c
+}
+
+func (c *ConnectFormView) NavItem() *materials.NavItem {
+	return &materials.NavItem{
+		Name: "Connection",
+		Icon: icons.ServerIcon,
+	}
+}
+
+func (c *ConnectFormView) DisplayAppBar() bool {
+	return true
 }
 
 func (c *ConnectFormView) HandleClipboard(contents string) {
