@@ -6,7 +6,7 @@ require (
 	gioui.org v0.0.0-20200719084717-6ab43aba3ea5
 	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200713202823-5e7385dc5102
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200625210621-d3d4a318419f
-	git.sr.ht/~whereswaldon/materials v0.0.0-20200721164908-8c25a7d84a9e
+	git.sr.ht/~whereswaldon/materials v0.0.0-20200721181208-b052bd40e10a
 	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200704211112-2f9aea91c0f3
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8
 	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c

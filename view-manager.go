@@ -81,6 +81,11 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 	vm.Push(vm.current)
 	vm.current = id
 	vm.ModalNavDrawer.SetNavDestination(id)
+	view := vm.views[vm.current]
+	if showBar, title, actions, overflow := view.AppBarData(); showBar {
+		vm.AppBar.Title = title
+		vm.AppBar.SetActions(actions, overflow)
+	}
 }
 
 func (vm *viewManager) RequestClipboardPaste() {
@@ -120,7 +125,7 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 		vm.ModalNavDrawer.Appear(gtx.Now)
 	}
 	if vm.ModalNavDrawer.NavDestinationChanged() {
-		vm.current = vm.ModalNavDrawer.CurrentNavDestination().(ViewID)
+		vm.RequestViewSwitch(vm.ModalNavDrawer.CurrentNavDestination().(ViewID))
 	}
 	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
@@ -148,11 +153,12 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	var barOp op.CallOp
 	view := vm.views[vm.current]
+	displayBar, _, _, _ := view.AppBarData()
 	dimensions := layout.Flex{
 		Axis: layout.Vertical,
 	}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			if view.DisplayAppBar() {
+			if displayBar {
 				// Calculate the dimensions of the app bar, but wait to lay it out
 				// until later.
 				macro := op.Record(gtx.Ops)
@@ -169,7 +175,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	)
 	// Lay out the app bar *after* the view so that the overflow can expand
 	// on top of the underlying view.
-	if view.DisplayAppBar() {
+	if displayBar {
 		barOp.Add(gtx.Ops)
 	}
 	// Lay out the nav drawer after the app bar so that it can expand over

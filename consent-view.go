@@ -35,8 +35,8 @@ func (c *ConsentView) NavItem() *materials.NavItem {
 	return nil
 }
 
-func (c *ConsentView) DisplayAppBar() bool {
-	return false
+func (c *ConsentView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return false, "", nil, nil
 }
 
 func (c *ConsentView) HandleClipboard(contents string) {

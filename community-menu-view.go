@@ -22,11 +22,9 @@ type CommunityMenuView struct {
 	*ArborState
 	*sprigTheme.Theme
 
-	BackButton      widget.Clickable
 	IdentityButton  widget.Clickable
 	CommunityList   layout.List
 	CommunityBoxes  []widget.Bool
-	ViewButton      widget.Clickable
 	ProfilingSwitch widget.Bool
 	ThemeingSwitch  widget.Bool
 }
@@ -42,8 +40,8 @@ func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *spr
 	return c
 }
 
-func (c *CommunityMenuView) DisplayAppBar() bool {
-	return true
+func (c *CommunityMenuView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return true, "Settings", []materials.AppBarAction{}, []materials.OverflowAction{}
 }
 
 func (c *CommunityMenuView) NavItem() *materials.NavItem {
@@ -57,17 +55,11 @@ func (c *CommunityMenuView) HandleClipboard(contents string) {
 }
 
 func (c *CommunityMenuView) Update(gtx layout.Context) {
-	if c.BackButton.Clicked() {
-		c.manager.RequestViewSwitch(ConnectFormID)
-	}
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
 		if box.Changed() {
 			log.Println("updated")
 		}
-	}
-	if c.ViewButton.Clicked() {
-		c.manager.RequestViewSwitch(ReplyViewID)
 	}
 	if c.IdentityButton.Clicked() {
 		c.manager.RequestViewSwitch(IdentityFormID)
@@ -83,12 +75,6 @@ func (c *CommunityMenuView) Update(gtx layout.Context) {
 func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	c.CommunityList.Axis = layout.Vertical
-	layout.NW.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-		return layout.UniformInset(unit.Dp(4)).Layout(
-			gtx,
-			material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
-		)
-	})
 	width := gtx.Constraints.Constrain(image.Point{X: gtx.Px(unit.Dp(200))}).X
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		inset := layout.UniformInset(unit.Dp(4))
@@ -145,15 +131,6 @@ func (c *CommunityMenuView) Layout(gtx layout.Context) layout.Dimensions {
 					})
 				})
 				return dims
-			}),
-			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return inset.Layout(gtx, func(gtx C) D {
-					gtx.Constraints.Max.X = width
-					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						gtx.Constraints.Max.X = width
-						return material.Button(theme, &c.ViewButton, "View These Communities").Layout(gtx)
-					})
-				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				if runtime.GOOS == "linux" || runtime.GOOS == "android" {

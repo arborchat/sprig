@@ -26,8 +26,6 @@ type ReplyListView struct {
 	*ArborState
 	*sprigTheme.Theme
 
-	BackButton widget.Clickable
-
 	DeselectButton  widget.Clickable
 	CopyReplyButton widget.Clickable
 
@@ -85,8 +83,23 @@ func (c *ReplyListView) NavItem() *materials.NavItem {
 	}
 }
 
-func (c *ReplyListView) DisplayAppBar() bool {
-	return true
+func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return true, "Messages", []materials.AppBarAction{
+		{
+			Icon: icons.CreateConversationIcon,
+			OverflowAction: materials.OverflowAction{
+				Name:  "Create Conversation",
+				State: &c.CreateConversationButton,
+			},
+		},
+		{
+			Icon: icons.FilterIcon,
+			OverflowAction: materials.OverflowAction{
+				Name:  "Filter by Selected",
+				State: &c.FilterButton,
+			},
+		},
+	}, []materials.OverflowAction{}
 }
 
 func (c *ReplyListView) HandleClipboard(contents string) {
@@ -113,9 +126,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.StateRefreshNeeded = false
 		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Selected)
 		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Selected)
-	}
-	if c.BackButton.Clicked() {
-		c.manager.RequestViewSwitch(CommunityMenuID)
 	}
 	if c.DeselectButton.Clicked() {
 		c.Selected = nil
@@ -251,45 +261,60 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 }
 
 func (c *ReplyListView) layoutButtons(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
-	buttons := []layout.FlexChild{}
-	buttons = append(buttons, layout.Rigid(func(gtx C) D {
-		return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-			material.IconButton(theme, &c.BackButton, icons.BackIcon).Layout,
-		)
-	}))
-	if c.Selected != nil {
-		buttons = append(buttons, layout.Rigid(func(gtx C) D {
-			return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-				material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
-			)
-		}))
-	}
-	if c.Selected != nil || c.Filtered {
-		buttons = append(buttons,
-			layout.Rigid(func(gtx C) D {
-				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-					btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
-					if c.Filtered {
-						btn.Background = theme.Color.InvText
-						btn.Color = theme.Color.Primary
-					}
-					return btn.Layout(gtx)
-				})
-			}))
-	}
-	if !c.CreatingConversation {
-		buttons = append(buttons,
-			layout.Rigid(func(gtx C) D {
+	/*
+		theme := c.Theme.Theme
+		buttons := []layout.FlexChild{}
+		if c.Selected != nil {
+			buttons = append(buttons, layout.Rigid(func(gtx C) D {
 				return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-					material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
+					material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
 				)
 			}))
-	}
+		}
+		if c.Selected != nil || c.Filtered {
+			buttons = append(buttons,
+				layout.Rigid(func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
+						if c.Filtered {
+							btn.Background = theme.Color.InvText
+							btn.Color = theme.Color.Primary
+						}
+						return btn.Layout(gtx)
+					})
+				}))
+		}
+		if !c.CreatingConversation {
+			buttons = append(buttons,
+				layout.Rigid(func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
+					)
+				}))
+		}
 
+		return layout.Stack{}.Layout(gtx,
+			layout.Expanded(func(gtx C) D {
+				paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
+				paintOp.Add(gtx.Ops)
+				paint.PaintOp{Rect: f32.Rectangle{
+					Max: layout.FPt(gtx.Constraints.Max),
+				}}.Add(gtx.Ops)
+				return layout.Dimensions{}
+			}),
+			layout.Stacked(func(gtx C) D {
+				gtx.Constraints.Min.X = gtx.Constraints.Max.X
+				return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, buttons...)
+			}),
+		)
+	*/
+	return layout.Dimensions{}
+}
+
+func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
+			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
 			paintOp.Add(gtx.Ops)
 			paint.PaintOp{Rect: f32.Rectangle{
 				Max: layout.FPt(gtx.Constraints.Max),
@@ -297,44 +322,19 @@ func (c *ReplyListView) layoutButtons(gtx layout.Context) layout.Dimensions {
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
-			gtx.Constraints.Min.X = gtx.Constraints.Max.X
-			return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, buttons...)
-		}),
-	)
-}
-
-func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
-	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			return c.layoutButtons(gtx)
-		}),
-		layout.Flexed(1, func(gtx C) D {
-			return layout.Stack{}.Layout(gtx,
-				layout.Expanded(func(gtx C) D {
-					paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
-					paintOp.Add(gtx.Ops)
-					paint.PaintOp{Rect: f32.Rectangle{
-						Max: layout.FPt(gtx.Constraints.Max),
-					}}.Add(gtx.Ops)
-					return layout.Dimensions{}
+			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Flexed(1, func(gtx C) D {
+					return c.layoutReplyList(gtx)
 				}),
-				layout.Stacked(func(gtx C) D {
-					return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-						layout.Flexed(1, func(gtx C) D {
-							return c.layoutReplyList(gtx)
-						}),
-						layout.Rigid(func(gtx C) D {
-							if c.ReplyingTo != nil || c.CreatingConversation {
-								return c.layoutEditor(gtx)
-							}
-							return layout.Dimensions{}
-						}),
-					)
+				layout.Rigid(func(gtx C) D {
+					if c.ReplyingTo != nil || c.CreatingConversation {
+						return c.layoutEditor(gtx)
+					}
+					return layout.Dimensions{}
 				}),
 			)
 		}),
 	)
-
 }
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {

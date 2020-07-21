@@ -7,7 +7,7 @@ import (
 
 type View interface {
 	SetManager(ViewManager)
-	DisplayAppBar() bool
+	AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction)
 	NavItem() *materials.NavItem
 	Update(gtx layout.Context)
 	HandleClipboard(contents string)

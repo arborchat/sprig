@@ -45,8 +45,8 @@ func (c *ConnectFormView) NavItem() *materials.NavItem {
 	}
 }
 
-func (c *ConnectFormView) DisplayAppBar() bool {
-	return true
+func (c *ConnectFormView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return true, "Connection", []materials.AppBarAction{}, []materials.OverflowAction{}
 }
 
 func (c *ConnectFormView) HandleClipboard(contents string) {

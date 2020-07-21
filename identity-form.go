@@ -35,8 +35,8 @@ func (c *IdentityFormView) NavItem() *materials.NavItem {
 	return nil
 }
 
-func (c *IdentityFormView) DisplayAppBar() bool {
-	return false
+func (c *IdentityFormView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return false, "", nil, nil
 }
 
 func (c *IdentityFormView) HandleClipboard(contents string) {

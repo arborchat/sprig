@@ -221,8 +221,8 @@ func (c *ThemeEditorView) NavItem() *materials.NavItem {
 	}
 }
 
-func (c *ThemeEditorView) DisplayAppBar() bool {
-	return true
+func (c *ThemeEditorView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	return true, "Theme", []materials.AppBarAction{}, []materials.OverflowAction{}
 }
 
 func (c *ThemeEditorView) HandleClipboard(contents string) {
