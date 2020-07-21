@@ -1,8 +1,6 @@
 package widget
 
 import (
-	"log"
-
 	"gioui.org/layout"
 	"gioui.org/widget"
 )
@@ -24,12 +22,10 @@ func (c *TextForm) Layout(gtx layout.Context) layout.Dimensions {
 	c.pasteRequested = false
 	for _, e := range c.Editor.Events() {
 		if _, ok := e.(widget.SubmitEvent); ok {
-			log.Printf("submit event")
 			c.submitted = true
 		}
 	}
 	if c.SubmitButton.Clicked() {
-		log.Printf("submit event")
 		c.submitted = true
 	}
 	if c.PasteButton.Clicked() {

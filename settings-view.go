@@ -21,12 +21,13 @@ type SettingsView struct {
 	*sprigTheme.Theme
 
 	layout.List
-	ConnectionForm  sprigWidget.TextForm
-	IdentityButton  widget.Clickable
-	CommunityList   layout.List
-	CommunityBoxes  []widget.Bool
-	ProfilingSwitch widget.Bool
-	ThemeingSwitch  widget.Bool
+	ConnectionForm      sprigWidget.TextForm
+	IdentityButton      widget.Clickable
+	CommunityList       layout.List
+	CommunityBoxes      []widget.Bool
+	ProfilingSwitch     widget.Bool
+	ThemeingSwitch      widget.Bool
+	NotificationsSwitch widget.Bool
 }
 
 var _ View = &SettingsView{}
@@ -54,9 +55,11 @@ func (c *SettingsView) NavItem() *materials.NavItem {
 }
 
 func (c *SettingsView) HandleClipboard(contents string) {
+	c.ConnectionForm.Paste(contents)
 }
 
 func (c *SettingsView) Update(gtx layout.Context) {
+	settingsChanged := false
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
 		if box.Changed() {
@@ -72,10 +75,26 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	if c.ThemeingSwitch.Changed() {
 		c.manager.SetThemeing(c.ThemeingSwitch.Value)
 	}
+	if c.ConnectionForm.Submitted() {
+		c.Settings.Address = c.ConnectionForm.Text()
+		settingsChanged = true
+		c.ArborState.RestartWorker(c.Settings.Address)
+	}
+	if c.ConnectionForm.PasteRequested() {
+		c.manager.RequestClipboardPaste()
+	}
+	if c.NotificationsSwitch.Changed() {
+		c.NotificationsEnabled = &c.NotificationsSwitch.Value
+		settingsChanged = true
+	}
+	if settingsChanged {
+		go c.Settings.Persist()
+	}
 }
 
 func (c *SettingsView) BecomeVisible() {
 	c.ConnectionForm.SetText(c.Settings.Address)
+	c.NotificationsSwitch.Value = c.Settings.NotificationsGloballyAllowed()
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
@@ -120,7 +139,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx C) D {
 					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
+							return itemInset.Layout(gtx, material.Switch(theme, &c.NotificationsSwitch).Layout)
 						}),
 						layout.Rigid(func(gtx C) D {
 							return itemInset.Layout(gtx, material.Body1(theme, "Enable notifications").Layout)

@@ -238,6 +238,10 @@ func (s Settings) IdentitiesDir() string {
 	return filepath.Join(s.dataDir, "identities")
 }
 
+func (s Settings) NotificationsGloballyAllowed() bool {
+	return s.NotificationsEnabled == nil || *s.NotificationsEnabled
+}
+
 func (s *Settings) Identity() (*forest.Identity, error) {
 	if s.ActiveIdentity == nil {
 		return nil, fmt.Errorf("no identity configured")
@@ -302,6 +306,8 @@ type Settings struct {
 	ActiveIdentity *fields.QualifiedHash
 
 	AcknowledgedNoticeVersion int
+
+	NotificationsEnabled *bool
 
 	dataDir string
 

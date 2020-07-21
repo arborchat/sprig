@@ -26,6 +26,9 @@ func NewNotificationManager(state *AppState) (*NotificationManager, error) {
 }
 
 func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
+	if !n.AppState.NotificationsGloballyAllowed() {
+		return false
+	}
 	if uint64(reply.Created) < n.AppState.TimeLaunched {
 		// do not send old notifications
 		return false
