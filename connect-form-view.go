@@ -1,22 +1,17 @@
 package main
 
 import (
-	"log"
-
 	"gioui.org/layout"
 	"gioui.org/unit"
-	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
-	"git.sr.ht/~whereswaldon/sprig/icons"
+	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type ConnectFormView struct {
 	manager ViewManager
-	widget.Editor
-	ConnectButton widget.Clickable
-	PasteButton   widget.Clickable
+	Form    sprigWidget.TextForm
 
 	*Settings
 	*ArborState
@@ -31,87 +26,46 @@ func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprig
 		ArborState: arborState,
 		Theme:      theme,
 	}
-	c.Editor.SingleLine = true
-	c.Editor.Submit = true
-
-	c.Editor.SetText(settings.Address)
 	return c
 }
 
 func (c *ConnectFormView) NavItem() *materials.NavItem {
-	return &materials.NavItem{
-		Name: "Connection",
-		Icon: icons.ServerIcon,
-	}
+	return nil
 }
 
 func (c *ConnectFormView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
-	return true, "Connection", []materials.AppBarAction{}, []materials.OverflowAction{}
+	return false, "", nil, nil
 }
 
 func (c *ConnectFormView) HandleClipboard(contents string) {
-	c.Editor.Insert(contents)
+	c.Form.Paste(contents)
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
-	submit := false
-	for _, e := range c.Editor.Events() {
-		if _, ok := e.(widget.SubmitEvent); ok {
-			submit = true
-		}
-		log.Printf("editor event: %v %T", e, e)
-	}
-	if c.ConnectButton.Clicked() {
-		submit = true
-	}
-	if submit {
-		c.Settings.Address = c.Editor.Text()
+	c.Form.SetText(c.Settings.Address)
+	if c.Form.Submitted() {
+		c.Settings.Address = c.Form.Text()
 		go c.Settings.Persist()
 		c.ArborState.RestartWorker(c.Settings.Address)
-		c.manager.RequestViewSwitch(CommunityMenuID)
+		c.manager.RequestViewSwitch(SettingsID)
 	}
-	if c.PasteButton.Clicked() {
+	if c.Form.PasteRequested() {
 		c.manager.RequestClipboardPaste()
 	}
 }
 
 func (c *ConnectFormView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
-	inset := layout.UniformInset(unit.Dp(4))
-	return layout.Center.Layout(gtx, func(gtx C) D {
+	inset := layout.UniformInset(unit.Dp(8))
+	return inset.Layout(gtx, func(gtx C) D {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx C) D {
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					return inset.Layout(gtx,
-						material.Body1(theme, "Arbor Relay Address:").Layout,
-					)
-				})
+				return inset.Layout(gtx,
+					material.H6(theme, "Arbor Relay Address:").Layout,
+				)
 			}),
 			layout.Rigid(func(gtx C) D {
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return inset.Layout(gtx, func(gtx C) D {
-								pasteButton := material.IconButton(theme, &c.PasteButton, icons.PasteIcon)
-								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
-								pasteButton.Size = unit.Dp(20)
-								return pasteButton.Layout(gtx)
-							})
-						}),
-						layout.Rigid(func(gtx C) D {
-							return inset.Layout(gtx,
-								material.Editor(theme, &(c.Editor), "HOST:PORT").Layout,
-							)
-						}),
-					)
-				})
-			}),
-			layout.Rigid(func(gtx C) D {
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					return inset.Layout(gtx,
-						material.Button(theme, &(c.ConnectButton), "Connect").Layout,
-					)
-				})
+				return inset.Layout(gtx, sprigTheme.TextForm(c.Theme, &c.Form, "Connect", "HOST:PORT").Layout)
 			}),
 		)
 	})

@@ -61,7 +61,7 @@ func eventLoop(w *app.Window) error {
 
 	viewManager := NewViewManager(w, appState.Theme, *profile)
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RegisterView(CommunityMenuID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
+	viewManager.RegisterView(SettingsID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ConsentViewID, NewConsentView(&appState.Settings, &appState.ArborState, appState.Theme))
@@ -69,8 +69,10 @@ func eventLoop(w *app.Window) error {
 		viewManager.RequestViewSwitch(ConsentViewID)
 	} else if appState.Settings.Address == "" {
 		viewManager.RequestViewSwitch(ConnectFormID)
+	} else if appState.Settings.ActiveIdentity == nil {
+		viewManager.RequestViewSwitch(IdentityFormID)
 	} else {
-		viewManager.RequestViewSwitch(CommunityMenuID)
+		viewManager.RequestViewSwitch(ReplyViewID)
 	}
 
 	notifMgr, err := NewNotificationManager(appState)
@@ -390,7 +392,7 @@ type ViewID int
 const (
 	ConnectFormID ViewID = iota
 	IdentityFormID
-	CommunityMenuID
+	SettingsID
 	ReplyViewID
 	ConsentViewID
 )

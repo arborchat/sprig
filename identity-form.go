@@ -45,7 +45,7 @@ func (c *IdentityFormView) HandleClipboard(contents string) {
 func (c *IdentityFormView) Update(gtx layout.Context) {
 	if c.CreateButton.Clicked() {
 		c.Settings.CreateIdentity(c.Editor.Text())
-		c.manager.RequestViewSwitch(CommunityMenuID)
+		c.manager.RequestViewSwitch(SettingsID)
 	}
 }
 

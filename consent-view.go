@@ -49,7 +49,7 @@ func (c *ConsentView) Update(gtx layout.Context) {
 		if c.Settings.Address == "" {
 			c.manager.RequestViewSwitch(ConnectFormID)
 		} else {
-			c.manager.RequestViewSwitch(CommunityMenuID)
+			c.manager.RequestViewSwitch(SettingsID)
 		}
 	}
 }
