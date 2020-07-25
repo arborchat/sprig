@@ -36,6 +36,8 @@ type ViewManager interface {
 	DismissContextualBar(gtx layout.Context)
 	// request that an app bar overflow menu disappear
 	DismissOverflow(gtx layout.Context)
+	// get the tag of a selected overflow message
+	SelectedOverflowTag() interface{}
 	// render the interface
 	Layout(gtx layout.Context) layout.Dimensions
 	// enable graphics profiling
@@ -115,6 +117,10 @@ func (vm *viewManager) DismissContextualBar(gtx layout.Context) {
 
 func (vm *viewManager) DismissOverflow(gtx layout.Context) {
 	vm.AppBar.CloseOverflowMenu(gtx.Now)
+}
+
+func (vm *viewManager) SelectedOverflowTag() interface{} {
+	return vm.AppBar.SelectedOverflowAction()
 }
 
 func (vm *viewManager) RequestClipboardPaste() {

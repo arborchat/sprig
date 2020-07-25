@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image/color"
 	"log"
 
 	"gioui.org/f32"
@@ -87,14 +88,17 @@ func (c *ReplyListView) NavItem() *materials.NavItem {
 }
 
 func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
+	th := c.Theme.Theme
 	return true, "Messages", []materials.AppBarAction{
-		{
-			Icon: icons.CreateConversationIcon,
-			OverflowAction: materials.OverflowAction{
-				Name:  "Create Conversation",
-				State: &c.CreateConversationButton,
+		materials.SimpleIconAction(
+			th,
+			&c.CreateConversationButton,
+			icons.CreateConversationIcon,
+			materials.OverflowAction{
+				Name: "Create Conversation",
+				Tag:  &c.CreateConversationButton,
 			},
-		},
+		),
 	}, []materials.OverflowAction{}
 }
 
@@ -102,42 +106,68 @@ func (c *ReplyListView) HandleClipboard(contents string) {
 	c.ReplyEditor.Insert(contents)
 }
 
+func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
+	th := c.Theme.Theme
+	return []materials.AppBarAction{
+		materials.SimpleIconAction(
+			th,
+			&c.CreateReplyButton,
+			icons.ReplyIcon,
+			materials.OverflowAction{
+				Name: "Reply to selected",
+				Tag:  &c.CreateReplyButton,
+			},
+		),
+		materials.SimpleIconAction(
+			th,
+			&c.CopyReplyButton,
+			icons.CopyIcon,
+			materials.OverflowAction{
+				Name: "Copy reply text",
+				Tag:  &c.CopyReplyButton,
+			},
+		),
+		materials.AppBarAction{
+			OverflowAction: materials.OverflowAction{
+				Name: "Filter by selected",
+				Tag:  &c.FilterButton,
+			},
+			Layout: func(gtx C, bg, fg color.RGBA) D {
+				btn := materials.SimpleIconButton(th, &c.FilterButton, icons.FilterIcon)
+				btn.Background = bg
+				btn.Color = fg
+				if c.Filtered {
+					btn.Color, btn.Background = btn.Background, btn.Color
+				}
+				return btn.Layout(gtx)
+			},
+		},
+	}, []materials.OverflowAction{}
+}
+
+func (c *ReplyListView) triggerReplyContextMenu(gtx layout.Context) {
+	actions, overflow := c.getContextualActions()
+	c.manager.RequestContextualBar(gtx, "Message Operations", actions, overflow)
+}
+
+func (c *ReplyListView) dismissReplyContextMenu(gtx layout.Context) {
+	c.manager.DismissContextualBar(gtx)
+}
+
 func (c *ReplyListView) Update(gtx layout.Context) {
+	overflowTag := c.manager.SelectedOverflowTag()
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
 			log.Printf("clicked %s", clickHandler.Reply)
-			c.manager.RequestContextualBar(gtx, "Message Operations", []materials.AppBarAction{
-				{
-					Icon: icons.ReplyIcon,
-					OverflowAction: materials.OverflowAction{
-						Name:  "Reply to selected",
-						State: &c.CreateReplyButton,
-					},
-				},
-				{
-					Icon: icons.CopyIcon,
-					OverflowAction: materials.OverflowAction{
-						Name:  "Copy reply text",
-						State: &c.CopyReplyButton,
-					},
-				},
-				{
-					Icon: icons.FilterIcon,
-					OverflowAction: materials.OverflowAction{
-						Name:  "Filter by selected",
-						State: &c.FilterButton,
-					},
-				},
-			}, []materials.OverflowAction{})
+			c.triggerReplyContextMenu(gtx)
 			if c.Selected == nil || !clickHandler.Reply.Equals(c.Selected) {
 				c.StateRefreshNeeded = true
 				c.Selected = clickHandler.Reply
 				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 			} else {
-				c.manager.DismissContextualBar(gtx)
-				//op.InvalidateOp{}.Add(gtx.Ops)
+				c.dismissReplyContextMenu(gtx)
 				c.Selected = nil
 				c.Filtered = false
 			}
@@ -151,7 +181,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.DeselectButton.Clicked() {
 		c.Selected = nil
 	}
-	if c.FilterButton.Clicked() {
+	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
 		if c.Filtered {
 			c.ReplyList.Position = c.PrefilterPosition
 		} else {
@@ -160,7 +190,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.Filtered = !c.Filtered
 		c.manager.DismissOverflow(gtx)
 	}
-	if c.Selected != nil && c.CopyReplyButton.Clicked() {
+	if c.Selected != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
@@ -172,7 +202,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.PasteIntoReplyButton.Clicked() {
 		c.manager.RequestClipboardPaste()
 	}
-	if c.Selected != nil && c.CreateReplyButton.Clicked() {
+	if c.Selected != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
 		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
@@ -187,7 +217,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		}
 		c.manager.DismissOverflow(gtx)
 	}
-	if c.CreateConversationButton.Clicked() {
+	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
 		c.CreatingConversation = true
 		c.manager.DismissOverflow(gtx)
 	}
