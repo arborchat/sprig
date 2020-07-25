@@ -60,9 +60,9 @@ func eventLoop(w *app.Window) error {
 	}
 
 	viewManager := NewViewManager(w, appState.Theme, *profile)
+	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(SettingsID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
-	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ConsentViewID, NewConsentView(&appState.Settings, &appState.ArborState, appState.Theme))
 	if appState.Settings.AcknowledgedNoticeVersion < NoticeVersion {
