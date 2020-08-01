@@ -11,7 +11,7 @@ require (
 	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8
 	git.wow.st/gmp/jni v0.0.0-20200709210836-4a3b173acb9f // indirect
-	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
+	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/exp v0.0.0-20200513190911-00229845015e
 	golang.org/x/sys v0.0.0-20200817155316-9781c653f443 // indirect
 	golang.org/x/text v0.3.3 // indirect
