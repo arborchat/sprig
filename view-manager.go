@@ -9,7 +9,6 @@ import (
 	"gioui.org/io/profile"
 	"gioui.org/io/system"
 	"gioui.org/layout"
-	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
@@ -52,6 +51,7 @@ type viewManager struct {
 	window  *app.Window
 	Theme   *sprigTheme.Theme
 
+	*materials.ModalLayer
 	*materials.ModalNavDrawer
 	*materials.AppBar
 
@@ -69,14 +69,16 @@ type viewManager struct {
 }
 
 func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) ViewManager {
+	modal := materials.NewModal()
 	vm := &viewManager{
 		views:          make(map[ViewID]View),
 		window:         window,
 		profiling:      profile,
 		Theme:          theme,
 		themeView:      NewThemeEditorView(theme),
-		ModalNavDrawer: materials.NewModalNav(theme.Theme, "Sprig", "Arbor chat client"),
-		AppBar:         materials.NewAppBar(theme.Theme),
+		ModalLayer:     modal,
+		ModalNavDrawer: materials.NewModalNav(theme.Theme, modal, "Sprig", "Arbor chat client"),
+		AppBar:         materials.NewAppBar(theme.Theme, modal),
 	}
 	vm.AppBar.NavigationIcon = icons.MenuIcon
 	return vm
@@ -157,7 +159,7 @@ func (vm *viewManager) Pop() {
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 	if vm.AppBar.NavigationClicked(gtx) {
-		vm.ModalNavDrawer.Appear(gtx.Now)
+		vm.ModalNavDrawer.ToggleVisibility(gtx.Now)
 	}
 	if vm.ModalNavDrawer.NavDestinationChanged() {
 		vm.RequestViewSwitch(vm.ModalNavDrawer.CurrentNavDestination().(ViewID))
@@ -186,7 +188,6 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 }
 
 func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
-	var barOp op.CallOp
 	view := vm.views[vm.current]
 	view.Update(gtx)
 	displayBar, _, _, _ := view.AppBarData()
@@ -195,12 +196,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
 			if displayBar {
-				// Calculate the dimensions of the app bar, but wait to lay it out
-				// until later.
-				macro := op.Record(gtx.Ops)
-				barDims := vm.AppBar.Layout(gtx)
-				barOp = macro.Stop()
-				return barDims
+				return vm.AppBar.Layout(gtx)
 			}
 			return layout.Dimensions{}
 		}),
@@ -208,14 +204,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 			return view.Layout(gtx)
 		}),
 	)
-	// Lay out the app bar *after* the view so that the overflow can expand
-	// on top of the underlying view.
-	if displayBar {
-		barOp.Add(gtx.Ops)
-	}
-	// Lay out the nav drawer after the app bar so that it can expand over
-	// the app bar.
-	vm.ModalNavDrawer.Layout(gtx)
+	vm.ModalLayer.Layout(gtx)
 	return dimensions
 }
 
