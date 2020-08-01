@@ -28,12 +28,11 @@ type ReplyListView struct {
 	*ArborState
 	*sprigTheme.Theme
 
-	DeselectButton  widget.Clickable
 	CopyReplyButton widget.Clickable
 
 	ReplyList    layout.List
 	ReplyStates  []sprigWidget.Reply
-	Selected     *fields.QualifiedHash
+	Focused      *fields.QualifiedHash
 	Ancestry     []*fields.QualifiedHash
 	Descendants  []*fields.QualifiedHash
 	Conversation *fields.QualifiedHash
@@ -160,27 +159,22 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
-			log.Printf("clicked %s", clickHandler.Reply)
-			c.triggerReplyContextMenu(gtx)
-			if c.Selected == nil || !clickHandler.Reply.Equals(c.Selected) {
+			clickedOnFocused := clickHandler.Reply.Equals(c.Focused)
+			if !clickedOnFocused {
 				c.StateRefreshNeeded = true
-				c.Selected = clickHandler.Reply
+				c.Focused = clickHandler.Reply
 				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
-			} else {
 				c.dismissReplyContextMenu(gtx)
-				c.Selected = nil
-				c.Filtered = false
+			} else {
+				c.triggerReplyContextMenu(gtx)
 			}
 		}
 	}
-	if c.StateRefreshNeeded && c.Selected != nil {
+	if c.StateRefreshNeeded && c.Focused != nil {
 		c.StateRefreshNeeded = false
-		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Selected)
-		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Selected)
-	}
-	if c.DeselectButton.Clicked() {
-		c.Selected = nil
+		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Focused)
+		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Focused)
 	}
 	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
 		if c.Filtered {
@@ -191,8 +185,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.Filtered = !c.Filtered
 		c.manager.DismissOverflow(gtx)
 	}
-	if c.Selected != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
-		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
+	if c.Focused != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
+		reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
 		} else {
@@ -203,8 +197,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.PasteIntoReplyButton.Clicked() {
 		c.manager.RequestClipboardPaste()
 	}
-	if c.Selected != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
-		reply, _, err := c.ArborState.SubscribableStore.Get(c.Selected)
+	if c.Focused != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
+		reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
 		} else {
@@ -292,10 +286,10 @@ func (c *ReplyListView) resetReplyState() {
 }
 
 func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
-	if c.Selected == nil {
+	if c.Focused == nil {
 		return sprigTheme.None
 	}
-	if c.Selected != nil && reply.ID().Equals(c.Selected) {
+	if c.Focused != nil && reply.ID().Equals(c.Focused) {
 		return sprigTheme.Selected
 	}
 	for _, id := range c.Ancestry {
@@ -342,6 +336,15 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	)
 }
 
+const insetUnit = 12
+
+var (
+	defaultInset    = unit.Dp(insetUnit)
+	ancestorInset   = unit.Dp(2 * insetUnit)
+	selectedInset   = unit.Dp(3 * insetUnit)
+	descendantInset = unit.Dp(4 * insetUnit)
+)
+
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
@@ -349,6 +352,10 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	stateIndex := 0
 	var dims layout.Dimensions
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+		if c.Focused == nil && len(replies) > 0 {
+			c.Focused = replies[len(replies)-1].ID()
+			c.StateRefreshNeeded = true
+		}
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
 				c.ReplyStates = append(c.ReplyStates, sprigWidget.Reply{})
@@ -363,23 +370,22 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			}
 			var community *forest.Community
 			author := reply.Author
-			sideInset := unit.Dp(3)
 			var leftInset unit.Value
 
 			status := c.statusOf(reply.Reply)
 			switch status {
 			case sprigTheme.Selected:
-				leftInset = unit.Dp(15)
+				leftInset = selectedInset
 				collapseMetadata = false
 				community = reply.Community
 			case sprigTheme.Ancestor:
-				leftInset = unit.Dp(15)
+				leftInset = ancestorInset
 			case sprigTheme.Descendant:
-				leftInset = unit.Dp(30)
+				leftInset = descendantInset
 			case sprigTheme.Sibling:
-				leftInset = sideInset
+				leftInset = defaultInset
 			default:
-				leftInset = sideInset
+				leftInset = defaultInset
 			}
 			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None) {
 				// do not render
@@ -388,7 +394,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			stateIndex++
 			return layout.Flex{}.Layout(gtx,
 				layout.Flexed(1, func(gtx C) D {
-					extraWidth := gtx.Px(unit.Dp(36))
+					extraWidth := gtx.Px(unit.Dp(5 * insetUnit))
 					messageWidth := gtx.Constraints.Max.X - extraWidth
 					return layout.Stack{}.Layout(gtx,
 						layout.Stacked(func(gtx C) D {
@@ -401,7 +407,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Top:    margin,
 								Bottom: unit.Dp(3),
 								Left:   leftInset,
-								Right:  sideInset,
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
 								replyWidget := sprigTheme.Reply(c.Theme, status)
