@@ -15,6 +15,7 @@ import (
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -347,7 +348,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	stateIndex := 0
 	var dims layout.Dimensions
-	c.ArborState.ReplyList.WithReplies(func(replies []*forest.Reply) {
+	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
 				c.ReplyStates = append(c.ReplyStates, sprigWidget.Reply{})
@@ -360,25 +361,17 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 					collapseMetadata = true
 				}
 			}
-			authorNode, found, err := c.ArborState.SubscribableStore.GetIdentity(&reply.Author)
-			if err != nil || !found {
-				log.Printf("failed finding author %s for node %s", &reply.Author, reply.ID())
-			}
 			var community *forest.Community
-			author := authorNode.(*forest.Identity)
+			author := reply.Author
 			sideInset := unit.Dp(3)
 			var leftInset unit.Value
 
-			status := c.statusOf(reply)
+			status := c.statusOf(reply.Reply)
 			switch status {
 			case sprigTheme.Selected:
 				leftInset = unit.Dp(15)
 				collapseMetadata = false
-				communityNode, found, err := c.ArborState.SubscribableStore.GetCommunity(&reply.CommunityID)
-				if err != nil || !found {
-					log.Printf("failed finding community %s for node %s", &reply.CommunityID, reply.ID())
-				}
-				community = communityNode.(*forest.Community)
+				community = reply.Community
 			case sprigTheme.Ancestor:
 				leftInset = unit.Dp(15)
 			case sprigTheme.Descendant:
@@ -413,7 +406,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								gtx.Constraints.Max.X = messageWidth
 								replyWidget := sprigTheme.Reply(c.Theme, status)
 								replyWidget.CollapseMetadata = collapseMetadata
-								return replyWidget.Layout(gtx, reply, author, community)
+								return replyWidget.Layout(gtx, reply.Reply, author, community)
 							})
 						}),
 						layout.Expanded(func(gtx C) D {

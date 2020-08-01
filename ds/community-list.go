@@ -26,11 +26,11 @@ func NewCommunityList(s store.ExtendedStore) (*CommunityList, error) {
 	cl := new(CommunityList)
 	var err error
 	var nodes []forest.Node
-	cl.nodelist = NewNodeList(func(node forest.Node) bool {
+	cl.nodelist = NewNodeList(func(node forest.Node) forest.Node {
 		if _, ok := node.(*forest.Community); ok {
-			return true
+			return node
 		}
-		return false
+		return nil
 	}, func(a, b forest.Node) bool {
 		return a.(*forest.Community).Created < b.(*forest.Community).Created
 	}, func() []forest.Node {
@@ -63,11 +63,35 @@ func (c *CommunityList) WithCommunities(closure func(communities []*forest.Commu
 	})
 }
 
+// ReplyData holds the contents of a single reply and the major nodes that
+// it references.
+type ReplyData struct {
+	*forest.Reply
+	Community *forest.Community
+	Author    *forest.Identity
+}
+
 // ReplyList holds a sortable list of replies that can update itself
 // automatically by subscribing to a store.ExtendedStore
 type ReplyList struct {
-	replies  []*forest.Reply
+	replies  []ReplyData
 	nodelist *NodeList
+}
+
+func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool {
+	asReply := reply.(*forest.Reply)
+	r.Reply = asReply
+	comm, has, err := store.GetCommunity(&asReply.CommunityID)
+	if err != nil || !has {
+		return false
+	}
+	r.Community = comm.(*forest.Community)
+	author, has, err := store.GetIdentity(&asReply.Author)
+	if err != nil || !has {
+		return false
+	}
+	r.Author = author.(*forest.Identity)
+	return true
 }
 
 // NewReplyList creates a ReplyList and subscribes it to the provided ExtendedStore.
@@ -76,16 +100,31 @@ func NewReplyList(s store.ExtendedStore) (*ReplyList, error) {
 	cl := new(ReplyList)
 	var err error
 	var nodes []forest.Node
-	cl.nodelist = NewNodeList(func(node forest.Node) bool {
-		if _, ok := node.(*forest.Reply); ok {
-			return true
+	cl.nodelist = NewNodeList(func(node forest.Node) forest.Node {
+		if _, ok := node.(ReplyData); ok {
+			return node
 		}
-		return false
+		var out ReplyData
+		if out.populate(node, s) {
+			return out
+		}
+		return nil
 	}, func(a, b forest.Node) bool {
-		return a.(*forest.Reply).Created < b.(*forest.Reply).Created
+		return a.(ReplyData).Reply.Created < b.(ReplyData).Reply.Created
 	}, func() []forest.Node {
+		replyDatas := make([]ReplyData, 0, 1024)
 		nodes, err = s.Recent(fields.NodeTypeReply, 1024)
-		return nodes
+		for _, node := range nodes {
+			var replyData ReplyData
+			if replyData.populate(node, s) {
+				replyDatas = append(replyDatas, replyData)
+			}
+		}
+		asNodes := make([]forest.Node, len(replyDatas))
+		for i := range replyDatas {
+			asNodes[i] = replyDatas[i]
+		}
+		return asNodes
 	}, s)
 	if err != nil {
 		return nil, fmt.Errorf("failed initializing reply list: %w", err)
@@ -101,13 +140,13 @@ func (c *ReplyList) IndexForID(id *fields.QualifiedHash) int {
 }
 
 // WithReplies executes an arbitrary closure with access to the replies stored
-// inside of the ReplList. The closure must not modify the slice that it is
+// inside of the ReplyList. The closure must not modify the slice that it is
 // given.
-func (c *ReplyList) WithReplies(closure func(replies []*forest.Reply)) {
+func (c *ReplyList) WithReplies(closure func(replies []ReplyData)) {
 	c.nodelist.WithNodes(func(nodes []forest.Node) {
 		c.replies = c.replies[:0]
 		for _, node := range nodes {
-			c.replies = append(c.replies, node.(*forest.Reply))
+			c.replies = append(c.replies, node.(ReplyData))
 		}
 		closure(c.replies)
 	})
@@ -117,17 +156,17 @@ func (c *ReplyList) WithReplies(closure func(replies []*forest.Reply)) {
 type NodeList struct {
 	sync.RWMutex
 	nodes    []forest.Node
-	filter   func(forest.Node) bool
-	sortFunc func(a, b forest.Node) bool
+	filter   NodeFilter
+	sortFunc NodeSorter
 }
 
-type NodeFilter func(forest.Node) bool
+type NodeFilter func(forest.Node) forest.Node
 type NodeSorter func(a, b forest.Node) bool
 
 // NewNodeList creates a nodelist subscribed to the provided store and initialized with the
 // return value of initialize(). The nodes will be sorted using the provided sort function
 // (via sort.Slice) and nodes will only be inserted into the list if the filter() function
-// returns true for them.
+// returns non-nil for them. The filter function may transform the data before inserting it.
 func NewNodeList(filter NodeFilter, sort NodeSorter, initialize func() []forest.Node, s store.ExtendedStore) *NodeList {
 	nl := new(NodeList)
 	nl.filter = filter
@@ -135,8 +174,8 @@ func NewNodeList(filter NodeFilter, sort NodeSorter, initialize func() []forest.
 	nl.withNodesWritable(func() {
 		nl.subscribeTo(s)
 		for _, node := range initialize() {
-			if filter(node) {
-				nl.nodes = append(nl.nodes, node)
+			if filtered := filter(node); filtered != nil {
+				nl.nodes = append(nl.nodes, filtered)
 			}
 		}
 		nl.sort()
@@ -150,16 +189,16 @@ func (n *NodeList) subscribeTo(s store.ExtendedStore) {
 		go func() {
 			n.Lock()
 			defer n.Unlock()
-			if n.filter(node) {
+			if filtered := n.filter(node); filtered != nil {
 				alreadyInList := false
 				for _, element := range n.nodes {
-					if element.Equals(node) {
+					if element.Equals(filtered) {
 						alreadyInList = true
 						break
 					}
 				}
 				if !alreadyInList {
-					n.nodes = append(n.nodes, node)
+					n.nodes = append(n.nodes, filtered)
 					n.sort()
 				}
 			}
