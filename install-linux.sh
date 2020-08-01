@@ -4,7 +4,7 @@ set -euo pipefail
 
 BASEDIR=$(dirname "$(realpath "$0")")
 
-PREFIX=/usr/local
+PREFIX=${PREFIX:-/usr/local}
 BIN_DIR=$PREFIX/bin
 APP_DIR=$PREFIX/share/applications
 ICON_DIR=$PREFIX/share/icons
