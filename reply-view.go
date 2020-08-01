@@ -315,57 +315,6 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 	return sprigTheme.None
 }
 
-func (c *ReplyListView) layoutButtons(gtx layout.Context) layout.Dimensions {
-	/*
-		theme := c.Theme.Theme
-		buttons := []layout.FlexChild{}
-		if c.Selected != nil {
-			buttons = append(buttons, layout.Rigid(func(gtx C) D {
-				return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-					material.IconButton(theme, &c.CopyReplyButton, icons.CopyIcon).Layout,
-				)
-			}))
-		}
-		if c.Selected != nil || c.Filtered {
-			buttons = append(buttons,
-				layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-						btn := material.IconButton(theme, &c.FilterButton, icons.FilterIcon)
-						if c.Filtered {
-							btn.Background = theme.Color.InvText
-							btn.Color = theme.Color.Primary
-						}
-						return btn.Layout(gtx)
-					})
-				}))
-		}
-		if !c.CreatingConversation {
-			buttons = append(buttons,
-				layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.IconButton(theme, &c.CreateConversationButton, icons.CreateConversationIcon).Layout,
-					)
-				}))
-		}
-
-		return layout.Stack{}.Layout(gtx,
-			layout.Expanded(func(gtx C) D {
-				paintOp := paint.ColorOp{Color: c.Theme.Primary.Dark}
-				paintOp.Add(gtx.Ops)
-				paint.PaintOp{Rect: f32.Rectangle{
-					Max: layout.FPt(gtx.Constraints.Max),
-				}}.Add(gtx.Ops)
-				return layout.Dimensions{}
-			}),
-			layout.Stacked(func(gtx C) D {
-				gtx.Constraints.Min.X = gtx.Constraints.Max.X
-				return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, buttons...)
-			}),
-		)
-	*/
-	return layout.Dimensions{}
-}
-
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
