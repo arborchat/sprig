@@ -7,9 +7,6 @@ gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09 h1:lb9vX6UiO8U3U73eqHGUp9AZvca8
 gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7 h1:mifEjre3ExP+TnI0Z6tjGa51TcP+CJCfPA16fFcw1Rs=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7/go.mod h1:r9pvrmlC21HDzv1lW5Udi/+01w4jIWf4NHPi2yHhjk8=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174 h1:rn4WjyTh9CvlVLlnVbKLsdViTW2R6wYPIWmkV9TRNSo=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9 h1:Y51y19J/hi5OCFA/L3j4ZH2IvRr5w4i3ZRhNVpRsSCk=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9/go.mod h1:B+yEvqqiOvReyFTyXa6Ar2YlGH04CDG0FyBPItbcbF4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
