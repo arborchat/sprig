@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"gioui.org/f32"
+	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -57,6 +58,9 @@ type ReplyListView struct {
 	// filtered to only those related to the selected node
 	Filtered          bool
 	PrefilterPosition layout.Position
+
+	HasKeyboardFocus           bool
+	ShouldRequestKeyboardFocus bool
 }
 
 var _ View = &ReplyListView{}
@@ -155,10 +159,20 @@ func (c *ReplyListView) dismissReplyContextMenu(gtx layout.Context) {
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
+	for _, event := range gtx.Events(c) {
+		switch event := event.(type) {
+		case key.FocusEvent:
+			log.Println("focus", event)
+			c.HasKeyboardFocus = event.Focus
+		case key.Event:
+			log.Println("key", event)
+		}
+	}
 	overflowTag := c.manager.SelectedOverflowTag()
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
+			c.requestKeyboardFocus()
 			clickedOnFocused := clickHandler.Reply.Equals(c.Focused)
 			if !clickedOnFocused {
 				c.StateRefreshNeeded = true
@@ -211,9 +225,11 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			}
 		}
 		c.manager.DismissOverflow(gtx)
+		c.ReplyEditor.Focus()
 	}
 	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
 		c.CreatingConversation = true
+		c.ReplyEditor.Focus()
 		c.manager.DismissOverflow(gtx)
 	}
 	if c.CancelReplyButton.Clicked() {
@@ -311,6 +327,8 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 }
 
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
+	key.InputOp{Tag: c, Focus: c.ShouldRequestKeyboardFocus}.Add(gtx.Ops)
+	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
@@ -355,6 +373,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		if c.Focused == nil && len(replies) > 0 {
 			c.Focused = replies[len(replies)-1].ID()
 			c.StateRefreshNeeded = true
+			c.requestKeyboardFocus()
 		}
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
@@ -536,9 +555,10 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 										return layout.Dimensions{}
 									}),
 									layout.Stacked(func(gtx C) D {
-										return layout.UniformInset(unit.Dp(6)).Layout(gtx,
-											material.Editor(theme, &c.ReplyEditor, "type your reply here").Layout,
-										)
+										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
+											editor := material.Editor(theme, &c.ReplyEditor, "type your reply here")
+											return editor.Layout(gtx)
+										})
 									}),
 								)
 							})
