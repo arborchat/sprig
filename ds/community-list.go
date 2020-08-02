@@ -79,7 +79,10 @@ type ReplyList struct {
 }
 
 func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool {
-	asReply := reply.(*forest.Reply)
+	asReply, ok := reply.(*forest.Reply)
+	if !ok {
+		return false
+	}
 	r.Reply = asReply
 	comm, has, err := store.GetCommunity(&asReply.CommunityID)
 	if err != nil || !has {
