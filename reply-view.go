@@ -59,7 +59,6 @@ type ReplyListView struct {
 	Filtered          bool
 	PrefilterPosition layout.Position
 
-	HasKeyboardFocus           bool
 	ShouldRequestKeyboardFocus bool
 }
 
@@ -158,13 +157,70 @@ func (c *ReplyListView) dismissReplyContextMenu(gtx layout.Context) {
 	c.manager.DismissContextualBar(gtx)
 }
 
+func (c *ReplyListView) moveFocusUp() {
+	if c.Focused == nil {
+		return
+	}
+	currentIndex := c.ArborState.ReplyList.IndexForID(c.Focused)
+	if currentIndex < 0 {
+		return
+	}
+	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+		if currentIndex <= 0 {
+			return
+		}
+		nextIndex := currentIndex - 1
+		c.Focused = replies[nextIndex].Reply.ID()
+		c.StateRefreshNeeded = true
+		c.ensureFocusedVisible(nextIndex)
+	})
+}
+
+func (c *ReplyListView) moveFocusDown() {
+	if c.Focused == nil {
+		return
+	}
+	currentIndex := c.ArborState.ReplyList.IndexForID(c.Focused)
+	if currentIndex < 0 {
+		return
+	}
+	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+		if currentIndex >= len(replies)-1 {
+			return
+		}
+		nextIndex := currentIndex + 1
+		c.Focused = replies[nextIndex].Reply.ID()
+		c.StateRefreshNeeded = true
+		c.ensureFocusedVisible(nextIndex)
+	})
+}
+
+func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
+	log.Printf("position: %v, index: %d", c.ReplyList.Position, focusedIndex)
+	currentFirst := c.ReplyList.Position.First
+	notInFirstFive := currentFirst+5 > focusedIndex
+	if currentFirst <= focusedIndex && notInFirstFive {
+		return
+	}
+	c.ReplyList.Position.First = focusedIndex
+	if notInFirstFive {
+		//		c.ReplyList.Position.First++
+	}
+	c.ReplyList.Position.Offset = 0
+	c.ReplyList.Position.BeforeEnd = true
+	log.Printf("after: %v", c.ReplyList.Position)
+}
+
 func (c *ReplyListView) Update(gtx layout.Context) {
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
-		case key.FocusEvent:
-			log.Println("focus", event)
-			c.HasKeyboardFocus = event.Focus
 		case key.Event:
+			switch event.Name {
+			case key.NameUpArrow:
+				c.moveFocusUp()
+			case key.NameDownArrow:
+				c.moveFocusDown()
+			}
 			log.Println("key", event)
 		}
 	}
@@ -375,6 +431,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			c.StateRefreshNeeded = true
 			c.requestKeyboardFocus()
 		}
+		log.Printf("beforelistlayout: %v", c.ReplyList.Position)
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
 				c.ReplyStates = append(c.ReplyStates, sprigWidget.Reply{})
@@ -456,6 +513,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
+	log.Printf("afterlistlayout: %v", c.ReplyList.Position)
 	return dims
 }
 
