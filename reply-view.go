@@ -483,9 +483,9 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Left:   leftInset,
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								replyWidget := sprigTheme.Reply(c.Theme, status)
+								replyWidget := sprigTheme.Reply(c.Theme, status, reply.Reply, author, community)
 								replyWidget.CollapseMetadata = collapseMetadata
-								return replyWidget.Layout(gtx, reply.Reply, author, community)
+								return replyWidget.Layout(gtx)
 							})
 						}),
 						layout.Expanded(func(gtx C) D {
@@ -583,10 +583,10 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
-								reply := sprigTheme.Reply(c.Theme, sprigTheme.None)
+								reply := sprigTheme.Reply(c.Theme, sprigTheme.None, c.ReplyingTo, c.ReplyingToAuthor, nil)
 								reply.Highlight = c.Theme.Primary.Default
 								reply.MaxLines = 5
-								return reply.Layout(gtx, c.ReplyingTo, c.ReplyingToAuthor, nil)
+								return reply.Layout(gtx)
 							})
 						}),
 						layout.Rigid(func(gtx C) D {

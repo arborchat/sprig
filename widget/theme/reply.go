@@ -40,14 +40,21 @@ type ReplyStyle struct {
 	// CollapseMetadata should be set to true if this reply can be rendered
 	// without the author being displayed.
 	CollapseMetadata bool
+
+	*forest.Reply
+	Author    *forest.Identity
+	Community *forest.Community
 }
 
-func Reply(th *Theme, status ReplyStatus) ReplyStyle {
+func Reply(th *Theme, status ReplyStatus, reply *forest.Reply, author *forest.Identity, community *forest.Community) ReplyStyle {
 	rs := ReplyStyle{
 		Theme:          th,
 		Background:     th.Background.Light,
 		TextColor:      th.Theme.Color.Text,
 		highlightWidth: unit.Dp(10),
+		Reply:          reply,
+		Author:         author,
+		Community:      community,
 	}
 	switch status {
 	case Selected:
@@ -60,13 +67,18 @@ func Reply(th *Theme, status ReplyStatus) ReplyStyle {
 		rs.Highlight = *th.Siblings
 		rs.highlightWidth = unit.Dp(0)
 	default:
-		rs.Highlight = *th.Unselected
-		rs.highlightWidth = unit.Dp(0)
+		if rs.Reply.Depth != 1 {
+			rs.Highlight = *th.Unselected
+			rs.highlightWidth = unit.Dp(0)
+		} else {
+			rs.Highlight = th.Primary.Dark
+			rs.highlightWidth = unit.Dp(10)
+		}
 	}
 	return rs
 }
 
-func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {
+func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			max := layout.FPt(gtx.Constraints.Min)
@@ -85,7 +97,7 @@ func (r ReplyStyle) Layout(gtx layout.Context, reply *forest.Reply, author *fore
 					inset := layout.UniformInset(unit.Dp(4))
 					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
 					return inset.Layout(gtx, func(gtx C) D {
-						return r.layoutContents(gtx, reply, author, community)
+						return r.layoutContents(gtx, r.Reply, r.Author, r.Community)
 					})
 				}),
 			)
@@ -187,7 +199,19 @@ func (r ReplyStyle) layoutContent(gtx layout.Context, reply *forest.Reply) layou
 	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
 	content.MaxLines = r.MaxLines
 	content.Color = r.TextColor
-	return content.Layout(gtx)
+	if r.Reply.Depth != 1 {
+		return content.Layout(gtx)
+	}
+	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
+			return content.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx C) D {
+			gtx.Constraints.Min.X = gtx.Constraints.Max.X
+			return layout.E.Layout(gtx, material.Body2(r.Theme.Theme, "Conversation root").Layout)
+		}),
+	)
+
 }
 
 type AuthorNameStyle struct {
