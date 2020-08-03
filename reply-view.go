@@ -515,7 +515,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		})
 	})
 	progress := float32(c.ReplyList.Position.First) / float32(replyListLen)
-	layout.E.Layout(gtx, func(gtx C) D {
+	log.Printf("progress: %v", progress)
+	layout.NE.Layout(gtx, func(gtx C) D {
 		indicatorHeightDp := unit.Dp(16)
 		indicatorHeightPx := gtx.Px(indicatorHeightDp)
 		heightDp := float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
