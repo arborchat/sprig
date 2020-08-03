@@ -196,7 +196,6 @@ func (c *ReplyListView) moveFocusDown() {
 }
 
 func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
-	log.Printf("position: %v, index: %d", c.ReplyList.Position, focusedIndex)
 	currentFirst := c.ReplyList.Position.First
 	notInFirstFive := currentFirst+5 > focusedIndex
 	if currentFirst <= focusedIndex && notInFirstFive {
@@ -208,7 +207,6 @@ func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
 	}
 	c.ReplyList.Position.Offset = 0
 	c.ReplyList.Position.BeforeEnd = true
-	log.Printf("after: %v", c.ReplyList.Position)
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
@@ -221,7 +219,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			case key.NameDownArrow:
 				c.moveFocusDown()
 			}
-			log.Println("key", event)
 		}
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
@@ -425,13 +422,14 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme.Theme
 	stateIndex := 0
 	var dims layout.Dimensions
+	var replyListLen int
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+		replyListLen = len(replies)
 		if c.Focused == nil && len(replies) > 0 {
 			c.Focused = replies[len(replies)-1].ID()
 			c.StateRefreshNeeded = true
 			c.requestKeyboardFocus()
 		}
-		log.Printf("beforelistlayout: %v", c.ReplyList.Position)
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
 				c.ReplyStates = append(c.ReplyStates, sprigWidget.Reply{})
@@ -498,10 +496,13 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 					)
 				}),
 				layout.Rigid(func(gtx C) D {
-					return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-						if status != sprigTheme.Selected {
-							return D{}
-						}
+					if status != sprigTheme.Selected {
+						return D{}
+					}
+					return layout.Inset{
+						Left:  unit.Dp(8),
+						Right: unit.Dp(12),
+					}.Layout(gtx, func(gtx C) D {
 						replyButton := material.IconButton(theme, &c.CreateReplyButton, icons.ReplyIcon)
 						replyButton.Size = unit.Dp(20)
 						replyButton.Inset = layout.UniformInset(unit.Dp(9))
@@ -513,7 +514,28 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
-	log.Printf("afterlistlayout: %v", c.ReplyList.Position)
+	progress := float32(c.ReplyList.Position.First) / float32(replyListLen)
+	layout.E.Layout(gtx, func(gtx C) D {
+		indicatorHeightDp := unit.Dp(16)
+		indicatorHeightPx := gtx.Px(indicatorHeightDp)
+		heightDp := float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
+		width := gtx.Px(unit.Dp(8))
+		top := unit.Dp(heightDp * progress)
+		if top.V+indicatorHeightDp.V > heightDp {
+			top = unit.Dp(heightDp - indicatorHeightDp.V)
+		}
+		rr := float32(gtx.Px(unit.Dp(4)))
+		return layout.Inset{
+			Top:    top,
+			Right:  unit.Dp(2),
+			Bottom: unit.Dp(2),
+		}.Layout(gtx, func(gtx C) D {
+			bg := c.Theme.Background.Dark
+			bg.A = 200
+			return sprigTheme.DrawRect(gtx, bg, f32.Point{X: float32(width), Y: float32(indicatorHeightPx)}, rr)
+		})
+	})
+
 	return dims
 }
 
