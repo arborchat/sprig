@@ -57,6 +57,10 @@ func (n *notificationManager) shouldNotify(reply *forest.Reply) bool {
 	if !n.SettingsService.NotificationsGloballyAllowed() {
 		return false
 	}
+	if md, err := reply.TwigMetadata(); err != nil || md.Contains("invisible", 1) {
+		// Invisible message
+		return false
+	}
 	localUserID := n.SettingsService.ActiveArborIdentityID()
 	if localUserID == nil {
 		return false
