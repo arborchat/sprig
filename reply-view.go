@@ -209,17 +209,56 @@ func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
 	c.ReplyList.Position.BeforeEnd = true
 }
 
+func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
+	if len(replies) < 1 {
+		return
+	}
+	c.Focused = replies[len(replies)-1].ID()
+	c.StateRefreshNeeded = true
+	c.requestKeyboardFocus()
+	c.ReplyList.Position.BeforeEnd = false
+}
+
+func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
+	if len(replies) < 1 {
+		return
+	}
+	c.Focused = replies[0].ID()
+	c.StateRefreshNeeded = true
+	c.requestKeyboardFocus()
+	c.ReplyList.Position.BeforeEnd = true
+	c.ReplyList.Position.First = 0
+	c.ReplyList.Position.Offset = 0
+}
+
 func (c *ReplyListView) Update(gtx layout.Context) {
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
 			switch event.Name {
+			case "K":
+				fallthrough
 			case key.NameUpArrow:
 				c.moveFocusUp()
+			case "J":
+				fallthrough
 			case key.NameDownArrow:
 				c.moveFocusDown()
+			case "g":
+				fallthrough
+			case key.NameHome:
+				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+					c.moveFocusStart(replies)
+				})
+			case "G":
+				fallthrough
+			case key.NameEnd:
+				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+					c.moveFocusEnd(replies)
+				})
 			}
 		}
+		log.Println(event)
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
 	for i := range c.ReplyStates {
@@ -426,9 +465,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
 		replyListLen = len(replies)
 		if c.Focused == nil && len(replies) > 0 {
-			c.Focused = replies[len(replies)-1].ID()
-			c.StateRefreshNeeded = true
-			c.requestKeyboardFocus()
+			c.moveFocusEnd(replies)
 		}
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
@@ -515,7 +552,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		})
 	})
 	progress := float32(c.ReplyList.Position.First) / float32(replyListLen)
-	log.Printf("progress: %v", progress)
 	layout.NE.Layout(gtx, func(gtx C) D {
 		indicatorHeightDp := unit.Dp(16)
 		indicatorHeightPx := gtx.Px(indicatorHeightDp)
