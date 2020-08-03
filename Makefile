@@ -20,7 +20,7 @@ MACOS_ARCHIVE = sprig-macos.tar.gz
 android: $(ANDROID_APK)
 
 $(ANDROID_APK): $(SOURCE) $(KEYSTORE)
-	go run gioui.org/cmd/gogio -target android -appid $(APPID) .
+	go run gioui.org/cmd/gogio -x -target android -appid $(APPID) .
 
 $(KEYSTORE):
 	mkdir -p $(ANDROID_CONFIG)
