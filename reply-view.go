@@ -258,7 +258,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				})
 			}
 		}
-		log.Println(event)
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
 	for i := range c.ReplyStates {
