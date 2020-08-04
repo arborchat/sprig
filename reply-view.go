@@ -478,7 +478,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			reply := replies[index]
 			collapseMetadata := false
 			if index > 0 {
-				if replies[index-1].Author.Equals(&reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
+				if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
 					collapseMetadata = true
 				}
 			}
