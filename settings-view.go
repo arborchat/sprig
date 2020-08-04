@@ -28,6 +28,7 @@ type SettingsView struct {
 	ProfilingSwitch     widget.Bool
 	ThemeingSwitch      widget.Bool
 	NotificationsSwitch widget.Bool
+	BottomBarSwitch     widget.Bool
 }
 
 var _ View = &SettingsView{}
@@ -87,7 +88,13 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		c.NotificationsEnabled = &c.NotificationsSwitch.Value
 		settingsChanged = true
 	}
+	if c.BottomBarSwitch.Changed() {
+		c.BottomAppBar = c.BottomBarSwitch.Value
+		settingsChanged = true
+		log.Println(c.BottomAppBar)
+	}
 	if settingsChanged {
+		c.manager.ApplySettings(*c.Settings)
 		go c.Settings.Persist()
 	}
 }
@@ -95,6 +102,7 @@ func (c *SettingsView) Update(gtx layout.Context) {
 func (c *SettingsView) BecomeVisible() {
 	c.ConnectionForm.SetText(c.Settings.Address)
 	c.NotificationsSwitch.Value = c.Settings.NotificationsGloballyAllowed()
+	c.BottomBarSwitch.Value = c.Settings.BottomAppBar
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
@@ -154,6 +162,26 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 		func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Rigid(func(gtx C) D {
+					return itemInset.Layout(gtx, material.H6(theme, "User Interface").Layout)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Switch(theme, &c.BottomBarSwitch).Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Body1(theme, "Use bottom app bar").Layout)
+						}),
+					)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on mobile devices.").Layout)
+				}),
+			)
+		},
+		func(gtx C) D {
+			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+				layout.Rigid(func(gtx C) D {
 					return itemInset.Layout(gtx, material.H6(theme, "Developer").Layout)
 				}),
 				layout.Rigid(func(gtx C) D {
@@ -184,101 +212,6 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 			return areas[index](gtx)
 		})
 	})
-	/*
-		c.CommunityList.Axis = layout.Vertical
-		width := gtx.Constraints.Constrain(image.Point{X: gtx.Px(unit.Dp(200))}).X
-		return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-			inset := layout.UniformInset(unit.Dp(4))
-			gtx.Constraints.Max.X = width
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					return inset.Layout(gtx, func(gtx C) D {
-						if c.Settings.ActiveIdentity != nil {
-							id, _ := c.Settings.Identity()
-							return layout.Flex{Alignment: layout.Baseline}.Layout(gtx,
-								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-									return material.Body1(theme, "Identity:").Layout(gtx)
-								}),
-								layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-									return layout.Inset{Left: unit.Dp(12)}.Layout(gtx,
-										sprigTheme.AuthorName(theme, id).Layout)
-								}),
-							)
-						} else {
-							return material.Button(theme, &c.IdentityButton, "Create new Identity").Layout(gtx)
-						}
-					})
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					gtx.Constraints.Max.X = width
-					return inset.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						return material.Body1(theme, "Known communities:").Layout(gtx)
-					})
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					var dims layout.Dimensions
-					c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
-						gtx.Constraints.Max.X = width
-						newCommunities := len(communities) - len(c.CommunityBoxes)
-						for ; newCommunities > 0; newCommunities-- {
-							c.CommunityBoxes = append(c.CommunityBoxes, widget.Bool{})
-						}
-						dims = c.CommunityList.Layout(gtx, len(communities), func(gtx layout.Context, index int) layout.Dimensions {
-							gtx.Constraints.Max.X = width
-							community := communities[index]
-							// checkbox := &c.CommunityBoxes[index]
-							// return layout.Flex{}.Layout(gtx,
-							// 	layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							// 		return layout.UniformInset(unit.Dp(8)).Layout(gtx,
-							// 			material.CheckBox(theme, checkbox, "").Layout,
-							// 		)
-							// 	}),
-							// layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-							return inset.Layout(gtx,
-								sprigTheme.CommunityName(theme, community).Layout,
-							)
-							// 	}),
-							// )
-						})
-					})
-					return dims
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					if runtime.GOOS == "linux" || runtime.GOOS == "android" {
-						gtx.Constraints.Max.X = width
-						in := layout.UniformInset(unit.Dp(8))
-						return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-							gtx.Constraints.Max.X = width
-							return layout.Flex{}.Layout(gtx,
-								layout.Rigid(func(gtx C) D {
-									return in.Layout(gtx, material.Body1(theme, "Graphics performance stats:").Layout)
-								}),
-								layout.Rigid(func(gtx C) D {
-									return in.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
-								}),
-							)
-						})
-					}
-					return D{}
-				}),
-				layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-					gtx.Constraints.Max.X = width
-					in := layout.UniformInset(unit.Dp(8))
-					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-						gtx.Constraints.Max.X = width
-						return layout.Flex{}.Layout(gtx,
-							layout.Rigid(func(gtx C) D {
-								return in.Layout(gtx, material.Body1(theme, "Edit Theme:").Layout)
-							}),
-							layout.Rigid(func(gtx C) D {
-								return in.Layout(gtx, material.Switch(theme, &c.ThemeingSwitch).Layout)
-							}),
-						)
-					})
-				}),
-			)
-		})
-	*/
 }
 
 func (c *SettingsView) SetManager(mgr ViewManager) {

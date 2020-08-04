@@ -43,6 +43,8 @@ type ViewManager interface {
 	SetProfiling(bool)
 	// enable live theme editing
 	SetThemeing(bool)
+	// apply settings changes relevant to the UI
+	ApplySettings(Settings)
 }
 
 type viewManager struct {
@@ -82,6 +84,15 @@ func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) V
 	}
 	vm.AppBar.NavigationIcon = icons.MenuIcon
 	return vm
+}
+
+func (vm *viewManager) ApplySettings(settings Settings) {
+	anchor := materials.Top
+	if settings.BottomAppBar {
+		anchor = materials.Bottom
+	}
+	vm.AppBar.Anchor = anchor
+	vm.ModalNavDrawer.Anchor = anchor
 }
 
 func (vm *viewManager) RegisterView(id ViewID, view View) {
@@ -191,19 +202,30 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	view := vm.views[vm.current]
 	view.Update(gtx)
 	displayBar, _, _, _ := view.AppBarData()
-	dimensions := layout.Flex{
+	bar := layout.Rigid(func(gtx C) D {
+		if displayBar {
+			return vm.AppBar.Layout(gtx)
+		}
+		return layout.Dimensions{}
+	})
+	content := layout.Flexed(1, func(gtx C) D {
+		return view.Layout(gtx)
+	})
+	flex := layout.Flex{
 		Axis: layout.Vertical,
-	}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			if displayBar {
-				return vm.AppBar.Layout(gtx)
-			}
-			return layout.Dimensions{}
-		}),
-		layout.Flexed(1, func(gtx C) D {
-			return view.Layout(gtx)
-		}),
-	)
+	}
+	var dimensions layout.Dimensions
+	if vm.AppBar.Anchor == materials.Top {
+		dimensions = flex.Layout(gtx,
+			bar,
+			content,
+		)
+	} else {
+		dimensions = flex.Layout(gtx,
+			content,
+			bar,
+		)
+	}
 	vm.ModalLayer.Layout(gtx)
 	return dimensions
 }

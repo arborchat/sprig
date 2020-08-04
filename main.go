@@ -60,6 +60,7 @@ func eventLoop(w *app.Window) error {
 	}
 
 	viewManager := NewViewManager(w, appState.Theme, *profile)
+	viewManager.ApplySettings(appState.Settings)
 	viewManager.RegisterView(ReplyViewID, NewReplyListView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(&appState.Settings, &appState.ArborState, appState.Theme))
 	viewManager.RegisterView(SettingsID, NewCommunityMenuView(&appState.Settings, &appState.ArborState, appState.Theme))
@@ -308,6 +309,8 @@ type Settings struct {
 	AcknowledgedNoticeVersion int
 
 	NotificationsEnabled *bool
+
+	BottomAppBar bool
 
 	dataDir string
 
