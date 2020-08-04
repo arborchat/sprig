@@ -41,18 +41,19 @@ type ReplyListView struct {
 	// contents of the replylist changed
 	StateRefreshNeeded bool
 
-	CreatingConversation     bool
-	ReplyingTo               *forest.Reply
-	ReplyingToAuthor         *forest.Identity
-	ReplyEditor              widget.Editor
-	FilterButton             widget.Clickable
-	CancelReplyButton        widget.Clickable
-	CreateReplyButton        widget.Clickable
-	SendReplyButton          widget.Clickable
-	PasteIntoReplyButton     widget.Clickable
-	CreateConversationButton widget.Clickable
-	CommunityChoice          widget.Enum
-	CommunityList            layout.List
+	CreatingConversation                bool
+	ReplyingTo                          *forest.Reply
+	ReplyingToAuthor                    *forest.Identity
+	ReplyEditor                         widget.Editor
+	FilterButton                        widget.Clickable
+	CancelReplyButton                   widget.Clickable
+	CreateReplyButton                   widget.Clickable
+	SendReplyButton                     widget.Clickable
+	PasteIntoReplyButton                widget.Clickable
+	CreateConversationButton            widget.Clickable
+	JumpToBottomButton, JumpToTopButton widget.Clickable
+	CommunityChoice                     widget.Enum
+	CommunityList                       layout.List
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -93,16 +94,25 @@ func (c *ReplyListView) NavItem() *materials.NavItem {
 func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
 	th := c.Theme.Theme
 	return true, "Messages", []materials.AppBarAction{
-		materials.SimpleIconAction(
-			th,
-			&c.CreateConversationButton,
-			icons.CreateConversationIcon,
-			materials.OverflowAction{
-				Name: "Create Conversation",
-				Tag:  &c.CreateConversationButton,
+			materials.SimpleIconAction(
+				th,
+				&c.CreateConversationButton,
+				icons.CreateConversationIcon,
+				materials.OverflowAction{
+					Name: "Create Conversation",
+					Tag:  &c.CreateConversationButton,
+				},
+			),
+		}, []materials.OverflowAction{
+			{
+				Name: "Jump to top",
+				Tag:  &c.JumpToTopButton,
 			},
-		),
-	}, []materials.OverflowAction{}
+			{
+				Name: "Jump to bottom",
+				Tag:  &c.JumpToBottomButton,
+			},
+		}
 }
 
 func (c *ReplyListView) HandleClipboard(contents string) {
@@ -232,6 +242,8 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
+	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
+	jump := jumpNone
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
@@ -245,25 +257,35 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			case key.NameDownArrow:
 				c.moveFocusDown()
 			case key.NameHome:
-				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-					c.moveFocusStart(replies)
-				})
+				jump = jumpStart
 			case "G":
 				if !event.Modifiers.Contain(key.ModShift) {
-					c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-						c.moveFocusStart(replies)
-					})
+					jump = jumpStart
 					break
 				}
 				fallthrough
 			case key.NameEnd:
-				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-					c.moveFocusEnd(replies)
-				})
+				jump = jumpEnd
 			}
 		}
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
+	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
+		jump = jumpEnd
+	}
+	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
+		jump = jumpStart
+	}
+	switch jump {
+	case jumpStart:
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusStart(replies)
+		})
+	case jumpEnd:
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusEnd(replies)
+		})
+	}
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
@@ -386,7 +408,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			c.resetReplyState()
 		}
 	}
-
 }
 
 func (c *ReplyListView) resetReplyState() {
