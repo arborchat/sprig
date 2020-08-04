@@ -244,13 +244,17 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				fallthrough
 			case key.NameDownArrow:
 				c.moveFocusDown()
-			case "g":
-				fallthrough
 			case key.NameHome:
 				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
 					c.moveFocusStart(replies)
 				})
 			case "G":
+				if !event.Modifiers.Contain(key.ModShift) {
+					c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+						c.moveFocusStart(replies)
+					})
+					break
+				}
 				fallthrough
 			case key.NameEnd:
 				c.ArborState.WithReplies(func(replies []ds.ReplyData) {
