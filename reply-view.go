@@ -719,7 +719,9 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 				reply            = replies[index]
 				status           = c.statusOf(reply.Reply)
 				anim             = c.Animations.Update(gtx, reply.Reply, status)
+				isActive         = c.Status().IsActive(reply.AuthorID())
 				collapseMetadata = func() bool {
+					// This conflicts with animation feature, so we're removing the feature for now.
 					// if index > 0 {
 					// 	if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
 					// 		return true
@@ -755,9 +757,10 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
 								return sprigTheme.
-									Reply(th, anim, reply).
+									Reply(th, anim, reply, isActive).
 									HideMetadata(collapseMetadata).
 									Layout(gtx)
+
 							})
 						}),
 						layout.Expanded(func(gtx C) D {
@@ -797,6 +800,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
+
 	totalNodes := func() int {
 		if c.Filtered {
 			return totalUnfilteredNodes
@@ -869,7 +873,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								}
 								reply := sprigTheme.Reply(th, &theme.ReplyAnimationState{
 									Normal: &c.Animations.Normal,
-								}, c.ReplyingTo)
+								}, c.ReplyingTo, true)
 								reply.Highlight = th.Primary.Default
 								reply.MaxLines = 5
 								return reply.Layout(gtx)

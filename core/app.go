@@ -12,6 +12,7 @@ type App interface {
 	Settings() SettingsService
 	Sprout() SproutService
 	Theme() ThemeService
+	Status() StatusService
 }
 
 // app bundles services together.
@@ -21,6 +22,7 @@ type app struct {
 	ArborService
 	SproutService
 	ThemeService
+	StatusService
 }
 
 var _ App = &app{}
@@ -58,12 +60,16 @@ func NewApp(stateDir string) (application App, err error) {
 	if a.ThemeService, err = newThemeService(); err != nil {
 		return nil, err
 	}
+	if a.StatusService, err = newStatusService(); err != nil {
+		return nil, err
+	}
 
 	// Connect services together
 	if addr := a.Settings().Address(); addr != "" {
 		a.Sprout().ConnectTo(addr)
 	}
 	a.Notifications().Register(a.Arbor().Store())
+	a.Status().Register(a.Arbor().Store())
 
 	return a, nil
 }
@@ -91,4 +97,9 @@ func (a *app) Sprout() SproutService {
 // Theme returns the app's theme service implmentation.
 func (a *app) Theme() ThemeService {
 	return a.ThemeService
+}
+
+// Status returns the app's sprout service implementation.
+func (a *app) Status() StatusService {
+	return a.StatusService
 }

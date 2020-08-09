@@ -5,7 +5,7 @@ go 1.14
 require (
 	gioui.org v0.0.0-20201011093930-f942db9e25bb
 	gioui.org/cmd v0.0.0-20201011093930-f942db9e25bb
-	git.sr.ht/~athorp96/forest-ex v0.0.0-20201011211837-c16617613aa2
+	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
 	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200924201440-0799d8d3d092
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86
 	git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0
@@ -24,4 +24,4 @@ require (
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
 
-replace git.sr.ht/~athorp96/forest-ex => git.sr.ht/~whereswaldon/forest-ex v0.0.0-20201012002222-096b725746a3
+replace gioui.org => git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c

@@ -6,12 +6,14 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/f32"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
+	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -66,10 +68,22 @@ func eventLoop(w *app.Window) error {
 		viewManager.RequestViewSwitch(ReplyViewID)
 	}
 
+	// Start active-status heartbeat
+	app.Arbor().Communities().WithCommunities(func(c []*forest.Community) {
+		if app.Settings().ActiveArborIdentityID() != nil {
+			builder, err := app.Settings().Builder()
+			if err == nil {
+				log.Printf("Begining active-status heartbeat")
+				go status.StartActivityHeartBeat(app.Arbor().Store(), c, builder, time.Minute*5)
+			} else {
+				log.Printf("Could not acquire builder: %v", err)
+			}
+		}
+	})
+
 	app.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
 	})
-
 	// handle ctrl+c to shutdown
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
@@ -78,15 +92,36 @@ func eventLoop(w *app.Window) error {
 	// for the necessary duration of that work.
 	shutdown := func() {
 		log.Printf("cleaning up")
-		// connections := app.Sprout().Connections()
-		// for _, conn := range connections {
-		// 	if worker := app.Sprout().WorkerFor(conn); worker != nil {
-		// 		var nodes []forest.Node
-		// 		if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
-		// 			log.Printf("error sending shutdown messages: %v", err)
-		// 		}
-		// 	}
-		// }
+		connections := app.Sprout().Connections()
+		for _, conn := range connections {
+			if worker := app.Sprout().WorkerFor(conn); worker != nil {
+				var nodes []forest.Node
+
+				app.Arbor().Communities().WithCommunities(func(coms []*forest.Community) {
+					if app.Settings().ActiveArborIdentityID() != nil {
+						builder, err := app.Settings().Builder()
+						if err == nil {
+							log.Printf("Killing active-status heartbeat")
+							for _, c := range coms {
+								n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
+								if err != nil {
+									log.Printf("Error creating inactive node: %v", err)
+									continue
+								}
+								log.Printf("Sending offline node to community %s", c.ID())
+								nodes = append(nodes, n)
+							}
+						} else {
+							log.Printf("Could not acquire builder: %v", err)
+						}
+					}
+				})
+
+				if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
+					log.Printf("error sending shutdown messages: %v", err)
+				}
+			}
+		}
 		log.Printf("shutting down")
 	}
 
