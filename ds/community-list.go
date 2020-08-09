@@ -100,11 +100,15 @@ func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool 
 	}
 	r.Author = author.(*forest.Identity)
 
-	// Verify twig data parses
-	if _, err := asReply.TwigMetadata(); err != nil {
+	// Verify twig data parses and node is not invisible
+	if md, err := asReply.TwigMetadata(); err != nil {
 		// Malformed metadata
 		log.Printf("Error when fetching twig metadata: %v", err)
 		log.Printf("Twig metadata: %v", asReply.Metadata.Blob)
+		return false
+	} else if md.Contains("invisible", 1) {
+		// Invisible message
+		log.Printf("Invisible node found. Not populating as a reply")
 		return false
 	}
 
