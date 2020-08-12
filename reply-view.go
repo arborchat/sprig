@@ -3,6 +3,7 @@ package main
 import (
 	"image/color"
 	"log"
+	"time"
 
 	"gioui.org/f32"
 	"gioui.org/io/key"
@@ -16,9 +17,11 @@ import (
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
+	"git.sr.ht/~whereswaldon/sprig/widget/theme"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -31,19 +34,20 @@ type ReplyListView struct {
 
 	CopyReplyButton widget.Clickable
 
-	ReplyList    layout.List
-	ReplyStates  []sprigWidget.Reply
-	Focused      *fields.QualifiedHash
-	Ancestry     []*fields.QualifiedHash
-	Descendants  []*fields.QualifiedHash
-	Conversation *fields.QualifiedHash
+	ReplyList       layout.List
+	ReplyStates     []sprigWidget.Reply
+	ReplyAnimations map[*forest.Reply]*theme.ReplyAnimationState
+	ReplyAnim       anim.Normal
+	Focused         *fields.QualifiedHash
+	Ancestry        []*fields.QualifiedHash
+	Descendants     []*fields.QualifiedHash
+	Conversation    *fields.QualifiedHash
 	// Whether the Ancestry and Descendants need to be regenerated because the
 	// contents of the replylist changed
 	StateRefreshNeeded bool
 
 	CreatingConversation                bool
-	ReplyingTo                          *forest.Reply
-	ReplyingToAuthor                    *forest.Identity
+	ReplyingTo                          ds.ReplyData
 	ReplyEditor                         widget.Editor
 	FilterButton                        widget.Clickable
 	CancelReplyButton                   widget.Clickable
@@ -65,11 +69,15 @@ type ReplyListView struct {
 
 var _ View = &ReplyListView{}
 
-func NewReplyListView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
+func NewReplyListView(settings *Settings, arborState *ArborState, th *sprigTheme.Theme) View {
 	c := &ReplyListView{
 		Settings:   settings,
 		ArborState: arborState,
-		Theme:      theme,
+		Theme:      th,
+		ReplyAnim: anim.Normal{
+			Duration: time.Millisecond * 200,
+		},
+		ReplyAnimations: make(map[*forest.Reply]*theme.ReplyAnimationState),
 	}
 	c.ReplyList.Axis = layout.Vertical
 	// ensure that we are notified when we need to refresh the state of visible nodes
@@ -241,6 +249,15 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	c.ReplyList.Position.Offset = 0
 }
 
+func (c *ReplyListView) refreshNodeStatus(gtx C) {
+	if c.Focused != nil {
+		c.StateRefreshNeeded = false
+		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Focused)
+		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Focused)
+		c.ReplyAnim.Start(gtx.Now)
+	}
+}
+
 func (c *ReplyListView) Update(gtx layout.Context) {
 	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
 	jump := jumpNone
@@ -302,10 +319,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			}
 		}
 	}
-	if c.StateRefreshNeeded && c.Focused != nil {
-		c.StateRefreshNeeded = false
-		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Focused)
-		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Focused)
+	if c.StateRefreshNeeded {
+		c.refreshNodeStatus(gtx)
 	}
 	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
 		if c.Filtered {
@@ -333,12 +348,12 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		if err != nil {
 			log.Printf("failed looking up selected message: %v", err)
 		} else {
-			c.ReplyingTo = reply.(*forest.Reply)
-			author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Author)
+			c.ReplyingTo.Reply = reply.(*forest.Reply)
+			author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Reply.Author)
 			if err != nil {
 				log.Printf("failed looking up select message author: %v", err)
 			} else {
-				c.ReplyingToAuthor = author.(*forest.Identity)
+				c.ReplyingTo.Author = author.(*forest.Identity)
 			}
 		}
 		c.manager.DismissOverflow(gtx)
@@ -411,8 +426,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 }
 
 func (c *ReplyListView) resetReplyState() {
-	c.ReplyingTo = nil
-	c.ReplyingToAuthor = nil
+	c.ReplyingTo.Reply = nil
 	c.CreatingConversation = false
 	c.ReplyEditor.SetText("")
 }
@@ -460,7 +474,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					return c.layoutReplyList(gtx)
 				}),
 				layout.Rigid(func(gtx C) D {
-					if c.ReplyingTo != nil || c.CreatingConversation {
+					if c.ReplyingTo.Reply != nil || c.CreatingConversation {
 						return c.layoutEditor(gtx)
 					}
 					return layout.Dimensions{}
@@ -479,10 +493,34 @@ var (
 	descendantInset = unit.Dp(4 * insetUnit)
 )
 
+func insetForStatus(status theme.ReplyStatus) unit.Value {
+	switch status {
+	case sprigTheme.Selected:
+		return selectedInset
+	case sprigTheme.Ancestor:
+		return ancestorInset
+	case sprigTheme.Descendant:
+		return descendantInset
+	case sprigTheme.Sibling:
+		return defaultInset
+	default:
+		return defaultInset
+	}
+}
+
+func interpolateInset(anim *theme.ReplyAnimationState, progress float32) unit.Value {
+	if progress == 0 {
+		return insetForStatus(anim.Begin)
+	}
+	begin := insetForStatus(anim.Begin).V
+	end := insetForStatus(anim.End).V
+	return unit.Dp((end-begin)*progress + begin)
+}
+
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
-	theme := c.Theme.Theme
+	th := c.Theme.Theme
 	stateIndex := 0
 	var dims layout.Dimensions
 	var replyListLen int
@@ -503,29 +541,24 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 					collapseMetadata = true
 				}
 			}
-			var community *forest.Community
-			author := reply.Author
-			var leftInset unit.Value
 
 			status := c.statusOf(reply.Reply)
-			switch status {
-			case sprigTheme.Selected:
-				leftInset = selectedInset
-				collapseMetadata = false
-				community = reply.Community
-			case sprigTheme.Ancestor:
-				leftInset = ancestorInset
-			case sprigTheme.Descendant:
-				leftInset = descendantInset
-			case sprigTheme.Sibling:
-				leftInset = defaultInset
-			default:
-				leftInset = defaultInset
-			}
 			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None) {
 				// do not render
 				return layout.Dimensions{}
 			}
+			anim, ok := c.ReplyAnimations[reply.Reply]
+			if !ok {
+				anim = &theme.ReplyAnimationState{
+					Normal: &c.ReplyAnim,
+					Begin:  status,
+				}
+				c.ReplyAnimations[reply.Reply] = anim
+			}
+			if c.ReplyAnim.Animating(gtx) {
+				anim.End = status
+			}
+			leftInset := interpolateInset(anim, c.ReplyAnim.Progress(gtx))
 			stateIndex++
 			return layout.Flex{}.Layout(gtx,
 				layout.Flexed(1, func(gtx C) D {
@@ -544,7 +577,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Left:   leftInset,
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								replyWidget := sprigTheme.Reply(c.Theme, status, reply.Reply, author, community)
+								replyWidget := sprigTheme.Reply(c.Theme, anim, reply)
 								replyWidget.CollapseMetadata = collapseMetadata
 								return replyWidget.Layout(gtx)
 							})
@@ -564,7 +597,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 						Left:  unit.Dp(8),
 						Right: unit.Dp(12),
 					}.Layout(gtx, func(gtx C) D {
-						replyButton := material.IconButton(theme, &c.CreateReplyButton, icons.ReplyIcon)
+						replyButton := material.IconButton(th, &c.CreateReplyButton, icons.ReplyIcon)
 						replyButton.Size = unit.Dp(20)
 						replyButton.Inset = layout.UniformInset(unit.Dp(9))
 						replyButton.Background = c.Theme.Secondary.Light
@@ -601,7 +634,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 }
 
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
+	th := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			paintOp := paint.ColorOp{Color: c.Theme.Primary.Light}
@@ -621,9 +654,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								if c.CreatingConversation {
-									return material.Body1(theme, "New Conversation in:").Layout(gtx)
+									return material.Body1(th, "New Conversation in:").Layout(gtx)
 								}
-								return material.Body1(theme, "Replying to:").Layout(gtx)
+								return material.Body1(th, "Replying to:").Layout(gtx)
 
 							})
 						}),
@@ -637,14 +670,16 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 											if c.CommunityChoice.Value == "" && index == 0 {
 												c.CommunityChoice.Value = community.ID().String()
 											}
-											radio := material.RadioButton(theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
+											radio := material.RadioButton(th, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
 											radio.IconColor = c.Theme.Secondary.Default
 											return radio.Layout(gtx)
 										})
 									})
 									return dims
 								}
-								reply := sprigTheme.Reply(c.Theme, sprigTheme.None, c.ReplyingTo, c.ReplyingToAuthor, nil)
+								reply := sprigTheme.Reply(c.Theme, &theme.ReplyAnimationState{
+									Normal: &c.ReplyAnim,
+								}, c.ReplyingTo)
 								reply.Highlight = c.Theme.Primary.Default
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
@@ -652,7 +687,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								cancelButton := material.IconButton(theme, &c.CancelReplyButton, icons.CancelReplyIcon)
+								cancelButton := material.IconButton(th, &c.CancelReplyButton, icons.CancelReplyIcon)
 								cancelButton.Size = unit.Dp(20)
 								cancelButton.Inset = layout.UniformInset(unit.Dp(4))
 								return cancelButton.Layout(gtx)
@@ -664,7 +699,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								pasteButton := material.IconButton(theme, &c.PasteIntoReplyButton, icons.PasteIcon)
+								pasteButton := material.IconButton(th, &c.PasteIntoReplyButton, icons.PasteIcon)
 								pasteButton.Inset = layout.UniformInset(unit.Dp(4))
 								pasteButton.Size = unit.Dp(20)
 								return pasteButton.Layout(gtx)
@@ -697,7 +732,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-											editor := material.Editor(theme, &c.ReplyEditor, "type your reply here")
+											editor := material.Editor(th, &c.ReplyEditor, "type your reply here")
 											return editor.Layout(gtx)
 										})
 									}),
@@ -706,7 +741,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								sendButton := material.IconButton(theme, &c.SendReplyButton, icons.SendReplyIcon)
+								sendButton := material.IconButton(th, &c.SendReplyButton, icons.SendReplyIcon)
 								sendButton.Size = unit.Dp(20)
 								sendButton.Inset = layout.UniformInset(unit.Dp(4))
 								sendButton.Background = c.Theme.Primary.Default

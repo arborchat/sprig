@@ -10,6 +10,9 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/anim"
+	"git.sr.ht/~whereswaldon/sprig/ds"
 )
 
 type (
@@ -25,7 +28,48 @@ const (
 	Selected
 	Ancestor
 	Descendant
+	ConversationRoot
 )
+
+func (r ReplyStatus) HighlightColor(th *Theme) color.RGBA {
+	switch r {
+	case Selected:
+		return *th.Selected
+	case Ancestor:
+		return *th.Ancestors
+	case Descendant:
+		return *th.Descendants
+	case Sibling:
+		return *th.Siblings
+	case ConversationRoot:
+		return th.Primary.Dark
+	default:
+		return *th.Unselected
+	}
+}
+
+// ReplyAnimationState holds the state of an in-progress animation for a reply.
+// The anim.Normal field defines how far through the animation the node is, and
+// the Begin and End fields define the two states that the node is transitioning
+// between.
+type ReplyAnimationState struct {
+	*anim.Normal
+	Begin, End ReplyStatus
+}
+
+// Style applies the appropriate visual tweaks the the reply status for the
+// current animation frame.
+func (r *ReplyAnimationState) Style(gtx C, reply *ReplyStyle) {
+	progress := r.Progress(gtx)
+	if progress >= 1 {
+		r.Begin = r.End
+		reply.Highlight = r.Begin.HighlightColor(reply.Theme)
+	}
+	startColor := r.Begin.HighlightColor(reply.Theme)
+	endColor := r.End.HighlightColor(reply.Theme)
+	current := materials.Interpolate(startColor, endColor, progress)
+	reply.Highlight = current
+}
 
 type ReplyStyle struct {
 	*Theme
@@ -41,44 +85,25 @@ type ReplyStyle struct {
 	// without the author being displayed.
 	CollapseMetadata bool
 
-	*forest.Reply
-	Author    *forest.Identity
-	Community *forest.Community
+	*ReplyAnimationState
+
+	ds.ReplyData
 }
 
-func Reply(th *Theme, status ReplyStatus, reply *forest.Reply, author *forest.Identity, community *forest.Community) ReplyStyle {
+func Reply(th *Theme, status *ReplyAnimationState, nodes ds.ReplyData) ReplyStyle {
 	rs := ReplyStyle{
-		Theme:          th,
-		Background:     th.Background.Light,
-		TextColor:      th.Theme.Color.Text,
-		highlightWidth: unit.Dp(10),
-		Reply:          reply,
-		Author:         author,
-		Community:      community,
-	}
-	switch status {
-	case Selected:
-		rs.Highlight = *th.Selected
-	case Ancestor:
-		rs.Highlight = *th.Ancestors
-	case Descendant:
-		rs.Highlight = *th.Descendants
-	case Sibling:
-		rs.Highlight = *th.Siblings
-		rs.highlightWidth = unit.Dp(0)
-	default:
-		if rs.Reply.Depth != 1 {
-			rs.Highlight = *th.Unselected
-			rs.highlightWidth = unit.Dp(0)
-		} else {
-			rs.Highlight = th.Primary.Dark
-			rs.highlightWidth = unit.Dp(10)
-		}
+		Theme:               th,
+		Background:          th.Background.Light,
+		TextColor:           th.Theme.Color.Text,
+		highlightWidth:      unit.Dp(10),
+		ReplyData:           nodes,
+		ReplyAnimationState: status,
 	}
 	return rs
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
+	r.ReplyAnimationState.Style(gtx, &r)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			max := layout.FPt(gtx.Constraints.Min)
@@ -97,7 +122,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 					inset := layout.UniformInset(unit.Dp(4))
 					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
 					return inset.Layout(gtx, func(gtx C) D {
-						return r.layoutContents(gtx, r.Reply, r.Author, r.Community)
+						return r.layoutContents(gtx)
 					})
 				}),
 			)
@@ -115,22 +140,23 @@ func max(is ...int) int {
 	return max
 }
 
-func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, author *forest.Identity, community *forest.Community) layout.Dimensions {
+func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
+	inset := layout.Inset{Right: unit.Dp(4)}
 	if !r.CollapseMetadata {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx,
 					func(gtx layout.Context) layout.Dimensions {
 						nameMacro := op.Record(gtx.Ops)
-						nameDim := AuthorName(r.Theme.Theme, author).Layout(gtx)
+						nameDim := inset.Layout(gtx, AuthorName(r.Theme.Theme, r.ReplyData.Author).Layout)
 						nameWidget := nameMacro.Stop()
 
 						communityMacro := op.Record(gtx.Ops)
-						communityDim := CommunityName(r.Theme.Theme, community).Layout(gtx)
+						communityDim := inset.Layout(gtx, CommunityName(r.Theme.Theme, r.ReplyData.Community).Layout)
 						communityWidget := communityMacro.Stop()
 
 						dateMacro := op.Record(gtx.Ops)
-						dateDim := r.layoutDate(gtx, reply)
+						dateDim := r.layoutDate(gtx)
 						dateWidget := dateMacro.Stop()
 
 						gtx.Constraints.Min.Y = max(nameDim.Size.Y, communityDim.Size.Y, dateDim.Size.Y)
@@ -172,22 +198,22 @@ func (r ReplyStyle) layoutContents(gtx layout.Context, reply *forest.Reply, auth
 					})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return r.layoutContent(gtx, reply)
+				return r.layoutContent(gtx)
 			}),
 		)
 	}
 	return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx,
 		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
-			return r.layoutContent(gtx, reply)
+			return r.layoutContent(gtx)
 		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return r.layoutDate(gtx, reply)
+			return r.layoutDate(gtx)
 		}),
 	)
 }
 
-func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
-	date := material.Body2(r.Theme.Theme, reply.Created.Time().Local().Format("2006/01/02 15:04"))
+func (r ReplyStyle) layoutDate(gtx layout.Context) layout.Dimensions {
+	date := material.Body2(r.Theme.Theme, r.ReplyData.Reply.Created.Time().Local().Format("2006/01/02 15:04"))
 	date.MaxLines = 1
 	date.Color = r.TextColor
 	date.Color.A = 200
@@ -195,7 +221,8 @@ func (r ReplyStyle) layoutDate(gtx layout.Context, reply *forest.Reply) layout.D
 	return date.Layout(gtx)
 }
 
-func (r ReplyStyle) layoutContent(gtx layout.Context, reply *forest.Reply) layout.Dimensions {
+func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
+	reply := r.ReplyData.Reply
 	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
 	content.MaxLines = r.MaxLines
 	content.Color = r.TextColor
@@ -250,7 +277,6 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 
 type CommunityNameStyle struct {
 	*forest.Community
-	Prefix string
 	*material.Theme
 }
 
@@ -266,12 +292,6 @@ func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 		return layout.Dimensions{}
 	}
 	return layout.Flex{}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			prefixLabel := material.Body2(a.Theme, a.Prefix)
-			prefixLabel.Color.A = 150
-			prefixLabel.MaxLines = 1
-			return prefixLabel.Layout(gtx)
-		}),
 		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 			name := material.Body2(a.Theme, string(a.Community.Name.Blob))
 			name.Font.Weight = text.Bold
