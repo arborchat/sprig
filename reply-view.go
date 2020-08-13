@@ -75,7 +75,7 @@ func NewReplyListView(settings *Settings, arborState *ArborState, th *sprigTheme
 		ArborState: arborState,
 		Theme:      th,
 		ReplyAnim: anim.Normal{
-			Duration: time.Millisecond * 200,
+			Duration: time.Millisecond * 100,
 		},
 		ReplyAnimations: make(map[*forest.Reply]*theme.ReplyAnimationState),
 	}
