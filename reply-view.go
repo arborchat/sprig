@@ -449,6 +449,9 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 			return sprigTheme.Descendant
 		}
 	}
+	if reply.Depth == 1 {
+		return sprigTheme.ConversationRoot
+	}
 	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
 		if c.Conversation.Equals(&reply.ConversationID) {
 			return sprigTheme.Sibling
