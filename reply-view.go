@@ -1,6 +1,7 @@
 package main
 
 import (
+	"image"
 	"image/color"
 	"log"
 	"time"
@@ -563,11 +564,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			}
 			leftInset := interpolateInset(anim, c.ReplyAnim.Progress(gtx))
 			stateIndex++
-			return layout.Flex{}.Layout(gtx,
-				layout.Flexed(1, func(gtx C) D {
+			return layout.Stack{}.Layout(gtx,
+				layout.Stacked(func(gtx C) D {
 					extraWidth := gtx.Px(unit.Dp(5 * insetUnit))
 					messageWidth := gtx.Constraints.Max.X - extraWidth
-					return layout.Stack{}.Layout(gtx,
+					dims := layout.Stack{}.Layout(gtx,
 						layout.Stacked(func(gtx C) D {
 							gtx.Constraints.Min.X = gtx.Constraints.Max.X
 							margin := unit.Dp(3)
@@ -591,21 +592,30 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							return dims
 						}),
 					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					if status != sprigTheme.Selected {
-						return D{}
+					return D{
+						Size: image.Point{
+							X: gtx.Constraints.Max.X,
+							Y: dims.Size.Y,
+						},
+						Baseline: dims.Baseline,
 					}
-					return layout.Inset{
-						Left:  unit.Dp(8),
-						Right: unit.Dp(12),
-					}.Layout(gtx, func(gtx C) D {
-						replyButton := material.IconButton(th, &c.CreateReplyButton, icons.ReplyIcon)
-						replyButton.Size = unit.Dp(20)
-						replyButton.Inset = layout.UniformInset(unit.Dp(9))
-						replyButton.Background = c.Theme.Secondary.Light
-						replyButton.Color = c.Theme.Background.Dark
-						return replyButton.Layout(gtx)
+				}),
+				layout.Expanded(func(gtx C) D {
+					return layout.E.Layout(gtx, func(gtx C) D {
+						if status != sprigTheme.Selected {
+							return D{}
+						}
+						return layout.Inset{
+							Left:  unit.Dp(8),
+							Right: unit.Dp(12),
+						}.Layout(gtx, func(gtx C) D {
+							replyButton := material.IconButton(th, &c.CreateReplyButton, icons.ReplyIcon)
+							replyButton.Size = unit.Dp(20)
+							replyButton.Inset = layout.UniformInset(unit.Dp(9))
+							replyButton.Background = c.Theme.Secondary.Light
+							replyButton.Color = c.Theme.Background.Dark
+							return replyButton.Layout(gtx)
+						})
 					})
 				}),
 			)
