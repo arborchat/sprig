@@ -540,11 +540,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			state := &c.ReplyStates[stateIndex]
 			reply := replies[index]
 			collapseMetadata := false
-			if index > 0 {
-				if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
-					collapseMetadata = true
-				}
-			}
+			// if index > 0 {
+			// 	if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
+			// 		collapseMetadata = true
+			// 	}
+			// }
 
 			status := c.statusOf(reply.Reply)
 			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None) {
