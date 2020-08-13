@@ -401,7 +401,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				log.Printf("failed acquiring node builder: %v", err)
 			} else {
 				author = nodeBuilder.User
-				reply, err := nodeBuilder.NewReply(c.ReplyingTo, c.ReplyEditor.Text(), []byte{})
+				reply, err := nodeBuilder.NewReply(c.ReplyingTo.Reply, c.ReplyEditor.Text(), []byte{})
 				if err != nil {
 					log.Printf("failed building reply: %v", err)
 				} else {
