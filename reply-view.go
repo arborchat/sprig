@@ -557,6 +557,9 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			}
 			if c.ReplyAnim.Animating(gtx) {
 				anim.End = status
+			} else {
+				anim.Begin = status
+				anim.End = status
 			}
 			leftInset := interpolateInset(anim, c.ReplyAnim.Progress(gtx))
 			stateIndex++

@@ -41,6 +41,11 @@ func (n *Normal) SetDuration(d time.Duration) {
 }
 
 func (n *Normal) Animating(gtx layout.Context) bool {
-	progress := n.Progress(gtx)
-	return progress > 0 && progress < 1
+	if n.Duration == 0 {
+		return false
+	}
+	if gtx.Now.After(n.StartTime.Add(n.Duration)) {
+		return false
+	}
+	return true
 }
