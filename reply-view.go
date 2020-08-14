@@ -547,7 +547,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			// }
 
 			status := c.statusOf(reply.Reply)
-			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None) {
+			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot) {
 				// do not render
 				return layout.Dimensions{}
 			}
