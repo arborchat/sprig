@@ -5,6 +5,7 @@ package ds
 
 import (
 	"fmt"
+	"log"
 	"sort"
 	"sync"
 
@@ -78,6 +79,9 @@ type ReplyList struct {
 	nodelist *NodeList
 }
 
+// populate populates the the fields of a ReplyData object from a given node and a store.
+// It can be used on an unfilled ReplyData instance in place of a constructor. It returns
+// false if the node cannot be processed into ReplyData
 func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool {
 	asReply, ok := reply.(*forest.Reply)
 	if !ok {
@@ -85,6 +89,7 @@ func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool 
 	}
 	r.Reply = asReply
 	comm, has, err := store.GetCommunity(&asReply.CommunityID)
+
 	if err != nil || !has {
 		return false
 	}
@@ -94,6 +99,15 @@ func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool 
 		return false
 	}
 	r.Author = author.(*forest.Identity)
+
+	// Verify twig data parses
+	if _, err := asReply.TwigMetadata(); err != nil {
+		// Malformed metadata
+		log.Printf("Error when fetching twig metadata: %v", err)
+		log.Printf("Twig metadata: %v", asReply.Metadata.Blob)
+		return false
+	}
+
 	return true
 }
 
@@ -104,14 +118,34 @@ func NewReplyList(s store.ExtendedStore) (*ReplyList, error) {
 	var err error
 	var nodes []forest.Node
 	cl.nodelist = NewNodeList(func(node forest.Node) forest.Node {
-		if _, ok := node.(ReplyData); ok {
-			return node
-		}
+		addToList := false
 		var out ReplyData
-		if out.populate(node, s) {
+
+		if r, ok := node.(ReplyData); ok {
+			addToList = true
+			out = r
+		}
+
+		if !addToList && out.populate(node, s) {
+			addToList = true
+		}
+
+		// Revoke node's addition if it is invisible
+		if addToList {
+			md, _ := out.Reply.TwigMetadata()
+			if md.Contains("invisible", 1) {
+				// Invisible message
+				log.Printf("Invisible node found. Skipping from ReplyList")
+				addToList = false
+			}
+		}
+
+		if addToList {
 			return out
 		}
+
 		return nil
+
 	}, func(a, b forest.Node) bool {
 		return a.(ReplyData).Reply.Created < b.(ReplyData).Reply.Created
 	}, func() []forest.Node {

@@ -5,8 +5,8 @@ git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7 h1:mifEjr
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7/go.mod h1:r9pvrmlC21HDzv1lW5Udi/+01w4jIWf4NHPi2yHhjk8=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93 h1:DXtB8FXojNZAj7+sqXhvVKM6Az36a18B1WuqvjG0D1Q=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20200625210621-d3d4a318419f h1:GQDJ9ExBSnPPh+gTt3YjA+dvJgbhM/Y9Zp/LCNVlueQ=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20200625210621-d3d4a318419f/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174 h1:rn4WjyTh9CvlVLlnVbKLsdViTW2R6wYPIWmkV9TRNSo=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200804211001-1d6a22007529 h1:7lY6HqIEXf2kC5s/1zflRYPbTjw9pJhk0wGU4eqXrKI=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200804211001-1d6a22007529/go.mod h1:gnQ47FJyeM34hX5zLHGlQsJSNvcWsMoF+SQiyT+YLdU=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200801210550-599c1e9a9702 h1:br/YWITnCKHPzUm0XyFr/CehQC6kH+fWi+p5DNNxraI=
