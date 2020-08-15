@@ -20,6 +20,7 @@ sources:
 environment:
     PATH: /usr/bin:/home/build/go/bin:/home/build/android/cmdline-tools/tools/bin
     ANDROID_HOME: /home/build/android
+    ANDROID_SDK_ROOT: /home/build/android
     android_sdk_tools_zip: commandlinetools-linux-6200805_latest.zip
     android_ndk_zip: android-ndk-r20-linux-x86_64.zip
     android_target_platform: "platforms;android-28"
