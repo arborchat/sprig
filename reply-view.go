@@ -4,6 +4,7 @@ import (
 	"image"
 	"image/color"
 	"log"
+	"runtime"
 	"time"
 
 	"gioui.org/f32"
@@ -369,6 +370,11 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	}
 }
 
+func (c *ReplyListView) startConversation() {
+	c.CreatingConversation = true
+	c.ReplyEditor.Focus()
+}
+
 func (c *ReplyListView) Update(gtx layout.Context) {
 	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
 	jump := jumpNone
@@ -392,9 +398,25 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				jump = jumpEnd
 			case key.NameReturn, key.NameEnter:
 				c.startReply()
+			case "C":
+				if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+					c.copyFocused()
+				} else {
+					c.startConversation()
+				}
+			case "V":
+				if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+					// TODO: move this handling code to the editor somehow, since that's where the paste needs to happen
+					c.manager.RequestClipboardPaste()
+				}
 			case " ", "F":
 				c.toggleFilter()
 			}
+		}
+	}
+	for _, event := range c.ReplyEditor.Events() {
+		if _, ok := event.(widget.SubmitEvent); ok {
+			c.sendReply()
 		}
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
@@ -431,8 +453,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.startReply()
 	}
 	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
-		c.CreatingConversation = true
-		c.ReplyEditor.Focus()
+		c.startConversation()
 	}
 	if c.CancelReplyButton.Clicked() {
 		c.resetReplyState()
@@ -765,6 +786,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 											editor := material.Editor(th, &c.ReplyEditor, "type your reply here")
+											editor.Editor.Submit = true
 											return editor.Layout(gtx)
 										})
 									}),
