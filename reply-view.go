@@ -112,6 +112,21 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 					Tag:  &c.CreateConversationButton,
 				},
 			),
+			{
+				OverflowAction: materials.OverflowAction{
+					Name: "Filter by selected",
+					Tag:  &c.FilterButton,
+				},
+				Layout: func(gtx C, bg, fg color.RGBA) D {
+					btn := materials.SimpleIconButton(th, &c.FilterButton, icons.FilterIcon)
+					btn.Background = bg
+					btn.Color = fg
+					if c.Filtered {
+						btn.Color, btn.Background = btn.Background, btn.Color
+					}
+					return btn.Layout(gtx)
+				},
+			},
 		}, []materials.OverflowAction{
 			{
 				Name: "Jump to top",
@@ -149,21 +164,6 @@ func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []mate
 				Tag:  &c.CopyReplyButton,
 			},
 		),
-		materials.AppBarAction{
-			OverflowAction: materials.OverflowAction{
-				Name: "Filter by selected",
-				Tag:  &c.FilterButton,
-			},
-			Layout: func(gtx C, bg, fg color.RGBA) D {
-				btn := materials.SimpleIconButton(th, &c.FilterButton, icons.FilterIcon)
-				btn.Background = bg
-				btn.Color = fg
-				if c.Filtered {
-					btn.Color, btn.Background = btn.Background, btn.Color
-				}
-				return btn.Layout(gtx)
-			},
-		},
 	}, []materials.OverflowAction{}
 }
 
