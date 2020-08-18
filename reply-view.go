@@ -259,51 +259,98 @@ func (c *ReplyListView) refreshNodeStatus(gtx C) {
 	}
 }
 
-func (c *ReplyListView) Update(gtx layout.Context) {
-	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
-	jump := jumpNone
-	for _, event := range gtx.Events(c) {
-		switch event := event.(type) {
-		case key.Event:
-			switch event.Name {
-			case "K":
-				fallthrough
-			case key.NameUpArrow:
-				c.moveFocusUp()
-			case "J":
-				fallthrough
-			case key.NameDownArrow:
-				c.moveFocusDown()
-			case key.NameHome:
-				jump = jumpStart
-			case "G":
-				if !event.Modifiers.Contain(key.ModShift) {
-					jump = jumpStart
-					break
+func (c *ReplyListView) toggleFilter() {
+	if c.Filtered {
+		c.ReplyList.Position = c.PrefilterPosition
+	} else {
+		c.PrefilterPosition = c.ReplyList.Position
+	}
+	c.Filtered = !c.Filtered
+}
+
+func (c *ReplyListView) copyFocused() {
+	reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
+	if err != nil {
+		log.Printf("failed looking up selected message: %v", err)
+	} else {
+		c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
+	}
+}
+
+func (c *ReplyListView) startReply() {
+	reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
+	if err != nil {
+		log.Printf("failed looking up selected message: %v", err)
+	} else {
+		c.ReplyingTo.Reply = reply.(*forest.Reply)
+		author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Reply.Author)
+		if err != nil {
+			log.Printf("failed looking up select message author: %v", err)
+		} else {
+			c.ReplyingTo.Author = author.(*forest.Identity)
+		}
+	}
+	c.ReplyEditor.Focus()
+}
+
+func (c *ReplyListView) sendReply() {
+	var newReply *forest.Reply
+	var author *forest.Identity
+	if c.CreatingConversation {
+		if c.CommunityChoice.Value != "" {
+			var chosen *forest.Community
+			chosenString := c.CommunityChoice.Value
+			c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
+				for _, community := range communities {
+					if community.ID().String() == chosenString {
+						chosen = community
+						break
+					}
 				}
-				fallthrough
-			case key.NameEnd:
-				jump = jumpEnd
+			})
+			nodeBuilder, err := c.Settings.Builder()
+			if err != nil {
+				log.Printf("failed acquiring node builder: %v", err)
+			} else {
+				author = nodeBuilder.User
+				convo, err := nodeBuilder.NewReply(chosen, c.ReplyEditor.Text(), []byte{})
+				if err != nil {
+					log.Printf("failed creating new conversation: %v", err)
+				} else {
+					newReply = convo
+				}
+			}
+		}
+	} else {
+		nodeBuilder, err := c.Settings.Builder()
+		if err != nil {
+			log.Printf("failed acquiring node builder: %v", err)
+		} else {
+			author = nodeBuilder.User
+			reply, err := nodeBuilder.NewReply(c.ReplyingTo.Reply, c.ReplyEditor.Text(), []byte{})
+			if err != nil {
+				log.Printf("failed building reply: %v", err)
+			} else {
+				newReply = reply
 			}
 		}
 	}
-	overflowTag := c.manager.SelectedOverflowTag()
-	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
-		jump = jumpEnd
+	if newReply != nil {
+		go func() {
+			if err := c.ArborState.SubscribableStore.Add(author); err != nil {
+				log.Printf("failed adding replying identity to store: %v", err)
+				return
+			}
+			if err := c.ArborState.SubscribableStore.Add(newReply); err != nil {
+				log.Printf("failed adding reply to store: %v", err)
+				return
+			}
+		}()
+		c.resetReplyState()
 	}
-	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
-		jump = jumpStart
-	}
-	switch jump {
-	case jumpStart:
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-			c.moveFocusStart(replies)
-		})
-	case jumpEnd:
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-			c.moveFocusEnd(replies)
-		})
-	}
+}
+
+func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	for i := range c.ReplyStates {
 		clickHandler := &c.ReplyStates[i]
 		if clickHandler.Clicked() {
@@ -320,109 +367,78 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			}
 		}
 	}
+}
+
+func (c *ReplyListView) Update(gtx layout.Context) {
+	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
+	jump := jumpNone
+	for _, event := range gtx.Events(c) {
+		switch event := event.(type) {
+		case key.Event:
+			switch event.Name {
+			case "K", key.NameUpArrow:
+				c.moveFocusUp()
+			case "J", key.NameDownArrow:
+				c.moveFocusDown()
+			case key.NameHome:
+				jump = jumpStart
+			case "G":
+				if !event.Modifiers.Contain(key.ModShift) {
+					jump = jumpStart
+					break
+				}
+				fallthrough
+			case key.NameEnd:
+				jump = jumpEnd
+			case key.NameReturn, key.NameEnter:
+				c.startReply()
+			case " ", "F":
+				c.toggleFilter()
+			}
+		}
+	}
+	overflowTag := c.manager.SelectedOverflowTag()
+	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
+		jump = jumpEnd
+	}
+	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
+		jump = jumpStart
+	}
+	if jump != jumpNone {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			switch jump {
+			case jumpStart:
+				c.moveFocusStart(replies)
+			case jumpEnd:
+				c.moveFocusEnd(replies)
+			}
+		})
+	}
+	c.processMessagePointerEvents(gtx)
 	if c.StateRefreshNeeded {
 		c.refreshNodeStatus(gtx)
 	}
 	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
-		if c.Filtered {
-			c.ReplyList.Position = c.PrefilterPosition
-		} else {
-			c.PrefilterPosition = c.ReplyList.Position
-		}
-		c.Filtered = !c.Filtered
-		c.manager.DismissOverflow(gtx)
+		c.toggleFilter()
 	}
 	if c.Focused != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
-		reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
-		if err != nil {
-			log.Printf("failed looking up selected message: %v", err)
-		} else {
-			c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
-		}
-		c.manager.DismissOverflow(gtx)
+		c.copyFocused()
 	}
 	if c.PasteIntoReplyButton.Clicked() {
 		c.manager.RequestClipboardPaste()
 	}
 	if c.Focused != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
-		reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
-		if err != nil {
-			log.Printf("failed looking up selected message: %v", err)
-		} else {
-			c.ReplyingTo.Reply = reply.(*forest.Reply)
-			author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Reply.Author)
-			if err != nil {
-				log.Printf("failed looking up select message author: %v", err)
-			} else {
-				c.ReplyingTo.Author = author.(*forest.Identity)
-			}
-		}
-		c.manager.DismissOverflow(gtx)
-		c.ReplyEditor.Focus()
+		c.startReply()
 	}
 	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
 		c.CreatingConversation = true
 		c.ReplyEditor.Focus()
-		c.manager.DismissOverflow(gtx)
 	}
 	if c.CancelReplyButton.Clicked() {
 		c.resetReplyState()
 	}
 	if c.SendReplyButton.Clicked() {
-		var newReply *forest.Reply
-		var author *forest.Identity
-		if c.CreatingConversation {
-			if c.CommunityChoice.Value != "" {
-				var chosen *forest.Community
-				chosenString := c.CommunityChoice.Value
-				c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
-					for _, community := range communities {
-						if community.ID().String() == chosenString {
-							chosen = community
-							break
-						}
-					}
-				})
-				nodeBuilder, err := c.Settings.Builder()
-				if err != nil {
-					log.Printf("failed acquiring node builder: %v", err)
-				} else {
-					author = nodeBuilder.User
-					convo, err := nodeBuilder.NewReply(chosen, c.ReplyEditor.Text(), []byte{})
-					if err != nil {
-						log.Printf("failed creating new conversation: %v", err)
-					} else {
-						newReply = convo
-					}
-				}
-			}
-		} else {
-			nodeBuilder, err := c.Settings.Builder()
-			if err != nil {
-				log.Printf("failed acquiring node builder: %v", err)
-			} else {
-				author = nodeBuilder.User
-				reply, err := nodeBuilder.NewReply(c.ReplyingTo.Reply, c.ReplyEditor.Text(), []byte{})
-				if err != nil {
-					log.Printf("failed building reply: %v", err)
-				} else {
-					newReply = reply
-				}
-			}
-		}
-		if newReply != nil {
-			go func() {
-				if err := c.ArborState.SubscribableStore.Add(author); err != nil {
-					log.Printf("failed adding replying identity to store: %v", err)
-					return
-				}
-				if err := c.ArborState.SubscribableStore.Add(newReply); err != nil {
-					log.Printf("failed adding reply to store: %v", err)
-					return
-				}
-			}()
-			c.resetReplyState()
-		}
+		c.sendReply()
 	}
 }
 
