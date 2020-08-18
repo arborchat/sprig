@@ -178,25 +178,14 @@ func (c *ReplyListView) dismissReplyContextMenu(gtx layout.Context) {
 }
 
 func (c *ReplyListView) moveFocusUp() {
-	if c.Focused == nil {
-		return
-	}
-	currentIndex := c.ArborState.ReplyList.IndexForID(c.Focused)
-	if currentIndex < 0 {
-		return
-	}
-	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
-		if currentIndex <= 0 {
-			return
-		}
-		nextIndex := currentIndex - 1
-		c.Focused = replies[nextIndex].Reply.ID()
-		c.StateRefreshNeeded = true
-		c.ensureFocusedVisible(nextIndex)
-	})
+	c.moveFocus(-1)
 }
 
 func (c *ReplyListView) moveFocusDown() {
+	c.moveFocus(1)
+}
+
+func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
 	}
@@ -205,13 +194,20 @@ func (c *ReplyListView) moveFocusDown() {
 		return
 	}
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
-		if currentIndex >= len(replies)-1 {
-			return
+		for {
+			currentIndex += indexIncrement
+			if currentIndex >= len(replies) || currentIndex < 0 {
+				break
+			}
+			status := c.statusOf(replies[currentIndex].Reply)
+			if c.shouldFilter(replies[currentIndex].Reply, status) {
+				continue
+			}
+			c.Focused = replies[currentIndex].Reply.ID()
+			c.StateRefreshNeeded = true
+			c.ensureFocusedVisible(currentIndex)
+			break
 		}
-		nextIndex := currentIndex + 1
-		c.Focused = replies[nextIndex].Reply.ID()
-		c.StateRefreshNeeded = true
-		c.ensureFocusedVisible(nextIndex)
 	})
 }
 
@@ -561,6 +557,9 @@ func interpolateInset(anim *theme.ReplyAnimationState, progress float32) unit.Va
 const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
+func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.ReplyStatus) bool {
+	return c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot)
+}
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
@@ -587,7 +586,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			// }
 
 			status := c.statusOf(reply.Reply)
-			if c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot) {
+			if c.shouldFilter(reply.Reply, status) {
 				// do not render
 				return layout.Dimensions{}
 			}
