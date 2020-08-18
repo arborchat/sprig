@@ -530,8 +530,8 @@ const insetUnit = 12
 var (
 	defaultInset    = unit.Dp(insetUnit)
 	ancestorInset   = unit.Dp(2 * insetUnit)
-	selectedInset   = unit.Dp(3 * insetUnit)
-	descendantInset = unit.Dp(4 * insetUnit)
+	selectedInset   = unit.Dp(2 * insetUnit)
+	descendantInset = unit.Dp(3 * insetUnit)
 )
 
 func insetForStatus(status theme.ReplyStatus) unit.Value {
