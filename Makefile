@@ -6,6 +6,7 @@ ANDROID_CONFIG = $(HOME)/.android
 KEYSTORE = $(ANDROID_CONFIG)/debug.keystore
 
 ANDROID_APK = sprig.apk
+ANDROID_SDK_ROOT := $(ANDROID_HOME)
 
 WINDOWS_BIN = sprig.exe
 WINDOWS_ARCHIVE = sprig-windows.zip
@@ -20,7 +21,7 @@ MACOS_ARCHIVE = sprig-macos.tar.gz
 android: $(ANDROID_APK)
 
 $(ANDROID_APK): $(SOURCE) $(KEYSTORE)
-	go run gioui.org/cmd/gogio -x -target android -appid $(APPID) .
+	env ANDROID_SDK_ROOT=$(ANDROID_SDK_ROOT) go run gioui.org/cmd/gogio -x -target android -appid $(APPID) .
 
 $(KEYSTORE):
 	mkdir -p $(ANDROID_CONFIG)
