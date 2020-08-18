@@ -12,8 +12,8 @@ git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93 h1:DXtB8FXo
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174 h1:rn4WjyTh9CvlVLlnVbKLsdViTW2R6wYPIWmkV9TRNSo=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200818114429-a1bc7f128af4 h1:q03VgfUfi+cz1C5mnT0iN+jnPWY8dmbNCTVHMQyUISk=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200818114429-a1bc7f128af4/go.mod h1:B+yEvqqiOvReyFTyXa6Ar2YlGH04CDG0FyBPItbcbF4=
+git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9 h1:Y51y19J/hi5OCFA/L3j4ZH2IvRr5w4i3ZRhNVpRsSCk=
+git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9/go.mod h1:B+yEvqqiOvReyFTyXa6Ar2YlGH04CDG0FyBPItbcbF4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200814013315-d562b139a9f5 h1:hTz0at4VzL6+UclcJKeQyUHeZ50QSJLQdfEcRkkj2Dg=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200814013315-d562b139a9f5/go.mod h1:NE3saRSb5uAz64TIkOlRTrFbctt4chJhlQpD59/nsko=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8 h1:Cl6MTNMZJgVVxe4vBXeqjAp1zfiQMXejn7VHra55Oqc=
