@@ -415,7 +415,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		}
 	}
 	for _, event := range c.ReplyEditor.Events() {
-		if _, ok := event.(widget.SubmitEvent); ok {
+		if _, ok := event.(widget.SubmitEvent); ok && submitShouldSend {
 			c.sendReply()
 		}
 	}
