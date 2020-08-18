@@ -558,6 +558,9 @@ func interpolateInset(anim *theme.ReplyAnimationState, progress float32) unit.Va
 	return unit.Dp((end-begin)*progress + begin)
 }
 
+const buttonWidthDp = 20
+const scrollSlotWidthDp = 12
+
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 
@@ -606,7 +609,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			stateIndex++
 			return layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx C) D {
-					extraWidth := gtx.Px(unit.Dp(5 * insetUnit))
+					extraWidth := gtx.Px(unit.Dp(5*insetUnit + buttonWidthDp + scrollSlotWidthDp))
 					messageWidth := gtx.Constraints.Max.X - extraWidth
 					dims := layout.Stack{}.Layout(gtx,
 						layout.Stacked(func(gtx C) D {
@@ -646,11 +649,10 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							return D{}
 						}
 						return layout.Inset{
-							Left:  unit.Dp(8),
-							Right: unit.Dp(12),
+							Right: unit.Dp(scrollSlotWidthDp),
 						}.Layout(gtx, func(gtx C) D {
 							replyButton := material.IconButton(th, &c.CreateReplyButton, icons.ReplyIcon)
-							replyButton.Size = unit.Dp(20)
+							replyButton.Size = unit.Dp(buttonWidthDp)
 							replyButton.Inset = layout.UniformInset(unit.Dp(9))
 							replyButton.Background = c.Theme.Secondary.Light
 							replyButton.Color = c.Theme.Background.Dark
