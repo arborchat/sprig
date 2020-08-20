@@ -707,10 +707,12 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
+								gtx.Constraints.Max.X = gtx.Px(unit.Dp(30))
+								gtx.Constraints.Min.X = gtx.Constraints.Max.X
 								if c.CreatingConversation {
-									return material.Body1(th, "New Conversation in:").Layout(gtx)
+									return material.Body1(th, "In:").Layout(gtx)
 								}
-								return material.Body1(th, "Replying to:").Layout(gtx)
+								return material.Body1(th, "Re:").Layout(gtx)
 
 							})
 						}),
