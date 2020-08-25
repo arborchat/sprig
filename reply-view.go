@@ -5,6 +5,7 @@ import (
 	"image/color"
 	"log"
 	"runtime"
+	"strings"
 	"time"
 
 	"gioui.org/f32"
@@ -293,6 +294,16 @@ func (c *ReplyListView) startReply() {
 func (c *ReplyListView) sendReply() {
 	var newReply *forest.Reply
 	var author *forest.Identity
+	replyText := c.ReplyEditor.Text()
+	replyText = strings.TrimSpace(replyText)
+	if replyText == "" {
+		return
+	}
+	nodeBuilder, err := c.Settings.Builder()
+	if err != nil {
+		log.Printf("failed acquiring node builder: %v", err)
+	}
+	author = nodeBuilder.User
 	if c.CreatingConversation {
 		if c.CommunityChoice.Value != "" {
 			var chosen *forest.Community
@@ -305,31 +316,19 @@ func (c *ReplyListView) sendReply() {
 					}
 				}
 			})
-			nodeBuilder, err := c.Settings.Builder()
+			convo, err := nodeBuilder.NewReply(chosen, c.ReplyEditor.Text(), []byte{})
 			if err != nil {
-				log.Printf("failed acquiring node builder: %v", err)
+				log.Printf("failed creating new conversation: %v", err)
 			} else {
-				author = nodeBuilder.User
-				convo, err := nodeBuilder.NewReply(chosen, c.ReplyEditor.Text(), []byte{})
-				if err != nil {
-					log.Printf("failed creating new conversation: %v", err)
-				} else {
-					newReply = convo
-				}
+				newReply = convo
 			}
 		}
 	} else {
-		nodeBuilder, err := c.Settings.Builder()
+		reply, err := nodeBuilder.NewReply(c.ReplyingTo.Reply, c.ReplyEditor.Text(), []byte{})
 		if err != nil {
-			log.Printf("failed acquiring node builder: %v", err)
+			log.Printf("failed building reply: %v", err)
 		} else {
-			author = nodeBuilder.User
-			reply, err := nodeBuilder.NewReply(c.ReplyingTo.Reply, c.ReplyEditor.Text(), []byte{})
-			if err != nil {
-				log.Printf("failed building reply: %v", err)
-			} else {
-				newReply = reply
-			}
+			newReply = reply
 		}
 	}
 	if newReply != nil {
