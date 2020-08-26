@@ -14,6 +14,19 @@ import (
 // DrawRect creates a rectangle of the provided background color with
 // Dimensions specified by size and a corner radius (on all corners)
 // specified by radii.
+type Rect struct {
+	Color color.RGBA
+	Size  f32.Point
+	Radii float32
+}
+
+func (r Rect) Layout(gtx C) D {
+	return DrawRect(gtx, r.Color, r.Size, r.Radii)
+}
+
+// DrawRect creates a rectangle of the provided background color with
+// Dimensions specified by size and a corner radius (on all corners)
+// specified by radii.
 func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 	stack := op.Push(gtx.Ops)
 	paint.ColorOp{Color: background}.Add(gtx.Ops)

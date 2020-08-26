@@ -494,9 +494,10 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			color := c.Theme.Background.Default
-			size := layout.FPt(gtx.Constraints.Max)
-			sprigTheme.DrawRect(gtx, color, size, 0)
+			sprigTheme.Rect{
+				Color: c.Theme.Background.Default,
+				Size:  layout.FPt(gtx.Constraints.Max),
+			}.Layout(gtx)
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -666,7 +667,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		if top.V+indicatorHeightDp.V > heightDp {
 			top = unit.Dp(heightDp - indicatorHeightDp.V)
 		}
-		rr := float32(gtx.Px(unit.Dp(4)))
+		radii := float32(gtx.Px(unit.Dp(4)))
 		return layout.Inset{
 			Top:    top,
 			Right:  unit.Dp(2),
@@ -674,7 +675,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		}.Layout(gtx, func(gtx C) D {
 			bg := c.Theme.Background.Dark
 			bg.A = 200
-			return sprigTheme.DrawRect(gtx, bg, f32.Point{X: float32(width), Y: float32(indicatorHeightPx)}, rr)
+			size := f32.Point{X: float32(width), Y: float32(indicatorHeightPx)}
+			return sprigTheme.Rect{Color: bg, Size: size, Radii: radii}.Layout(gtx)
 		})
 	})
 
@@ -685,12 +687,13 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	th := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			color := c.Theme.Primary.Light
-			size := f32.Point{
-				X: float32(gtx.Constraints.Max.X),
-				Y: float32(gtx.Constraints.Max.Y),
-			}
-			sprigTheme.DrawRect(gtx, color, size, 0)
+			sprigTheme.Rect{
+				Color: c.Theme.Primary.Light,
+				Size: f32.Point{
+					X: float32(gtx.Constraints.Max.X),
+					Y: float32(gtx.Constraints.Max.Y),
+				},
+			}.Layout(gtx)
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -757,13 +760,15 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return layout.Stack{}.Layout(gtx,
 									layout.Expanded(func(gtx C) D {
-										color := c.Theme.Background.Light
-										size := f32.Point{
-											X: float32(gtx.Constraints.Max.X),
-											Y: float32(gtx.Constraints.Min.Y),
-										}
-										radii := float32(gtx.Px(unit.Dp(5)))
-										return sprigTheme.DrawRect(gtx, color, size, radii)
+										return sprigTheme.Rect{
+											Color: c.Theme.Background.Light,
+											Size: f32.Point{
+												X: float32(gtx.Constraints.Max.X),
+												Y: float32(gtx.Constraints.Min.Y),
+											},
+											Radii: float32(gtx.Px(unit.Dp(5))),
+										}.Layout(gtx)
+
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
