@@ -11,9 +11,6 @@ import (
 	"gioui.org/f32"
 	"gioui.org/io/key"
 	"gioui.org/layout"
-	"gioui.org/op"
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -497,11 +494,9 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			paintOp := paint.ColorOp{Color: c.Theme.Background.Default}
-			paintOp.Add(gtx.Ops)
-			paint.PaintOp{Rect: f32.Rectangle{
-				Max: layout.FPt(gtx.Constraints.Max),
-			}}.Add(gtx.Ops)
+			color := c.Theme.Background.Default
+			size := layout.FPt(gtx.Constraints.Max)
+			sprigTheme.DrawRect(gtx, color, size, 0)
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -690,14 +685,12 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	th := c.Theme.Theme
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			paintOp := paint.ColorOp{Color: c.Theme.Primary.Light}
-			paintOp.Add(gtx.Ops)
-			paint.PaintOp{Rect: f32.Rectangle{
-				Max: f32.Point{
-					X: float32(gtx.Constraints.Max.X),
-					Y: float32(gtx.Constraints.Max.Y),
-				},
-			}}.Add(gtx.Ops)
+			color := c.Theme.Primary.Light
+			size := f32.Point{
+				X: float32(gtx.Constraints.Max.X),
+				Y: float32(gtx.Constraints.Max.Y),
+			}
+			sprigTheme.DrawRect(gtx, color, size, 0)
 			return layout.Dimensions{}
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -764,26 +757,13 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return layout.Stack{}.Layout(gtx,
 									layout.Expanded(func(gtx C) D {
-										stack := op.Push(gtx.Ops)
-										paintOp := paint.ColorOp{Color: c.Theme.Background.Light}
-										paintOp.Add(gtx.Ops)
-										bounds := f32.Rectangle{
-											Max: f32.Point{
-												X: float32(gtx.Constraints.Max.X),
-												Y: float32(gtx.Constraints.Min.Y),
-											},
+										color := c.Theme.Background.Light
+										size := f32.Point{
+											X: float32(gtx.Constraints.Max.X),
+											Y: float32(gtx.Constraints.Min.Y),
 										}
 										radii := float32(gtx.Px(unit.Dp(5)))
-										clip.RRect{
-											Rect: bounds,
-											NW:   radii,
-											NE:   radii,
-											SE:   radii,
-											SW:   radii,
-										}.Add(gtx.Ops)
-										paint.PaintOp{Rect: bounds}.Add(gtx.Ops)
-										stack.Pop()
-										return layout.Dimensions{}
+										return sprigTheme.DrawRect(gtx, color, size, radii)
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
