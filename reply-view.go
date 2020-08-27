@@ -59,6 +59,9 @@ type ReplyListView struct {
 	CommunityChoice                     widget.Enum
 	CommunityList                       layout.List
 
+	// ScrollBar clicks for click-based scrolling.
+	ScrollBar widget.Clickable
+
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
 	Filtered          bool
@@ -368,8 +371,16 @@ func (c *ReplyListView) startConversation() {
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
-	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
-	jump := jumpNone
+	jumpStart := func() {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusStart(replies)
+		})
+	}
+	jumpEnd := func() {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusEnd(replies)
+		})
+	}
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
@@ -379,15 +390,15 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			case "J", key.NameDownArrow:
 				c.moveFocusDown()
 			case key.NameHome:
-				jump = jumpStart
+				jumpStart()
 			case "G":
 				if !event.Modifiers.Contain(key.ModShift) {
-					jump = jumpStart
+					jumpStart()
 					break
 				}
 				fallthrough
 			case key.NameEnd:
-				jump = jumpEnd
+				jumpEnd()
 			case key.NameReturn, key.NameEnter:
 				c.startReply()
 			case "C":
@@ -413,20 +424,10 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
 	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
-		jump = jumpEnd
+		jumpEnd()
 	}
 	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
-		jump = jumpStart
-	}
-	if jump != jumpNone {
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-			switch jump {
-			case jumpStart:
-				c.moveFocusStart(replies)
-			case jumpEnd:
-				c.moveFocusEnd(replies)
-			}
-		})
+		jumpStart()
 	}
 	c.processMessagePointerEvents(gtx)
 	if c.StateRefreshNeeded {
