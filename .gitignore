@@ -2,3 +2,5 @@ sprig.apk
 sprig.test
 sprig
 *.apk
+pak/
+.flatpak-builder/

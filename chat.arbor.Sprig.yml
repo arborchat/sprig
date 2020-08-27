@@ -1,0 +1,21 @@
+app-id: chat.arbor.Sprig
+runtime: org.freedesktop.Platform
+runtime-version: '19.08'
+sdk: org.freedesktop.Sdk
+command: sprig
+finish-args:
+  - --share=ipc
+  - --socket=wayland
+  - --socket=system-bus
+  - --socket=fallback-x11
+  - --filesystem=home
+  - --share=network
+  - --verbose
+modules:
+  - name: sprig
+    buildsystem: simple
+    build-commands:
+      - install -D sprig /app/bin/sprig
+    sources:
+      - type: file
+        path: sprig
