@@ -10,6 +10,7 @@ import (
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
+	"gioui.org/widget"
 )
 
 // Rect creates a rectangle of the provided background color with
@@ -49,6 +50,10 @@ func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 
 // ScrollBar renders a scroll bar anchored to a side.
 type ScrollBar struct {
+	// Track clicks.
+	*widget.Clickable
+	// Length of scrollbar after layouting has been computed.
+	Length *int
 	// Color of the scroll bar.
 	Color color.RGBA
 	// Progress is how far down we are as a fraction between 0 and 1.
@@ -78,19 +83,35 @@ func (sb ScrollBar) Layout(gtx C) D {
 		if top.V+height.V > totalHeight {
 			top = unit.Dp(totalHeight - height.V)
 		}
-		return layout.Inset{
-			Top:    top,
-			Right:  unit.Dp(2),
-			Bottom: unit.Dp(2),
-		}.Layout(gtx, func(gtx C) D {
-			return Rect{
-				Color: sb.Color,
-				Size: f32.Point{
-					X: float32(gtx.Px(width)),
-					Y: float32(gtx.Px(height)),
-				},
-				Radii: float32(gtx.Px(unit.Dp(4))),
-			}.Layout(gtx)
+		return Clickable(gtx, sb.Clickable, func(gtx C) D {
+			if sb.Length != nil {
+				*sb.Length = gtx.Constraints.Max.Y
+			}
+			return layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					return Rect{Size: f32.Point{
+						X: float32(gtx.Constraints.Min.X),
+						Y: float32(gtx.Constraints.Max.Y),
+					}}.Layout(gtx)
+				}),
+				layout.Stacked(func(gtx C) D {
+					return layout.Inset{
+						Top:    top,
+						Right:  unit.Dp(2),
+						Left:   unit.Dp(2),
+						Bottom: unit.Dp(2),
+					}.Layout(gtx, func(gtx C) D {
+						return Rect{
+							Color: sb.Color,
+							Size: f32.Point{
+								X: float32(gtx.Px(width)),
+								Y: float32(gtx.Px(height)),
+							},
+							Radii: float32(gtx.Px(unit.Dp(4))),
+						}.Layout(gtx)
+					})
+				}),
+			)
 		})
 	})
 }
@@ -103,4 +124,22 @@ func WithAlpha(c color.RGBA, alpha uint8) color.RGBA {
 		B: c.B,
 		A: alpha,
 	}
+}
+
+// Clickable lays out a rectangular clickable widget without further
+// decoration. No Inking.
+func Clickable(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(button.Layout),
+		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+			clip.RRect{
+				Rect: f32.Rectangle{Max: f32.Point{
+					X: float32(gtx.Constraints.Min.X),
+					Y: float32(gtx.Constraints.Min.Y),
+				}},
+			}.Add(gtx.Ops)
+			return layout.Dimensions{Size: gtx.Constraints.Min}
+		}),
+		layout.Stacked(w),
+	)
 }

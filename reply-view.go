@@ -61,6 +61,8 @@ type ReplyListView struct {
 
 	// ScrollBar clicks for click-based scrolling.
 	ScrollBar widget.Clickable
+	// ScrollBarLength tracked so fractions can be calculated.
+	ScrollBarLength int
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -245,6 +247,19 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	c.requestKeyboardFocus()
 	c.ReplyList.Position.BeforeEnd = true
 	c.ReplyList.Position.First = 0
+	c.ReplyList.Position.Offset = 0
+}
+
+// moveFocusAbsolute moves the list focus to the reply at the specified index.
+func (c *ReplyListView) moveFocusAbsolute(replies []ds.ReplyData, index int) {
+	if len(replies) < 1 || index > len(replies)-1 {
+		return
+	}
+	c.Focused = replies[index].ID()
+	c.StateRefreshNeeded = true
+	c.requestKeyboardFocus()
+	c.ReplyList.Position.BeforeEnd = true
+	c.ReplyList.Position.First = index
 	c.ReplyList.Position.Offset = 0
 }
 
@@ -453,6 +468,17 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	if c.SendReplyButton.Clicked() {
 		c.sendReply()
+	}
+	if c.ScrollBar.Clicked() {
+		// Resolve the click position to a fraction of the bar height and focus on
+		// the corresponding reply item.
+		// Assuming vertical axis.
+		for _, press := range c.ScrollBar.History() {
+			fraction := float32(press.Position.Y) / float32(c.ScrollBarLength)
+			c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+				c.moveFocusAbsolute(replies, int(float32(len(replies))*fraction))
+			})
+		}
 	}
 }
 
@@ -668,9 +694,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		})
 	})
 	sprigTheme.ScrollBar{
-		Color:    sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
-		Progress: float32(c.ReplyList.Position.First) / float32(replyListLen),
-		Anchor:   layout.NE,
+		Clickable: &c.ScrollBar,
+		Length:    &c.ScrollBarLength,
+		Color:     sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
+		Progress:  float32(c.ReplyList.Position.First) / float32(replyListLen),
+		Anchor:    layout.NE,
 	}.Layout(gtx)
 	return dims
 }
