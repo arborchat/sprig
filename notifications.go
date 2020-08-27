@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"strings"
 
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/niotify"
@@ -29,14 +30,26 @@ func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
 	if !n.AppState.NotificationsGloballyAllowed() {
 		return false
 	}
+	localUserID := n.AppState.Settings.ActiveIdentity
+	if localUserID == nil {
+		return false
+	}
+	localUserNode, _, err := n.AppState.ArborState.SubscribableStore.GetIdentity(localUserID)
+	if err != nil {
+		return false
+	}
+	localUser := localUserNode.(*forest.Identity)
+	messageContent := strings.ToLower(string(reply.Content.Blob))
+	username := strings.ToLower(string(localUser.Name.Blob))
+	if strings.Contains(messageContent, username) {
+		// local user directly mentioned
+		return true
+	}
 	if uint64(reply.Created) < n.AppState.TimeLaunched {
 		// do not send old notifications
 		return false
 	}
-	if n.AppState.Settings.ActiveIdentity == nil {
-		return false
-	}
-	if reply.Author.Equals(n.AppState.Settings.ActiveIdentity) {
+	if reply.Author.Equals(localUserID) {
 		// Do not send notifications for replies created by the local
 		// user's identity.
 		return false
@@ -50,7 +63,7 @@ func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
 		// Don't notify if we don't know about this conversation.
 		return false
 	}
-	if parent.(*forest.Reply).Author.Equals(n.AppState.Settings.ActiveIdentity) {
+	if parent.(*forest.Reply).Author.Equals(localUserID) {
 		// Direct response to local user.
 		return true
 	}
