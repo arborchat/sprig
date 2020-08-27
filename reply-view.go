@@ -657,29 +657,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
-	progress := float32(c.ReplyList.Position.First) / float32(replyListLen)
-	layout.NE.Layout(gtx, func(gtx C) D {
-		indicatorHeightDp := unit.Dp(16)
-		indicatorHeightPx := gtx.Px(indicatorHeightDp)
-		heightDp := float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
-		width := gtx.Px(unit.Dp(8))
-		top := unit.Dp(heightDp * progress)
-		if top.V+indicatorHeightDp.V > heightDp {
-			top = unit.Dp(heightDp - indicatorHeightDp.V)
-		}
-		radii := float32(gtx.Px(unit.Dp(4)))
-		return layout.Inset{
-			Top:    top,
-			Right:  unit.Dp(2),
-			Bottom: unit.Dp(2),
-		}.Layout(gtx, func(gtx C) D {
-			bg := c.Theme.Background.Dark
-			bg.A = 200
-			size := f32.Point{X: float32(width), Y: float32(indicatorHeightPx)}
-			return sprigTheme.Rect{Color: bg, Size: size, Radii: radii}.Layout(gtx)
-		})
-	})
-
+	sprigTheme.ScrollBar{
+		Color:    sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
+		Progress: float32(c.ReplyList.Position.First) / float32(replyListLen),
+		Anchor:   layout.NE,
+	}.Layout(gtx)
 	return dims
 }
 
