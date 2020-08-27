@@ -11,6 +11,20 @@ import (
 	"gioui.org/op/paint"
 )
 
+// Rect creates a rectangle of the provided background color with
+// Dimensions specified by size and a corner radius (on all corners)
+// specified by radii.
+type Rect struct {
+	Color color.RGBA
+	Size  f32.Point
+	Radii float32
+}
+
+// Layout renders the Rect into the provided context
+func (r Rect) Layout(gtx C) D {
+	return DrawRect(gtx, r.Color, r.Size, r.Radii)
+}
+
 // DrawRect creates a rectangle of the provided background color with
 // Dimensions specified by size and a corner radius (on all corners)
 // specified by radii.
