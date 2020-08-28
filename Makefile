@@ -1,4 +1,4 @@
-.PHONY: android_install logs windows linux macos android clean
+.PHONY: android_install logs windows linux macos android clean fp fp-install fp-repo fp-run
 
 SOURCE = $(shell find . -name '*\.go') go.mod go.sum
 APPID := chat.arbor.sprig.dev
@@ -14,6 +14,10 @@ WINDOWS_ARCHIVE = sprig-windows.zip
 LINUX_BIN = sprig
 LINUX_ARCHIVE = sprig-linux.tar.xz
 LINUX_FILES = $(LINUX_BIN) ./desktop-assets ./install-linux.sh ./appicon.png ./LICENSE.txt
+
+FPCONFIG = chat.arbor.Client.Sprig.yml
+FPBUILD = pakbuild
+FPREPO ?= /data/fp-repo
 
 MACOS_BIN = sprig-mac
 MACOS_ARCHIVE = sprig-macos.tar.gz
@@ -58,14 +62,18 @@ logs:
 	adb logcat -s -T1 $(APPID):\*
 
 fp:
-	flatpak-builder --force-clean pak chat.arbor.Client.Sprig.yml
+	flatpak-builder --force-clean $(FPBUILD) $(FPCONFIG)
 
 fp-install:
-	flatpak-builder --user --install --force-clean pak chat.arbor.Client.Sprig.yml
+	flatpak-builder --user --install --force-clean $(FPBUILD) $(FPCONFIG)
 
-fp-run: fp-install
+fp-run:
+	flatpak run $(FPCONFIG)
+
+fp-repo:
+	flatpak-builder --force-clean --repo=$(FPREPO) $(FPBUILD) $(FPCONFIG)
 
 clean:
-	rm $(ANDROID_APK) $(WINDOWS_ARCHIVE) \
+	rm -rf $(ANDROID_APK) $(WINDOWS_ARCHIVE) \
 	    $(WINDOWS_BIN) $(LINUX_ARCHIVE) $(LINUX_BIN) \
-	    $(MACOS_ARCHIVE) $(MACOS_BIN)
+	    $(MACOS_ARCHIVE) $(MACOS_BIN) $(FPBUILD)

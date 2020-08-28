@@ -7,12 +7,16 @@ finish-args:
   - --socket=wayland
   - --socket=fallback-x11
   - --socket=session-bus
-  - --filesystem=home
+  - --filesystem=xdg-config
   - --share=network
   - --device=dri
   - --share=ipc
+cleanup:
+  - /app/lib/sdk/golang
 modules:
   - name: golang
+    cleanup:
+      - /run/build/golang
     buildsystem: simple
     sources:
       - type: archive
