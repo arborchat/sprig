@@ -58,14 +58,26 @@ type ScrollBar struct {
 	Color color.RGBA
 	// Progress is how far down we are as a fraction between 0 and 1.
 	Progress float32
-	// Anchor is the direction to anchor the bar.
-	Anchor layout.Direction
+	// Anchor is the content-relative position to anchor to.
+	// Defaults to `End`, which is usually what you want.
+	Anchor Anchor
 	// Size of the bar.
 	Size f32.Point
 }
 
+// Anchor specifies where to anchor to.
+// On the horizontal axis this becomes left-right.
+// On the vertical axis this becomes top-bottom.
+type Anchor bool
+
+const (
+	Start Anchor = true
+	End          = false
+)
+
 // Layout renders the ScrollBar into the provided context.
 func (sb ScrollBar) Layout(gtx C) D {
+	return sb.Anchor.Layout(gtx, layout.Vertical, func(gtx C) D {
 		if sb.Size.X == 0 {
 			sb.Size.X = 8
 		}
@@ -112,6 +124,26 @@ func (sb ScrollBar) Layout(gtx C) D {
 			)
 		})
 	})
+}
+
+func (an Anchor) Layout(gtx C, axis layout.Axis, widget layout.Widget) D {
+	switch an {
+	case Start:
+		if axis == layout.Vertical {
+			return layout.W.Layout(gtx, widget)
+		}
+		if axis == layout.Horizontal {
+			return layout.N.Layout(gtx, widget)
+		}
+	case End:
+		if axis == layout.Vertical {
+			return layout.E.Layout(gtx, widget)
+		}
+		if axis == layout.Horizontal {
+			return layout.S.Layout(gtx, widget)
+		}
+	}
+	return layout.Dimensions{}
 }
 
 // WithAlpha returns the color with a modified alpha.
