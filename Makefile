@@ -57,6 +57,14 @@ android_install: $(ANDROID_APK)
 logs:
 	adb logcat -s -T1 $(APPID):\*
 
+fp:
+	flatpak-builder --force-clean pak chat.arbor.Client.Sprig.yml
+
+fp-install:
+	flatpak-builder --user --install --force-clean pak chat.arbor.Client.Sprig.yml
+
+fp-run: fp-install
+
 clean:
 	rm $(ANDROID_APK) $(WINDOWS_ARCHIVE) \
 	    $(WINDOWS_BIN) $(LINUX_ARCHIVE) $(LINUX_BIN) \
