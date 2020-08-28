@@ -635,7 +635,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			return layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx C) D {
 					var (
-						extraWidth   = gtx.Px(unit.Dp(5*insetUnit + buttonWidthDp + scrollSlotWidthDp))
+						extraWidth   = gtx.Px(unit.Dp(5*insetUnit + sprigTheme.DefaultIconButtonWidthDp + scrollSlotWidthDp))
 						messageWidth = gtx.Constraints.Max.X - extraWidth
 					)
 					dims := layout.Stack{}.Layout(gtx,
@@ -684,7 +684,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Color:      c.Theme.Background.Dark,
 								Button:     &c.CreateReplyButton,
 								Icon:       icons.ReplyIcon,
-								Size:       unit.Dp(buttonWidthDp),
+								Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
 								Inset:      layout.UniformInset(unit.Dp(9)),
 							}.Layout(gtx)
 						})
@@ -760,7 +760,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return iconButton{
+								return sprigTheme.IconButton{
 									Theme:  c.Theme,
 									Button: &c.CancelReplyButton,
 									Icon:   icons.CancelReplyIcon,
@@ -773,7 +773,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return iconButton{
+								return sprigTheme.IconButton{
 									Theme:  c.Theme,
 									Button: &c.PasteIntoReplyButton,
 									Icon:   icons.PasteIcon,
@@ -806,7 +806,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return iconButton{
+								return sprigTheme.IconButton{
 									Theme:  c.Theme,
 									Button: &c.SendReplyButton,
 									Icon:   icons.SendReplyIcon,
