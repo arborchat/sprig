@@ -83,7 +83,7 @@ func (sb ScrollBar) Layout(gtx C) D {
 		if top.V+height.V > totalHeight {
 			top = unit.Dp(totalHeight - height.V)
 		}
-		return Clickable(gtx, sb.Clickable, func(gtx C) D {
+		return ClickBox(gtx, sb.Clickable, func(gtx C) D {
 			if sb.Length != nil {
 				*sb.Length = gtx.Constraints.Max.Y
 			}
@@ -126,9 +126,9 @@ func WithAlpha(c color.RGBA, alpha uint8) color.RGBA {
 	}
 }
 
-// Clickable lays out a rectangular clickable widget without further
+// ClickBox lays out a rectangular clickable widget without further
 // decoration. No Inking.
-func Clickable(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
+func ClickBox(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(button.Layout),
 		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
