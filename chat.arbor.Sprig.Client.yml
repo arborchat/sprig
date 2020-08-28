@@ -1,12 +1,10 @@
-app-id: chat.arbor.Sprig
-runtime: org.freedesktop.Platform
+app-id: chat.arbor.Client.Sprig
+runtime: org.freedesktop.Platform.GL.default
 runtime-version: '19.08'
 sdk: org.freedesktop.Sdk
 command: sprig
 finish-args:
-  - --share=ipc
   - --socket=wayland
-  - --socket=system-bus
   - --socket=fallback-x11
   - --filesystem=home
   - --share=network
