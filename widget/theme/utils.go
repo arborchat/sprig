@@ -61,22 +61,20 @@ type ScrollBar struct {
 	// Anchor is the direction to anchor the bar.
 	Anchor layout.Direction
 	// Size of the bar.
-	Size image.Point
+	Size f32.Point
 }
 
 // Layout renders the ScrollBar into the provided context.
 func (sb ScrollBar) Layout(gtx C) D {
-	return sb.Anchor.Layout(gtx, func(gtx C) D {
-		if sb.Size.X == 0 || sb.Size.Y == 0 {
-			// Note(jfm): Default size themeable?
-			sb.Size = image.Point{
-				X: 8,
-				Y: 16,
-			}
+		if sb.Size.X == 0 {
+			sb.Size.X = 8
+		}
+		if sb.Size.Y == 0 {
+			sb.Size.Y = 16
 		}
 		var (
-			width       = unit.Dp(float32(sb.Size.X))
-			height      = unit.Dp(float32(sb.Size.Y))
+			width       = unit.Dp(sb.Size.X)
+			height      = unit.Dp(sb.Size.Y)
 			totalHeight = float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
 			top         = unit.Dp(totalHeight * sb.Progress)
 		)
