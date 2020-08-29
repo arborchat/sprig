@@ -11,8 +11,9 @@ finish-args:
   - --share=network
   - --device=dri
   - --share=ipc
-cleanup:
-  - /app/lib/sdk/golang
+cleanup-commands:
+  - 'rm -rf $(/app/lib/sdk/golang/bin/go env GOMODCACHE) $(/app/lib/sdk/golang/bin/go env GOCACHE)'
+  - 'rm -rf /app/lib/sdk/golang'
 modules:
   - name: golang
     cleanup:
@@ -33,6 +34,7 @@ modules:
         - --share=network
     buildsystem: simple
     build-commands:
+      - go env
       - go build .
       - install -D sprig /app/bin/sprig
     sources:

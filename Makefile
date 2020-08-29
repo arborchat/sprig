@@ -15,7 +15,8 @@ LINUX_BIN = sprig
 LINUX_ARCHIVE = sprig-linux.tar.xz
 LINUX_FILES = $(LINUX_BIN) ./desktop-assets ./install-linux.sh ./appicon.png ./LICENSE.txt
 
-FPCONFIG = chat.arbor.Client.Sprig.yml
+FPNAME = chat.arbor.Client.Sprig
+FPCONFIG = $(FPNAME).yml
 FPBUILD = pakbuild
 FPREPO ?= /data/fp-repo
 
@@ -63,6 +64,9 @@ logs:
 
 fp:
 	flatpak-builder --force-clean $(FPBUILD) $(FPCONFIG)
+
+fp-shell:
+	flatpak-builder --run $(FPBUILD) $(FPCONFIG) sh
 
 fp-install:
 	flatpak-builder --user --install --force-clean $(FPBUILD) $(FPCONFIG)
