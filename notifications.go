@@ -34,8 +34,8 @@ func (n *NotificationManager) ShouldNotify(reply *forest.Reply) bool {
 	if localUserID == nil {
 		return false
 	}
-	localUserNode, _, err := n.AppState.ArborState.SubscribableStore.GetIdentity(localUserID)
-	if err != nil {
+	localUserNode, has, err := n.AppState.ArborState.SubscribableStore.GetIdentity(localUserID)
+	if err != nil || !has {
 		return false
 	}
 	localUser := localUserNode.(*forest.Identity)

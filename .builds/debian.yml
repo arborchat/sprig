@@ -11,6 +11,7 @@ packages:
     - libxkbcommon-x11-dev
     - libgles2-mesa-dev
     - libegl1-mesa-dev
+    - libffi-dev
 secrets:
     - c36d8148-24ea-4c82-843d-6223649368bb
     - 536ae4e3-5a52-4d4f-a48c-daa63ed9819a
@@ -27,6 +28,10 @@ environment:
     android_target_build_tools: "build-tools;28.0.2"
     GO111MODULE: "on"
     github_mirror: git@github.com:arborchat/sprig
+triggers:
+ - action: email
+   condition: failure
+   to: ~whereswaldon/arbor-ci@lists.sr.ht
 tasks:
  - test: |
     cd sprig
