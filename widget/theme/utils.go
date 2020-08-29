@@ -48,21 +48,55 @@ func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 	return layout.Dimensions{Size: image.Pt(int(size.X), int(size.Y))}
 }
 
+// Scrollable holds the stateful part of a scrolling. The Progress property
+// can be used to check how far the bar has been scrolled, and the Scrolled()
+// method can be used to determine if the scroll position changed within the
+// last frame.
+type Scrollable struct {
+	// Track clicks.
+	widget.Clickable
+	// Has the bar scrolled since the previous frame?
+	scrolled bool
+	// Cached length of scroll region after layout has been computed. This can be
+	// off if the screen is being resized, but we have no better way to acquire
+	// this data.
+	length int
+	// Progress is how far along we are as a fraction between 0 and 1.
+	Progress float32
+}
+
+// Update the internal state of the scrollbar.
+func (sb *Scrollable) Update() {
+	sb.scrolled = false
+	if sb.Clicked() {
+		// Resolve the click position to a fraction of the bar height
+		// Assuming vertical axis.
+		// Looping over each press is required for consistent snapping.
+		for _, press := range sb.History() {
+			sb.Progress = float32(press.Position.Y) / float32(sb.length)
+			sb.scrolled = true
+		}
+	}
+}
+
+// Scrolled returns true if the scroll position changed within the last frame.
+func (sb Scrollable) Scrolled() bool {
+	return sb.scrolled
+}
+
 // ScrollBar renders a scroll bar anchored to a side.
 type ScrollBar struct {
-	// Track clicks.
-	*widget.Clickable
-	// Length of scrollbar after layouting has been computed.
-	Length *int
+	*Scrollable
 	// Color of the scroll bar.
 	Color color.RGBA
-	// Progress is how far down we are as a fraction between 0 and 1.
-	Progress float32
 	// Anchor is the content-relative position to anchor to.
 	// Defaults to `End`, which is usually what you want.
 	Anchor Anchor
 	// Size of the bar.
 	Size f32.Point
+	// Progress overrides the internal progress of the scrollable.
+	// This lets external systems hint to where the indicator should render.
+	Progress float32
 }
 
 // Anchor specifies where to anchor to.
@@ -77,6 +111,12 @@ const (
 
 // Layout renders the ScrollBar into the provided context.
 func (sb ScrollBar) Layout(gtx C) D {
+	sb.Update()
+	if sb.Scrolled() {
+		op.InvalidateOp{}.Add(gtx.Ops)
+	}
+	// assuming vertical
+	sb.length = gtx.Constraints.Max.Y
 	return sb.Anchor.Layout(gtx, layout.Vertical, func(gtx C) D {
 		if sb.Size.X == 0 {
 			sb.Size.X = 8
@@ -93,35 +133,24 @@ func (sb ScrollBar) Layout(gtx C) D {
 		if top.V+height.V > totalHeight {
 			top = unit.Dp(totalHeight - height.V)
 		}
-		return ClickBox(gtx, sb.Clickable, func(gtx C) D {
-			if sb.Length != nil {
-				*sb.Length = gtx.Constraints.Max.Y
-			}
-			return layout.Stack{}.Layout(gtx,
-				layout.Expanded(func(gtx C) D {
-					return Rect{Size: f32.Point{
-						X: float32(gtx.Constraints.Min.X),
-						Y: float32(gtx.Constraints.Max.Y),
-					}}.Layout(gtx)
-				}),
-				layout.Stacked(func(gtx C) D {
-					return layout.Inset{
-						Top:    top,
-						Right:  unit.Dp(2),
-						Left:   unit.Dp(2),
-						Bottom: unit.Dp(2),
-					}.Layout(gtx, func(gtx C) D {
-						return Rect{
-							Color: sb.Color,
-							Size: f32.Point{
-								X: float32(gtx.Px(width)),
-								Y: float32(gtx.Px(height)),
-							},
-							Radii: float32(gtx.Px(unit.Dp(4))),
-						}.Layout(gtx)
-					})
-				}),
-			)
+		return ClickBox(gtx, &sb.Clickable, func(gtx C) D {
+			barAreaDims := layout.Inset{
+				Top:    top,
+				Right:  unit.Dp(2),
+				Left:   unit.Dp(2),
+				Bottom: unit.Dp(2),
+			}.Layout(gtx, func(gtx C) D {
+				return Rect{
+					Color: sb.Color,
+					Size: f32.Point{
+						X: float32(gtx.Px(width)),
+						Y: float32(gtx.Px(height)),
+					},
+					Radii: float32(gtx.Px(unit.Dp(4))),
+				}.Layout(gtx)
+			})
+			barAreaDims.Size.Y = gtx.Constraints.Max.Y
+			return barAreaDims
 		})
 	})
 }

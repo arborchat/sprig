@@ -59,10 +59,7 @@ type ReplyListView struct {
 	CommunityChoice                     widget.Enum
 	CommunityList                       layout.List
 
-	// ScrollBar clicks for click-based scrolling.
-	ScrollBar widget.Clickable
-	// ScrollBarLength tracked so fractions can be calculated.
-	ScrollBarLength int
+	ScrollBar sprigTheme.Scrollable
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -70,6 +67,9 @@ type ReplyListView struct {
 	PrefilterPosition layout.Position
 
 	ShouldRequestKeyboardFocus bool
+
+	// Cache the number of replies during update.
+	replyCount int
 }
 
 var _ View = &ReplyListView{}
@@ -250,17 +250,15 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	c.ReplyList.Position.Offset = 0
 }
 
-// moveFocusAbsolute moves the list focus to the reply at the specified index.
-func (c *ReplyListView) moveFocusAbsolute(replies []ds.ReplyData, index int) {
-	if len(replies) < 1 || index > len(replies)-1 {
+// reveal the reply at the given index.
+func (c *ReplyListView) reveal(index int) {
+	if c.replyCount < 1 || index > c.replyCount-1 {
 		return
 	}
-	c.Focused = replies[index].ID()
 	c.StateRefreshNeeded = true
 	c.requestKeyboardFocus()
 	c.ReplyList.Position.BeforeEnd = true
 	c.ReplyList.Position.First = index
-	c.ReplyList.Position.Offset = 0
 }
 
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
@@ -386,6 +384,12 @@ func (c *ReplyListView) startConversation() {
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
+	c.replyCount = func() (count int) {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			count = len(replies)
+		})
+		return count
+	}()
 	jumpStart := func() {
 		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
 			c.moveFocusStart(replies)
@@ -469,16 +473,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.SendReplyButton.Clicked() {
 		c.sendReply()
 	}
-	if c.ScrollBar.Clicked() {
-		// Resolve the click position to a fraction of the bar height and focus on
-		// the corresponding reply item.
-		// Assuming vertical axis.
-		for _, press := range c.ScrollBar.History() {
-			fraction := float32(press.Position.Y) / float32(c.ScrollBarLength)
-			c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-				c.moveFocusAbsolute(replies, int(float32(len(replies))*fraction))
-			})
-		}
+	if c.ScrollBar.Scrolled() {
+		c.reveal(int(float32(c.replyCount) * c.ScrollBar.Progress))
 	}
 }
 
@@ -584,13 +580,11 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 }
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
-		stateIndex   = 0
-		dims         layout.Dimensions
-		replyListLen int
+		stateIndex = 0
+		dims       layout.Dimensions
 	)
 	gtx.Constraints.Min = gtx.Constraints.Max
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
-		replyListLen = len(replies)
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
@@ -694,11 +688,10 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		})
 	})
 	sprigTheme.ScrollBar{
-		Clickable: &c.ScrollBar,
-		Length:    &c.ScrollBarLength,
-		Color:     sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
-		Progress:  float32(c.ReplyList.Position.First) / float32(replyListLen),
-		Anchor:    sprigTheme.End,
+		Scrollable: &c.ScrollBar,
+		Progress:   float32(c.ReplyList.Position.First) / float32(c.replyCount),
+		Color:      sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
+		Anchor:     sprigTheme.End,
 	}.Layout(gtx)
 	return dims
 }
