@@ -87,26 +87,39 @@ func (sb Scrollable) Scrolled() bool {
 // ScrollBar renders a scroll bar anchored to a side.
 type ScrollBar struct {
 	*Scrollable
-	// Color of the scroll bar.
+	// Color of the scroll indicator.
 	Color color.RGBA
-	// Anchor is the content-relative position to anchor to.
-	// Defaults to `End`, which is usually what you want.
-	Anchor Anchor
-	// Size of the bar.
-	Size f32.Point
 	// Progress overrides the internal progress of the scrollable.
 	// This lets external systems hint to where the indicator should render.
 	Progress float32
+	// Anchor is the content-relative position to anchor to.
+	// Defaults to `End`, which is usually what you want.
+	Anchor Anchor
+	// Axis along which the scrollbar is oriented.
+	Axis Axis
+	// Axis independent size.
+	Thickness unit.Value
+	Length    unit.Value
 }
 
 // Anchor specifies where to anchor to.
 // On the horizontal axis this becomes left-right.
 // On the vertical axis this becomes top-bottom.
+// Default to `End`.
 type Anchor bool
 
 const (
-	Start Anchor = true
 	End          = false
+	Start Anchor = true
+)
+
+// Axis specifies the scroll bar orientation.
+// Default to `Vertical`.
+type Axis bool
+
+const (
+	Vertical   = false
+	Horizontal = true
 )
 
 // Layout renders the ScrollBar into the provided context.
@@ -115,65 +128,79 @@ func (sb ScrollBar) Layout(gtx C) D {
 	if sb.Scrolled() {
 		op.InvalidateOp{}.Add(gtx.Ops)
 	}
-	// assuming vertical
-	sb.length = gtx.Constraints.Max.Y
-	return sb.Anchor.Layout(gtx, layout.Vertical, func(gtx C) D {
-		if sb.Size.X == 0 {
-			sb.Size.X = 8
+	return sb.Anchor.Layout(gtx, sb.Axis, func(gtx C) D {
+		if sb.Length == (unit.Value{}) {
+			sb.Length = unit.Dp(16)
 		}
-		if sb.Size.Y == 0 {
-			sb.Size.Y = 16
+		if sb.Thickness == (unit.Value{}) {
+			sb.Thickness = unit.Dp(8)
 		}
 		var (
-			width       = unit.Dp(sb.Size.X)
-			height      = unit.Dp(sb.Size.Y)
-			totalHeight = float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
-			top         = unit.Dp(totalHeight * sb.Progress)
+			total float32
+			size  f32.Point
+			top   = unit.Dp(2)
+			left  = unit.Dp(2)
 		)
-		if top.V+height.V > totalHeight {
-			top = unit.Dp(totalHeight - height.V)
+		switch sb.Axis {
+		case Horizontal:
+			sb.length = gtx.Constraints.Max.X
+			size = f32.Point{
+				X: float32(gtx.Px(sb.Length)),
+				Y: float32(gtx.Px(sb.Thickness)),
+			}
+			total = float32(gtx.Constraints.Max.X) / gtx.Metric.PxPerDp
+			left = unit.Dp(total * sb.Progress)
+			if left.V+sb.Length.V > total {
+				left = unit.Dp(total - sb.Length.V)
+			}
+		case Vertical:
+			sb.length = gtx.Constraints.Max.Y
+			size = f32.Point{
+				X: float32(gtx.Px(sb.Thickness)),
+				Y: float32(gtx.Px(sb.Length)),
+			}
+			total = float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
+			top = unit.Dp(total * sb.Progress)
+			if top.V+sb.Length.V > total {
+				top = unit.Dp(total - sb.Length.V)
+			}
 		}
 		return ClickBox(gtx, &sb.Clickable, func(gtx C) D {
-			// Instead of creating local variables for manipulating dimensions,
-			// why not add a method to Dimensions that lets us transform it
-			// functionally.
 			return Dimensions(layout.Inset{
 				Top:    top,
 				Right:  unit.Dp(2),
-				Left:   unit.Dp(2),
+				Left:   left,
 				Bottom: unit.Dp(2),
 			}.Layout(gtx, func(gtx C) D {
 				return Rect{
 					Color: sb.Color,
-					Size: f32.Point{
-						X: float32(gtx.Px(width)),
-						Y: float32(gtx.Px(height)),
-					},
+					Size:  size,
 					Radii: float32(gtx.Px(unit.Dp(4))),
 				}.Layout(gtx)
 			})).Where(func(d *Dimensions) {
-				d.Size.Y = gtx.Constraints.Max.Y
+				switch sb.Axis {
+				case Vertical:
+					d.Size.Y = gtx.Constraints.Max.Y
+				case Horizontal:
+					d.Size.X = gtx.Constraints.Max.X
+				}
 			}).Into()
 		})
 	})
 }
 
-func (an Anchor) Layout(gtx C, axis layout.Axis, widget layout.Widget) D {
-	switch an {
-	case Start:
-		if axis == layout.Vertical {
-			return layout.W.Layout(gtx, widget)
-		}
-		if axis == layout.Horizontal {
-			return layout.N.Layout(gtx, widget)
-		}
-	case End:
-		if axis == layout.Vertical {
-			return layout.E.Layout(gtx, widget)
-		}
-		if axis == layout.Horizontal {
-			return layout.S.Layout(gtx, widget)
-		}
+func (an Anchor) Layout(gtx C, axis Axis, widget layout.Widget) D {
+	if axis == Vertical && an == Start {
+		return layout.NW.Layout(gtx, widget)
+	}
+	if axis == Vertical && an == End {
+		return layout.NE.Layout(gtx, widget)
+	}
+	if axis == Horizontal && an == Start {
+		return layout.NW.Layout(gtx, widget)
+	}
+	if axis == Horizontal && an == End {
+		return layout.SW.Layout(gtx, widget)
 	}
 	return layout.Dimensions{}
 }

@@ -691,7 +691,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		Scrollable: &c.ScrollBar,
 		Progress:   float32(c.ReplyList.Position.First) / float32(c.replyCount),
 		Color:      sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
-		Anchor:     sprigTheme.End,
 	}.Layout(gtx)
 	return dims
 }
