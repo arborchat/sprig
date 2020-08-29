@@ -134,7 +134,10 @@ func (sb ScrollBar) Layout(gtx C) D {
 			top = unit.Dp(totalHeight - height.V)
 		}
 		return ClickBox(gtx, &sb.Clickable, func(gtx C) D {
-			barAreaDims := layout.Inset{
+			// Instead of creating local variables for manipulating dimensions,
+			// why not add a method to Dimensions that lets us transform it
+			// functionally.
+			return Dimensions(layout.Inset{
 				Top:    top,
 				Right:  unit.Dp(2),
 				Left:   unit.Dp(2),
@@ -148,9 +151,9 @@ func (sb ScrollBar) Layout(gtx C) D {
 					},
 					Radii: float32(gtx.Px(unit.Dp(4))),
 				}.Layout(gtx)
-			})
-			barAreaDims.Size.Y = gtx.Constraints.Max.Y
-			return barAreaDims
+			})).Where(func(d *Dimensions) {
+				d.Size.Y = gtx.Constraints.Max.Y
+			}).Into()
 		})
 	})
 }
@@ -201,4 +204,19 @@ func ClickBox(gtx layout.Context, button *widget.Clickable, w layout.Widget) lay
 		}),
 		layout.Stacked(w),
 	)
+}
+
+type Dimensions layout.Dimensions
+
+// Where transforms Dimensions by applying a series of operations.
+// Allows for a declarative calling style.
+func (d Dimensions) Where(ops ...func(*Dimensions)) Dimensions {
+	for _, op := range ops {
+		op(&d)
+	}
+	return d
+}
+
+func (d Dimensions) Into() layout.Dimensions {
+	return layout.Dimensions(d)
 }
