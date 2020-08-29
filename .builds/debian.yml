@@ -28,6 +28,10 @@ environment:
     android_target_build_tools: "build-tools;28.0.2"
     GO111MODULE: "on"
     github_mirror: git@github.com:arborchat/sprig
+triggers:
+ - action: email
+   condition: failure
+   to: ~whereswaldon/arbor-ci@lists.sr.ht
 tasks:
  - test: |
     cd sprig
