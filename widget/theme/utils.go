@@ -9,6 +9,8 @@ import (
 	"gioui.org/op"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
+	"gioui.org/unit"
+	"gioui.org/widget"
 )
 
 // Rect creates a rectangle of the provided background color with
@@ -44,4 +46,172 @@ func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 	paint.PaintOp{Rect: bounds}.Add(gtx.Ops)
 	stack.Pop()
 	return layout.Dimensions{Size: image.Pt(int(size.X), int(size.Y))}
+}
+
+// Scrollable holds the stateful part of a scrolling. The Progress property
+// can be used to check how far the bar has been scrolled, and the Scrolled()
+// method can be used to determine if the scroll position changed within the
+// last frame.
+type Scrollable struct {
+	// Track clicks.
+	widget.Clickable
+	// Has the bar scrolled since the previous frame?
+	scrolled bool
+	// Cached length of scroll region after layout has been computed. This can be
+	// off if the screen is being resized, but we have no better way to acquire
+	// this data.
+	length int
+	// Progress is how far along we are as a fraction between 0 and 1.
+	Progress float32
+}
+
+// Update the internal state of the scrollbar.
+func (sb *Scrollable) Update(axis Axis) {
+	sb.scrolled = false
+	if sb.Clicked() {
+		// Resolve the click position to a fraction of the bar height
+		// Assuming vertical axis.
+		presses := sb.History()
+		press := presses[len(presses)-1]
+		switch axis {
+		case Vertical:
+			sb.Progress = float32(press.Position.Y) / float32(sb.length)
+		case Horizontal:
+			sb.Progress = float32(press.Position.X) / float32(sb.length)
+		}
+		sb.scrolled = true
+	}
+}
+
+// Scrolled returns true if the scroll position changed within the last frame.
+func (sb Scrollable) Scrolled() bool {
+	return sb.scrolled
+}
+
+// ScrollBar renders a scroll bar anchored to a side.
+type ScrollBar struct {
+	*Scrollable
+	// Color of the scroll indicator.
+	Color color.RGBA
+	// Progress tells the scrollbar where to render the indicator as a fraction [0, 1].
+	Progress float32
+	// Axis along which the scrollbar is oriented.
+	Axis Axis
+	// Axis independent size.
+	Thickness unit.Value
+	Length    unit.Value
+}
+
+// Axis specifies the scroll bar orientation.
+// Default to `Vertical`.
+type Axis bool
+
+const (
+	Vertical   = false
+	Horizontal = true
+)
+
+// Layout renders the ScrollBar into the provided context.
+func (sb ScrollBar) Layout(gtx C) D {
+	sb.Update(sb.Axis)
+	if sb.Scrolled() {
+		op.InvalidateOp{}.Add(gtx.Ops)
+	}
+	return sb.Axis.Layout(gtx, func(gtx C) D {
+		if sb.Length == (unit.Value{}) {
+			sb.Length = unit.Dp(16)
+		}
+		if sb.Thickness == (unit.Value{}) {
+			sb.Thickness = unit.Dp(8)
+		}
+		var (
+			total float32
+			size  f32.Point
+			top   = unit.Dp(2)
+			left  = unit.Dp(2)
+		)
+		switch sb.Axis {
+		case Horizontal:
+			sb.length = gtx.Constraints.Max.X
+			size = f32.Point{
+				X: float32(gtx.Px(sb.Length)),
+				Y: float32(gtx.Px(sb.Thickness)),
+			}
+			total = float32(gtx.Constraints.Max.X) / gtx.Metric.PxPerDp
+			left = unit.Dp(total * sb.Progress)
+			if left.V+sb.Length.V > total {
+				left = unit.Dp(total - sb.Length.V)
+			}
+		case Vertical:
+			sb.length = gtx.Constraints.Max.Y
+			size = f32.Point{
+				X: float32(gtx.Px(sb.Thickness)),
+				Y: float32(gtx.Px(sb.Length)),
+			}
+			total = float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
+			top = unit.Dp(total * sb.Progress)
+			if top.V+sb.Length.V > total {
+				top = unit.Dp(total - sb.Length.V)
+			}
+		}
+		return ClickBox(gtx, &sb.Clickable, func(gtx C) D {
+			barAreaDims := layout.Inset{
+				Top:    top,
+				Right:  unit.Dp(2),
+				Left:   left,
+				Bottom: unit.Dp(2),
+			}.Layout(gtx, func(gtx C) D {
+				return Rect{
+					Color: sb.Color,
+					Size:  size,
+					Radii: float32(gtx.Px(unit.Dp(4))),
+				}.Layout(gtx)
+			})
+			switch sb.Axis {
+			case Vertical:
+				barAreaDims.Size.Y = gtx.Constraints.Max.Y
+			case Horizontal:
+				barAreaDims.Size.X = gtx.Constraints.Max.X
+			}
+			return barAreaDims
+		})
+	})
+}
+
+func (axis Axis) Layout(gtx C, widget layout.Widget) D {
+	if axis == Vertical {
+		return layout.NE.Layout(gtx, widget)
+	}
+	if axis == Horizontal {
+		return layout.SW.Layout(gtx, widget)
+	}
+	return layout.Dimensions{}
+}
+
+// WithAlpha returns the color with a modified alpha.
+func WithAlpha(c color.RGBA, alpha uint8) color.RGBA {
+	return color.RGBA{
+		R: c.R,
+		G: c.G,
+		B: c.B,
+		A: alpha,
+	}
+}
+
+// ClickBox lays out a rectangular clickable widget without further
+// decoration. No Inking.
+func ClickBox(gtx layout.Context, button *widget.Clickable, w layout.Widget) layout.Dimensions {
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(button.Layout),
+		layout.Expanded(func(gtx layout.Context) layout.Dimensions {
+			clip.RRect{
+				Rect: f32.Rectangle{Max: f32.Point{
+					X: float32(gtx.Constraints.Min.X),
+					Y: float32(gtx.Constraints.Min.Y),
+				}},
+			}.Add(gtx.Ops)
+			return layout.Dimensions{Size: gtx.Constraints.Min}
+		}),
+		layout.Stacked(w),
+	)
 }

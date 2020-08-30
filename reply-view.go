@@ -59,12 +59,17 @@ type ReplyListView struct {
 	CommunityChoice                     widget.Enum
 	CommunityList                       layout.List
 
+	ScrollBar sprigTheme.Scrollable
+
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
 	Filtered          bool
 	PrefilterPosition layout.Position
 
 	ShouldRequestKeyboardFocus bool
+
+	// Cache the number of replies during update.
+	replyCount int
 }
 
 var _ View = &ReplyListView{}
@@ -245,6 +250,17 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	c.ReplyList.Position.Offset = 0
 }
 
+// reveal the reply at the given index.
+func (c *ReplyListView) reveal(index int) {
+	if c.replyCount < 1 || index > c.replyCount-1 {
+		return
+	}
+	c.StateRefreshNeeded = true
+	c.requestKeyboardFocus()
+	c.ReplyList.Position.BeforeEnd = true
+	c.ReplyList.Position.First = index
+}
+
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
 	if c.Focused != nil {
 		c.StateRefreshNeeded = false
@@ -368,8 +384,22 @@ func (c *ReplyListView) startConversation() {
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
-	const jumpNone, jumpStart, jumpEnd = 0, 1, 2
-	jump := jumpNone
+	c.replyCount = func() (count int) {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			count = len(replies)
+		})
+		return count
+	}()
+	jumpStart := func() {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusStart(replies)
+		})
+	}
+	jumpEnd := func() {
+		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+			c.moveFocusEnd(replies)
+		})
+	}
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
@@ -379,15 +409,15 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			case "J", key.NameDownArrow:
 				c.moveFocusDown()
 			case key.NameHome:
-				jump = jumpStart
+				jumpStart()
 			case "G":
 				if !event.Modifiers.Contain(key.ModShift) {
-					jump = jumpStart
+					jumpStart()
 					break
 				}
 				fallthrough
 			case key.NameEnd:
-				jump = jumpEnd
+				jumpEnd()
 			case key.NameReturn, key.NameEnter:
 				c.startReply()
 			case "C":
@@ -413,20 +443,10 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
 	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
-		jump = jumpEnd
+		jumpEnd()
 	}
 	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
-		jump = jumpStart
-	}
-	if jump != jumpNone {
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
-			switch jump {
-			case jumpStart:
-				c.moveFocusStart(replies)
-			case jumpEnd:
-				c.moveFocusEnd(replies)
-			}
-		})
+		jumpStart()
 	}
 	c.processMessagePointerEvents(gtx)
 	if c.StateRefreshNeeded {
@@ -452,6 +472,9 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	if c.SendReplyButton.Clicked() {
 		c.sendReply()
+	}
+	if c.ScrollBar.Scrolled() {
+		c.reveal(int(float32(c.replyCount) * c.ScrollBar.Progress))
 	}
 }
 
@@ -557,13 +580,11 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 }
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
-		stateIndex   = 0
-		dims         layout.Dimensions
-		replyListLen int
+		stateIndex = 0
+		dims       layout.Dimensions
 	)
 	gtx.Constraints.Min = gtx.Constraints.Max
 	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
-		replyListLen = len(replies)
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
@@ -666,29 +687,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
-	progress := float32(c.ReplyList.Position.First) / float32(replyListLen)
-	layout.NE.Layout(gtx, func(gtx C) D {
-		indicatorHeightDp := unit.Dp(16)
-		indicatorHeightPx := gtx.Px(indicatorHeightDp)
-		heightDp := float32(gtx.Constraints.Max.Y) / gtx.Metric.PxPerDp
-		width := gtx.Px(unit.Dp(8))
-		top := unit.Dp(heightDp * progress)
-		if top.V+indicatorHeightDp.V > heightDp {
-			top = unit.Dp(heightDp - indicatorHeightDp.V)
-		}
-		radii := float32(gtx.Px(unit.Dp(4)))
-		return layout.Inset{
-			Top:    top,
-			Right:  unit.Dp(2),
-			Bottom: unit.Dp(2),
-		}.Layout(gtx, func(gtx C) D {
-			bg := c.Theme.Background.Dark
-			bg.A = 200
-			size := f32.Point{X: float32(width), Y: float32(indicatorHeightPx)}
-			return sprigTheme.Rect{Color: bg, Size: size, Radii: radii}.Layout(gtx)
-		})
-	})
-
+	sprigTheme.ScrollBar{
+		Scrollable: &c.ScrollBar,
+		Progress:   float32(c.ReplyList.Position.First) / float32(c.replyCount),
+		Color:      sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
+	}.Layout(gtx)
 	return dims
 }
 
