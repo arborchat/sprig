@@ -30,7 +30,7 @@ environment:
     github_mirror: git@github.com:arborchat/sprig
 triggers:
  - action: email
-   condition: failure
+   condition: always
    to: ~whereswaldon/arbor-ci@lists.sr.ht
 tasks:
  - test: |
