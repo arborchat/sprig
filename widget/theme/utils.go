@@ -66,16 +66,20 @@ type Scrollable struct {
 }
 
 // Update the internal state of the scrollbar.
-func (sb *Scrollable) Update() {
+func (sb *Scrollable) Update(axis Axis) {
 	sb.scrolled = false
 	if sb.Clicked() {
 		// Resolve the click position to a fraction of the bar height
 		// Assuming vertical axis.
-		// Looping over each press is required for consistent snapping.
-		for _, press := range sb.History() {
+		presses := sb.History()
+		press := presses[len(presses)-1]
+		switch axis {
+		case Vertical:
 			sb.Progress = float32(press.Position.Y) / float32(sb.length)
-			sb.scrolled = true
+		case Horizontal:
+			sb.Progress = float32(press.Position.X) / float32(sb.length)
 		}
+		sb.scrolled = true
 	}
 }
 
@@ -89,29 +93,14 @@ type ScrollBar struct {
 	*Scrollable
 	// Color of the scroll indicator.
 	Color color.RGBA
-	// Progress overrides the internal progress of the scrollable.
-	// This lets external systems hint to where the indicator should render.
+	// Progress tells the scrollbar where to render the indicator as a fraction [0, 1].
 	Progress float32
-	// Anchor is the content-relative position to anchor to.
-	// Defaults to `End`, which is usually what you want.
-	Anchor Anchor
 	// Axis along which the scrollbar is oriented.
 	Axis Axis
 	// Axis independent size.
 	Thickness unit.Value
 	Length    unit.Value
 }
-
-// Anchor specifies where to anchor to.
-// On the horizontal axis this becomes left-right.
-// On the vertical axis this becomes top-bottom.
-// Default to `End`.
-type Anchor bool
-
-const (
-	End          = false
-	Start Anchor = true
-)
 
 // Axis specifies the scroll bar orientation.
 // Default to `Vertical`.
@@ -124,11 +113,11 @@ const (
 
 // Layout renders the ScrollBar into the provided context.
 func (sb ScrollBar) Layout(gtx C) D {
-	sb.Update()
+	sb.Update(sb.Axis)
 	if sb.Scrolled() {
 		op.InvalidateOp{}.Add(gtx.Ops)
 	}
-	return sb.Anchor.Layout(gtx, sb.Axis, func(gtx C) D {
+	return sb.Axis.Layout(gtx, func(gtx C) D {
 		if sb.Length == (unit.Value{}) {
 			sb.Length = unit.Dp(16)
 		}
@@ -166,7 +155,7 @@ func (sb ScrollBar) Layout(gtx C) D {
 			}
 		}
 		return ClickBox(gtx, &sb.Clickable, func(gtx C) D {
-			return Dimensions(layout.Inset{
+			barAreaDims := layout.Inset{
 				Top:    top,
 				Right:  unit.Dp(2),
 				Left:   left,
@@ -177,29 +166,23 @@ func (sb ScrollBar) Layout(gtx C) D {
 					Size:  size,
 					Radii: float32(gtx.Px(unit.Dp(4))),
 				}.Layout(gtx)
-			})).Where(func(d *Dimensions) {
-				switch sb.Axis {
-				case Vertical:
-					d.Size.Y = gtx.Constraints.Max.Y
-				case Horizontal:
-					d.Size.X = gtx.Constraints.Max.X
-				}
-			}).Into()
+			})
+			switch sb.Axis {
+			case Vertical:
+				barAreaDims.Size.Y = gtx.Constraints.Max.Y
+			case Horizontal:
+				barAreaDims.Size.X = gtx.Constraints.Max.X
+			}
+			return barAreaDims
 		})
 	})
 }
 
-func (an Anchor) Layout(gtx C, axis Axis, widget layout.Widget) D {
-	if axis == Vertical && an == Start {
-		return layout.NW.Layout(gtx, widget)
-	}
-	if axis == Vertical && an == End {
+func (axis Axis) Layout(gtx C, widget layout.Widget) D {
+	if axis == Vertical {
 		return layout.NE.Layout(gtx, widget)
 	}
-	if axis == Horizontal && an == Start {
-		return layout.NW.Layout(gtx, widget)
-	}
-	if axis == Horizontal && an == End {
+	if axis == Horizontal {
 		return layout.SW.Layout(gtx, widget)
 	}
 	return layout.Dimensions{}
@@ -231,19 +214,4 @@ func ClickBox(gtx layout.Context, button *widget.Clickable, w layout.Widget) lay
 		}),
 		layout.Stacked(w),
 	)
-}
-
-type Dimensions layout.Dimensions
-
-// Where transforms Dimensions by applying a series of operations.
-// Allows for a declarative calling style.
-func (d Dimensions) Where(ops ...func(*Dimensions)) Dimensions {
-	for _, op := range ops {
-		op(&d)
-	}
-	return d
-}
-
-func (d Dimensions) Into() layout.Dimensions {
-	return layout.Dimensions(d)
 }
