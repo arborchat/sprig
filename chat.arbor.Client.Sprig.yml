@@ -1,0 +1,43 @@
+app-id: chat.arbor.Client.Sprig
+runtime: org.freedesktop.Platform
+runtime-version: '19.08'
+sdk: org.freedesktop.Sdk
+command: sprig
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --socket=session-bus
+  - --filesystem=xdg-config
+  - --share=network
+  - --device=dri
+  - --share=ipc
+cleanup-commands:
+  - 'rm -rf $(/app/lib/sdk/golang/bin/go env GOMODCACHE) $(/app/lib/sdk/golang/bin/go env GOCACHE)'
+  - 'rm -rf /app/lib/sdk/golang'
+modules:
+  - name: golang
+    cleanup:
+      - /run/build/golang
+    buildsystem: simple
+    sources:
+      - type: archive
+        url: https://golang.org/dl/go1.15.linux-amd64.tar.gz
+        sha256: 2d75848ac606061efe52a8068d0e647b35ce487a15bb52272c427df485193602
+    build-commands:
+        - install -d /app/lib/sdk/golang
+        - cp -rpv * /app/lib/sdk/golang/
+  - name: sprig
+    build-options:
+      append-path: /app/lib/sdk/golang/bin
+      build-args:
+        - --env=GO111MODULE=on
+        - --share=network
+    buildsystem: simple
+    build-commands:
+      - go env
+      - go build .
+      - install -D sprig /app/bin/sprig
+    sources:
+      - type: git
+        url: https://git.sr.ht/~whereswaldon/sprig
+
