@@ -4,8 +4,8 @@ gioui.org v0.0.0-20200726090339-83673ecb203f h1:09YCGWJqqcRI/X3HEODsA/val03uLETN
 gioui.org v0.0.0-20200726090339-83673ecb203f/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
 gioui.org v0.0.0-20200817101435-3bb1450d0d0e h1:V4PQqoftotkx9k4loaN2JTCPEFndUwmsUG2EYhGGXr8=
 gioui.org v0.0.0-20200817101435-3bb1450d0d0e/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org/cmd v0.0.0-20200817101435-3bb1450d0d0e h1:TJbI0B3ruFy5NTu0P3hDsUkH3wGFsqNM1WlpXVxNBEA=
-gioui.org/cmd v0.0.0-20200817101435-3bb1450d0d0e/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
+gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09 h1:lb9vX6UiO8U3U73eqHGUp9AZvca8GQ9x+AxcJrK94tM=
+gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7 h1:mifEjre3ExP+TnI0Z6tjGa51TcP+CJCfPA16fFcw1Rs=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7/go.mod h1:r9pvrmlC21HDzv1lW5Udi/+01w4jIWf4NHPi2yHhjk8=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200517003538-529ac9248d93 h1:DXtB8FXojNZAj7+sqXhvVKM6Az36a18B1WuqvjG0D1Q=
@@ -14,12 +14,11 @@ git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174 h1:rn4WjyTh
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200712155735-6acac05fe174/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9 h1:Y51y19J/hi5OCFA/L3j4ZH2IvRr5w4i3ZRhNVpRsSCk=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200818214119-ff03acf111a9/go.mod h1:B+yEvqqiOvReyFTyXa6Ar2YlGH04CDG0FyBPItbcbF4=
-git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200814013315-d562b139a9f5 h1:hTz0at4VzL6+UclcJKeQyUHeZ50QSJLQdfEcRkkj2Dg=
-git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200814013315-d562b139a9f5/go.mod h1:NE3saRSb5uAz64TIkOlRTrFbctt4chJhlQpD59/nsko=
+git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200830212031-8373c3049aa2 h1:l+l/U1uCi4JCzGBWMfxlmYCllanCiV3u9xIWsfFtWyg=
+git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200830212031-8373c3049aa2/go.mod h1:c237AiA2cwcg+n865LzGlKY4z6H3UbCJHWOumUj7fGk=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8 h1:Cl6MTNMZJgVVxe4vBXeqjAp1zfiQMXejn7VHra55Oqc=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200517010141-a4188845a9a8/go.mod h1:aMg78wuZrnmbesMseUyCaQdj6OG1laIYpR5HbDJfG7Y=
-git.wow.st/gmp/jni v0.0.0-20200623180511-2e7d20a1b472 h1:YlBjj/ZrWg1Vs/h7ibZSXBpX9GUtvZ1ATNUVs+jhcXg=
-git.wow.st/gmp/jni v0.0.0-20200623180511-2e7d20a1b472/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
+git.wow.st/gmp/jni v0.0.0-20200626194017-b74a17279b1f/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
 git.wow.st/gmp/jni v0.0.0-20200709210836-4a3b173acb9f h1:Tc+xxWSa4L3XLYdY3pFTK/fwR+HXIIendpxpfS7O3jQ=
 git.wow.st/gmp/jni v0.0.0-20200709210836-4a3b173acb9f/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
 github.com/BurntSushi/xgb v0.0.0-20160522181843-27f122750802/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=

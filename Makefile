@@ -18,9 +18,10 @@ LINUX_FILES = $(LINUX_BIN) ./desktop-assets ./install-linux.sh ./appicon.png ./L
 FPNAME = chat.arbor.Client.Sprig
 FPCONFIG = $(FPNAME).yml
 FPBUILD = pakbuild
-FPREPO ?= /data/fp-repo
+FPREPO := /data/fp-repo
 
 MACOS_BIN = sprig-mac
+MACOS_APP = sprig.app
 MACOS_ARCHIVE = sprig-macos.tar.gz
 
 android: $(ANDROID_APK)
@@ -50,11 +51,19 @@ $(LINUX_BIN): $(SOURCE)
 
 macos: $(MACOS_ARCHIVE)
 
-$(MACOS_ARCHIVE): $(MACOS_BIN)
-	tar czf $(MACOS_ARCHIVE) $(MACOS_BIN)
+$(MACOS_ARCHIVE): $(MACOS_APP)
+	tar czf $(MACOS_ARCHIVE) $(MACOS_APP)
+
+$(MACOS_APP): $(MACOS_BIN) $(MACOS_APP).template
+	rm -rf $(MACOS_APP)
+	cp -rv $(MACOS_APP).template $(MACOS_APP)
+	cp $(MACOS_BIN) $(MACOS_APP)/Contents/MacOS/$(MACOS_BIN)
+	codesign -s - $(MACOS_APP)
 
 $(MACOS_BIN): $(SOURCE)
-	env GOOS=darwin go build -o $(MACOS_BIN) .
+	env GOOS=darwin CGO_CFLAGS=-mmacosx-version-min=10.13 \
+	CGO_LDFLAGS=-mmacosx-version-min=10.13 \
+	go build -o $(MACOS_BIN) -ldflags -v .
 
 android_install: $(ANDROID_APK)
 	adb install $(ANDROID_APK)
