@@ -60,6 +60,7 @@ $(MACOS_ARCHIVE): $(MACOS_APP)
 $(MACOS_APP): $(MACOS_BIN) $(MACOS_APP).template
 	rm -rf $(MACOS_APP)
 	cp -rv $(MACOS_APP).template $(MACOS_APP)
+	mkdir -p $(MACOS_APP)/Contents/MacOS
 	cp $(MACOS_BIN) $(MACOS_APP)/Contents/MacOS/$(MACOS_BIN)
 	codesign -s - $(MACOS_APP)
 
