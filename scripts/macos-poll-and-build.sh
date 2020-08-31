@@ -3,32 +3,33 @@
 set -euo pipefail
 
 SCRIPT_DIR=$(cd $(dirname "$0") && pwd)
-REPO_ROOT="$SCRIPT_DIR/.."
+REPO_ROOT="$SCRIPT_DIR/sprig"
+ASSET_ROOT="$SCRIPT_DIR/assets"
 
 function build_for_mac() {
-    local -r artifact
-    artifact=$1
+    local -r artifact=$1
     make macos
-    mv sprig-mac.tar.gz $artifact
+    mv sprig-mac.tar.gz "$ASSET_ROOT/$artifact"
 }
 
 function build_for_tag() {
-    local -r tag
-    tag="$1"
+    local -r tag="$1"
     artifact="sprig-$tag-macOS.tar.gz"
     # check if we are on a new tagged commit
-    if ! [ -e "$artifact" ]; then
+    if ! [ -e "$ASSET_ROOT/$artifact" ]; then
         echo "building tag $tag"
         if ! build_for_mac "$artifact"; then
             return 1
         fi
         if ! curl --http1.2 -H "Authorization: token $SRHT_TOKEN" \
-        	-F "file=@$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag" ; then
+        	-F "file=@$ASSET_ROOT/$artifact" "https://git.sr.ht/api/repos/sprig/artifacts/$tag" ; then
             echo "upload failed"
             return 2
         fi
     fi
 }
+
+if ! [ -d sprig ]; then git clone https://git.sr.ht/~whereswaldon/sprig; fi
 
 # poll indefinitely
 while true; do
