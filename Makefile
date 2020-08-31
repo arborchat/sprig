@@ -24,6 +24,9 @@ MACOS_BIN = sprig-mac
 MACOS_APP = sprig.app
 MACOS_ARCHIVE = sprig-macos.tar.gz
 
+IOS_APP = sprig.ipa
+IOS_VERSION := 0
+
 android: $(ANDROID_APK)
 
 $(ANDROID_APK): $(SOURCE) $(KEYSTORE)
@@ -64,6 +67,11 @@ $(MACOS_BIN): $(SOURCE)
 	env GOOS=darwin CGO_CFLAGS=-mmacosx-version-min=10.13 \
 	CGO_LDFLAGS=-mmacosx-version-min=10.13 \
 	go build -o $(MACOS_BIN) -ldflags -v .
+
+ios: $(IOS_APP)
+
+$(IOS_APP): $(SOURCE)
+	gogio -target ios -appid chat.arbor.sprig -version $(IOS_VERSION) .
 
 android_install: $(ANDROID_APK)
 	adb install $(ANDROID_APK)
