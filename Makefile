@@ -64,8 +64,8 @@ $(MACOS_APP): $(MACOS_BIN) $(MACOS_APP).template
 	codesign -s - $(MACOS_APP)
 
 $(MACOS_BIN): $(SOURCE)
-	env GOOS=darwin CGO_CFLAGS=-mmacosx-version-min=10.13 \
-	CGO_LDFLAGS=-mmacosx-version-min=10.13 \
+	env GOOS=darwin CGO_CFLAGS=-mmacosx-version-min=10.14 \
+	CGO_LDFLAGS=-mmacosx-version-min=10.14 \
 	go build -o $(MACOS_BIN) -ldflags -v .
 
 ios: $(IOS_APP)
