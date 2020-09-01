@@ -99,9 +99,21 @@ func (sb *Scrollable) Update(gtx C, axis Axis) {
 		}
 	}
 	if drags := sb.Drag.Events(gtx.Metric, gtx, axis.ToGesture()); len(drags) > 0 {
-		drag := drags[len(drags)-1]
+		// Calculate the average drag movement across all drag events this frame.
+		// NOTE: unlike the History() on a clickable, these drag eents are not
+		// from past frames, but from the current one.
+		avgDrag := float32(0)
+		for _, d := range drags {
+			avgDrag += pickAxis(d.Position)
+		}
+		// This artificially divides the drag distance by an extra factor of two.
+		// This number was determined entirely through trial and error, as it
+		// seems to smooth the dragging behavior pretty well.
+		// TODO: understand why this works.
+		avgDrag /= float32(len(drags) * 2)
+
 		// Recombine the drag position into a the fraction.
-		sb.Progress = (sb.Progress*float32(sb.length) + pickAxis(drag.Position)) / float32(sb.length)
+		sb.Progress = (sb.Progress*float32(sb.length) + avgDrag) / float32(sb.length)
 		sb.scrolled = true
 	}
 }
