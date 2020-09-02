@@ -5,6 +5,8 @@ import (
 	"image/color"
 
 	"gioui.org/f32"
+	"gioui.org/gesture"
+	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/op/clip"
@@ -55,6 +57,8 @@ func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
 type Scrollable struct {
 	// Track clicks.
 	widget.Clickable
+	// Track drag events.
+	gesture.Drag
 	// Has the bar scrolled since the previous frame?
 	scrolled bool
 	// Cached length of scroll region after layout has been computed. This can be
@@ -66,19 +70,35 @@ type Scrollable struct {
 }
 
 // Update the internal state of the scrollbar.
-func (sb *Scrollable) Update(axis Axis) {
+func (sb *Scrollable) Update(gtx C, axis Axis) {
 	sb.scrolled = false
-	if sb.Clicked() {
-		// Resolve the click position to a fraction of the bar height
-		// Assuming vertical axis.
-		presses := sb.History()
-		press := presses[len(presses)-1]
+	// Restrict progress to [0, 1].
+	defer func() {
+		if sb.Progress > 1 {
+			sb.Progress = 1
+		} else if sb.Progress < 0 {
+			sb.Progress = 0
+		}
+	}()
+	pickAxis := func(pt f32.Point) (v float32) {
 		switch axis {
 		case Vertical:
-			sb.Progress = float32(press.Position.Y) / float32(sb.length)
+			v = pt.Y
 		case Horizontal:
-			sb.Progress = float32(press.Position.X) / float32(sb.length)
+			v = pt.X
 		}
+		return v
+	}
+	if sb.Clicked() {
+		if presses := sb.History(); len(presses) > 0 {
+			press := presses[len(presses)-1]
+			sb.Progress = float32(pickAxis(press.Position)) / float32(sb.length)
+			sb.scrolled = true
+		}
+	}
+	if drags := sb.Drag.Events(gtx.Metric, gtx, axis.ToGesture()); len(drags) > 0 {
+		delta := pickAxis(drags[len(drags)-1].Position)
+		sb.Progress = (sb.Progress*float32(sb.length) + (delta / 2)) / float32(sb.length)
 		sb.scrolled = true
 	}
 }
@@ -113,7 +133,8 @@ const (
 
 // Layout renders the ScrollBar into the provided context.
 func (sb ScrollBar) Layout(gtx C) D {
-	sb.Update(sb.Axis)
+	sb.Scrollable.Progress = sb.Progress
+	sb.Update(gtx, sb.Axis)
 	if sb.Scrolled() {
 		op.InvalidateOp{}.Add(gtx.Ops)
 	}
@@ -161,6 +182,13 @@ func (sb ScrollBar) Layout(gtx C) D {
 				Left:   left,
 				Bottom: unit.Dp(2),
 			}.Layout(gtx, func(gtx C) D {
+				pointer.Rect(image.Rectangle{
+					Max: image.Point{
+						X: int(size.X),
+						Y: int(size.Y),
+					},
+				}).Add(gtx.Ops)
+				sb.Drag.Add(gtx.Ops)
 				return Rect{
 					Color: sb.Color,
 					Size:  size,
@@ -186,6 +214,16 @@ func (axis Axis) Layout(gtx C, widget layout.Widget) D {
 		return layout.SW.Layout(gtx, widget)
 	}
 	return layout.Dimensions{}
+}
+
+func (axis Axis) ToGesture() (g gesture.Axis) {
+	switch axis {
+	case Vertical:
+		g = gesture.Vertical
+	case Horizontal:
+		g = gesture.Horizontal
+	}
+	return g
 }
 
 // WithAlpha returns the color with a modified alpha.
