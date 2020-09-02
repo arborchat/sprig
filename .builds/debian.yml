@@ -36,9 +36,18 @@ tasks:
  - test: |
     cd sprig
     go test -v -cover ./...
- - install_android_and_mirror: |
+ - mirror: |
     # mirror to github while we wait for android
-    ssh-keyscan github.com > "$HOME"/.ssh/known_hosts && cd sprig && git push --mirror "$github_mirror" &
+    ssh-keyscan github.com > "$HOME"/.ssh/known_hosts && cd sprig && git push --mirror "$github_mirror" || echo "failed mirroring"
+ - build_windows: |
+    cd sprig
+    make sprig-windows.zip
+ - build_linux: |
+    cd sprig
+ - install_android: |
+    cd sprig
+    if ! git describe --tags --exact-match HEAD; then exit 0; fi
+    cd ..
     mkdir -p android/cmdline-tools
     cd android/cmdline-tools
     curl -so sdk-tools.zip "https://dl.google.com/android/repository/$android_sdk_tools_zip"
@@ -50,17 +59,12 @@ tasks:
     rm ndk.zip
     mv android-ndk-* ndk-bundle
     yes | sdkmanager --licenses
-    sdkmanager "$android_target_platform" "$android_target_build_tools"
+    sdkmanager "$android_target_platform" "$android_target_build_tools"   make sprig-linux.tar.xz
  - build_apk: |
     cd sprig
+    if ! git describe --tags --exact-match HEAD; then exit 0; fi
     mv appicon-release.png appicon.png
     make APPID=chat.arbor.sprig sprig.apk
- - build_windows: |
-    cd sprig
-    make sprig-windows.zip
- - build_linux: |
-    cd sprig
-    make sprig-linux.tar.xz
  - release: |
     cd sprig
     if ! git describe --tags --exact-match HEAD; then exit 0; fi
