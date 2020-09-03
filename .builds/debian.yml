@@ -44,6 +44,7 @@ tasks:
     make sprig-windows.zip
  - build_linux: |
     cd sprig
+    make sprig-linux.tar.xz
  - install_android: |
     cd sprig
     if ! git describe --tags --exact-match HEAD; then exit 0; fi
@@ -59,7 +60,7 @@ tasks:
     rm ndk.zip
     mv android-ndk-* ndk-bundle
     yes | sdkmanager --licenses
-    sdkmanager "$android_target_platform" "$android_target_build_tools"   make sprig-linux.tar.xz
+    sdkmanager "$android_target_platform" "$android_target_build_tools"
  - build_apk: |
     cd sprig
     if ! git describe --tags --exact-match HEAD; then exit 0; fi
