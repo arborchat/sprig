@@ -19,6 +19,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/store"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 	"golang.org/x/crypto/openpgp"
@@ -50,6 +51,12 @@ func eventLoop(w *app.Window) error {
 		log.Printf("failed finding application data dir: %v", err)
 	}
 
+	app, err := core.NewApp()
+	if err != nil {
+		log.Fatalf("Failed initializing application: %v", err)
+	}
+	app.Notifications().Register(app.Arbor().Store())
+
 	appState, err := NewAppState(dataDir)
 	if err != nil {
 		return err
@@ -76,11 +83,8 @@ func eventLoop(w *app.Window) error {
 		viewManager.RequestViewSwitch(ReplyViewID)
 	}
 
-	notifMgr, err := NewNotificationManager(appState)
-
 	appState.SubscribableStore.SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
-		notifMgr.HandleNode(n)
 	})
 	var ops op.Ops
 	for {
