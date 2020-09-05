@@ -7,6 +7,7 @@ import (
 	"gioui.org/widget/material"
 
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -14,18 +15,16 @@ type ConsentView struct {
 	manager     ViewManager
 	AgreeButton widget.Clickable
 
-	*Settings
-	*ArborState
+	core.App
 	*sprigTheme.Theme
 }
 
 var _ View = &ConsentView{}
 
-func NewConsentView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
+func NewConsentView(app core.App, theme *sprigTheme.Theme) View {
 	c := &ConsentView{
-		Settings:   settings,
-		ArborState: arborState,
-		Theme:      theme,
+		App:   app,
+		Theme: theme,
 	}
 
 	return c
@@ -47,9 +46,9 @@ func (c *ConsentView) HandleClipboard(contents string) {
 
 func (c *ConsentView) Update(gtx layout.Context) {
 	if c.AgreeButton.Clicked() {
-		c.Settings.AcknowledgedNoticeVersion = NoticeVersion
-		go c.Settings.Persist()
-		if c.Settings.Address == "" {
+		c.Settings().SetAcknowledgedNoticeVersion(NoticeVersion)
+		go c.Settings().Persist()
+		if c.Settings().Address() == "" {
 			c.manager.RequestViewSwitch(ConnectFormID)
 		} else {
 			c.manager.RequestViewSwitch(SettingsID)
@@ -82,7 +81,7 @@ func (c *ConsentView) Layout(gtx layout.Context) layout.Dimensions {
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				if c.Settings.AcknowledgedNoticeVersion != 0 {
+				if c.Settings().AcknowledgedNoticeVersion() != 0 {
 					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
 							material.Body2(theme, UpdateText).Layout,

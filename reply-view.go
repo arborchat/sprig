@@ -18,6 +18,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/anim"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
@@ -28,8 +29,7 @@ import (
 type ReplyListView struct {
 	manager ViewManager
 
-	*Settings
-	*ArborState
+	core.App
 	*sprigTheme.Theme
 
 	CopyReplyButton widget.Clickable
@@ -74,11 +74,10 @@ type ReplyListView struct {
 
 var _ View = &ReplyListView{}
 
-func NewReplyListView(settings *Settings, arborState *ArborState, th *sprigTheme.Theme) View {
+func NewReplyListView(app core.App, th *sprigTheme.Theme) View {
 	c := &ReplyListView{
-		Settings:   settings,
-		ArborState: arborState,
-		Theme:      th,
+		App:   app,
+		Theme: th,
 		ReplyAnim: anim.Normal{
 			Duration: time.Millisecond * 100,
 		},
@@ -86,7 +85,7 @@ func NewReplyListView(settings *Settings, arborState *ArborState, th *sprigTheme
 	}
 	c.ReplyList.Axis = layout.Vertical
 	// ensure that we are notified when we need to refresh the state of visible nodes
-	c.ArborState.SubscribableStore.SubscribeToNewMessages(func(forest.Node) {
+	c.Arbor().Store().SubscribeToNewMessages(func(forest.Node) {
 		c.StateRefreshNeeded = true
 	})
 	c.ReplyList.ScrollToEnd = true
@@ -192,11 +191,11 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
 	}
-	currentIndex := c.ArborState.ReplyList.IndexForID(c.Focused)
+	currentIndex := c.Arbor().Replies().IndexForID(c.Focused)
 	if currentIndex < 0 {
 		return
 	}
-	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+	c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
 		for {
 			currentIndex += indexIncrement
 			if currentIndex >= len(replies) || currentIndex < 0 {
@@ -264,8 +263,8 @@ func (c *ReplyListView) reveal(index int) {
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
 	if c.Focused != nil {
 		c.StateRefreshNeeded = false
-		c.Ancestry, _ = c.ArborState.SubscribableStore.AncestryOf(c.Focused)
-		c.Descendants, _ = c.ArborState.SubscribableStore.DescendantsOf(c.Focused)
+		c.Ancestry, _ = c.Arbor().Store().AncestryOf(c.Focused)
+		c.Descendants, _ = c.Arbor().Store().DescendantsOf(c.Focused)
 		c.ReplyAnim.Start(gtx.Now)
 	}
 }
@@ -280,7 +279,7 @@ func (c *ReplyListView) toggleFilter() {
 }
 
 func (c *ReplyListView) copyFocused() {
-	reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
+	reply, _, err := c.Arbor().Store().Get(c.Focused)
 	if err != nil {
 		log.Printf("failed looking up selected message: %v", err)
 	} else {
@@ -289,12 +288,12 @@ func (c *ReplyListView) copyFocused() {
 }
 
 func (c *ReplyListView) startReply() {
-	reply, _, err := c.ArborState.SubscribableStore.Get(c.Focused)
+	reply, _, err := c.Arbor().Store().Get(c.Focused)
 	if err != nil {
 		log.Printf("failed looking up selected message: %v", err)
 	} else {
 		c.ReplyingTo.Reply = reply.(*forest.Reply)
-		author, _, err := c.ArborState.SubscribableStore.GetIdentity(&c.ReplyingTo.Reply.Author)
+		author, _, err := c.Arbor().Store().GetIdentity(&c.ReplyingTo.Reply.Author)
 		if err != nil {
 			log.Printf("failed looking up select message author: %v", err)
 		} else {
@@ -312,7 +311,7 @@ func (c *ReplyListView) sendReply() {
 	if replyText == "" {
 		return
 	}
-	nodeBuilder, err := c.Settings.Builder()
+	nodeBuilder, err := c.Settings().Builder()
 	if err != nil {
 		log.Printf("failed acquiring node builder: %v", err)
 	}
@@ -321,7 +320,7 @@ func (c *ReplyListView) sendReply() {
 		if c.CommunityChoice.Value != "" {
 			var chosen *forest.Community
 			chosenString := c.CommunityChoice.Value
-			c.ArborState.CommunityList.WithCommunities(func(communities []*forest.Community) {
+			c.Arbor().Communities().WithCommunities(func(communities []*forest.Community) {
 				for _, community := range communities {
 					if community.ID().String() == chosenString {
 						chosen = community
@@ -346,11 +345,11 @@ func (c *ReplyListView) sendReply() {
 	}
 	if newReply != nil {
 		go func() {
-			if err := c.ArborState.SubscribableStore.Add(author); err != nil {
+			if err := c.Arbor().Store().Add(author); err != nil {
 				log.Printf("failed adding replying identity to store: %v", err)
 				return
 			}
-			if err := c.ArborState.SubscribableStore.Add(newReply); err != nil {
+			if err := c.Arbor().Store().Add(newReply); err != nil {
 				log.Printf("failed adding reply to store: %v", err)
 				return
 			}
@@ -368,7 +367,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 			if !clickedOnFocused {
 				c.StateRefreshNeeded = true
 				c.Focused = clickHandler.Reply
-				reply, _, _ := c.ArborState.SubscribableStore.Get(clickHandler.Reply)
+				reply, _, _ := c.Arbor().Store().Get(clickHandler.Reply)
 				c.Conversation = &reply.(*forest.Reply).ConversationID
 				c.dismissReplyContextMenu(gtx)
 			} else {
@@ -385,18 +384,18 @@ func (c *ReplyListView) startConversation() {
 
 func (c *ReplyListView) Update(gtx layout.Context) {
 	c.replyCount = func() (count int) {
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
 			count = len(replies)
 		})
 		return count
 	}()
 	jumpStart := func() {
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
 			c.moveFocusStart(replies)
 		})
 	}
 	jumpEnd := func() {
-		c.ArborState.WithReplies(func(replies []ds.ReplyData) {
+		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
 			c.moveFocusEnd(replies)
 		})
 	}
@@ -584,7 +583,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		dims       layout.Dimensions
 	)
 	gtx.Constraints.Min = gtx.Constraints.Max
-	c.ArborState.ReplyList.WithReplies(func(replies []ds.ReplyData) {
+	c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
@@ -729,7 +728,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								if c.CreatingConversation {
 									var dims layout.Dimensions
-									c.ArborState.CommunityList.WithCommunities(func(comms []*forest.Community) {
+									c.Arbor().Communities().WithCommunities(func(comms []*forest.Community) {
 										dims = c.CommunityList.Layout(gtx, len(comms), func(gtx layout.Context, index int) layout.Dimensions {
 											community := comms[index]
 											if c.CommunityChoice.Value == "" && index == 0 {

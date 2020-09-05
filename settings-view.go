@@ -8,6 +8,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -16,8 +17,7 @@ import (
 type SettingsView struct {
 	manager ViewManager
 
-	*Settings
-	*ArborState
+	core.App
 	*sprigTheme.Theme
 
 	layout.List
@@ -33,14 +33,13 @@ type SettingsView struct {
 
 var _ View = &SettingsView{}
 
-func NewCommunityMenuView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
+func NewCommunityMenuView(app core.App, theme *sprigTheme.Theme) View {
 	c := &SettingsView{
-		Settings:   settings,
-		ArborState: arborState,
-		Theme:      theme,
+		App:   app,
+		Theme: theme,
 	}
 	c.List.Axis = layout.Vertical
-	c.ConnectionForm.SetText(c.Settings.Address)
+	c.ConnectionForm.SetText(c.Settings().Address())
 	return c
 }
 
@@ -77,32 +76,31 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		c.manager.SetThemeing(c.ThemeingSwitch.Value)
 	}
 	if c.ConnectionForm.Submitted() {
-		c.Settings.Address = c.ConnectionForm.Text()
+		c.Settings().SetAddress(c.ConnectionForm.Text())
 		settingsChanged = true
-		c.ArborState.RestartWorker(c.Settings.Address)
+		c.ArborState.RestartWorker(c.Settings().Address())
 	}
 	if c.ConnectionForm.PasteRequested() {
 		c.manager.RequestClipboardPaste()
 	}
 	if c.NotificationsSwitch.Changed() {
-		c.NotificationsEnabled = &c.NotificationsSwitch.Value
+		c.Settings().SetNotificationsGloballyAllowed(c.NotificationsSwitch.Value)
 		settingsChanged = true
 	}
 	if c.BottomBarSwitch.Changed() {
-		c.BottomAppBar = c.BottomBarSwitch.Value
+		c.Settings().SetBottomAppBar(c.BottomBarSwitch.Value)
 		settingsChanged = true
-		log.Println(c.BottomAppBar)
 	}
 	if settingsChanged {
-		c.manager.ApplySettings(*c.Settings)
-		go c.Settings.Persist()
+		c.manager.ApplySettings(c.Settings())
+		go c.Settings().Persist()
 	}
 }
 
 func (c *SettingsView) BecomeVisible() {
-	c.ConnectionForm.SetText(c.Settings.Address)
-	c.NotificationsSwitch.Value = c.Settings.NotificationsGloballyAllowed()
-	c.BottomBarSwitch.Value = c.Settings.BottomAppBar
+	c.ConnectionForm.SetText(c.Settings().Address())
+	c.NotificationsSwitch.Value = c.Settings().NotificationsGloballyAllowed()
+	c.BottomBarSwitch.Value = c.Settings().BottomAppBar()
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
@@ -115,8 +113,8 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					return itemInset.Layout(gtx, material.H6(theme, "Identity").Layout)
 				}),
 				layout.Rigid(func(gtx C) D {
-					if c.Settings.ActiveIdentity != nil {
-						id, _ := c.Settings.Identity()
+					if c.Settings().ActiveArborIdentityID() != nil {
+						id, _ := c.Settings().Identity()
 						return itemInset.Layout(gtx, sprigTheme.AuthorName(theme, id).Layout)
 					}
 					return itemInset.Layout(gtx, material.Button(theme, &c.IdentityButton, "Create new Identity").Layout)

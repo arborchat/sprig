@@ -17,7 +17,15 @@ import (
 // SettingsService allows querying, updating, and saving settings.
 type SettingsService interface {
 	NotificationsGloballyAllowed() bool
+	SetNotificationsGloballyAllowed(bool)
+	AcknowledgedNoticeVersion() int
+	SetAcknowledgedNoticeVersion(version int)
+	Address() string
+	SetAddress(string)
+	BottomAppBar() bool
+	SetBottomAppBar(bool)
 	ActiveArborIdentityID() *fields.QualifiedHash
+	Identity() (*forest.Identity, error)
 	GrovePath() string
 	Persist() error
 	CreateIdentity(name string) error
@@ -77,12 +85,32 @@ func (s *settingsService) Load() error {
 	return nil
 }
 
+func (s *settingsService) AcknowledgedNoticeVersion() int {
+	return s.Settings.AcknowledgedNoticeVersion
+}
+
+func (s *settingsService) SetAcknowledgedNoticeVersion(version int) {
+	s.Settings.AcknowledgedNoticeVersion = version
+}
+
 func (s *settingsService) NotificationsGloballyAllowed() bool {
 	return s.Settings.NotificationsEnabled == nil || *s.Settings.NotificationsEnabled
 }
 
+func (s *settingsService) SetNotificationsGloballyAllowed(allowed bool) {
+	s.Settings.NotificationsEnabled = &allowed
+}
+
 func (s *settingsService) ActiveArborIdentityID() *fields.QualifiedHash {
 	return s.Settings.ActiveIdentity
+}
+
+func (s *settingsService) Address() string {
+	return s.Settings.Address
+}
+
+func (s *settingsService) SetAddress(addr string) {
+	s.Settings.Address = addr
 }
 
 func (s *settingsService) GrovePath() string {
@@ -91,6 +119,10 @@ func (s *settingsService) GrovePath() string {
 
 func (s *settingsService) BottomAppBar() bool {
 	return s.Settings.BottomAppBar
+}
+
+func (s *settingsService) SetBottomAppBar(bottom bool) {
+	s.Settings.BottomAppBar = bottom
 }
 
 func (s *settingsService) SettingsFile() string {

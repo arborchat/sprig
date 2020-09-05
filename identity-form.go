@@ -6,6 +6,7 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -14,18 +15,16 @@ type IdentityFormView struct {
 	widget.Editor
 	CreateButton widget.Clickable
 
-	*Settings
-	*ArborState
+	core.App
 	*sprigTheme.Theme
 }
 
 var _ View = &IdentityFormView{}
 
-func NewIdentityFormView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
+func NewIdentityFormView(app core.App, theme *sprigTheme.Theme) View {
 	c := &IdentityFormView{
-		Settings:   settings,
-		ArborState: arborState,
-		Theme:      theme,
+		App:   app,
+		Theme: theme,
 	}
 
 	return c
@@ -47,7 +46,7 @@ func (c *IdentityFormView) HandleClipboard(contents string) {
 
 func (c *IdentityFormView) Update(gtx layout.Context) {
 	if c.CreateButton.Clicked() {
-		c.Settings.CreateIdentity(c.Editor.Text())
+		c.Settings().CreateIdentity(c.Editor.Text())
 		c.manager.RequestViewSwitch(ReplyViewID)
 	}
 }

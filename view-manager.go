@@ -12,6 +12,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -44,7 +45,7 @@ type ViewManager interface {
 	// enable live theme editing
 	SetThemeing(bool)
 	// apply settings changes relevant to the UI
-	ApplySettings(Settings)
+	ApplySettings(core.SettingsService)
 }
 
 type viewManager struct {
@@ -86,9 +87,9 @@ func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) V
 	return vm
 }
 
-func (vm *viewManager) ApplySettings(settings Settings) {
+func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	anchor := materials.Top
-	if settings.BottomAppBar {
+	if settings.BottomAppBar() {
 		anchor = materials.Bottom
 	}
 	vm.AppBar.Anchor = anchor

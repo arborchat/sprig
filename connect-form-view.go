@@ -5,6 +5,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -13,18 +14,16 @@ type ConnectFormView struct {
 	manager ViewManager
 	Form    sprigWidget.TextForm
 
-	*Settings
-	*ArborState
+	core.App
 	*sprigTheme.Theme
 }
 
 var _ View = &ConnectFormView{}
 
-func NewConnectFormView(settings *Settings, arborState *ArborState, theme *sprigTheme.Theme) View {
+func NewConnectFormView(app core.App, theme *sprigTheme.Theme) View {
 	c := &ConnectFormView{
-		Settings:   settings,
-		ArborState: arborState,
-		Theme:      theme,
+		App:   app,
+		Theme: theme,
 	}
 	return c
 }
@@ -46,9 +45,9 @@ func (c *ConnectFormView) HandleClipboard(contents string) {
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
 	if c.Form.Submitted() {
-		c.Settings.Address = c.Form.Text()
-		go c.Settings.Persist()
-		c.ArborState.RestartWorker(c.Settings.Address)
+		c.Settings().SetAddress(c.Form.Text())
+		go c.Settings().Persist()
+		c.ArborState.RestartWorker(c.Settings().Address())
 		c.manager.RequestViewSwitch(IdentityFormID)
 	}
 	if c.Form.PasteRequested() {
