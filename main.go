@@ -43,7 +43,6 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
-	address := flag.String("address", "", "arbor relay address to connect to")
 	profile := flag.Bool("profile", false, "log profiling data")
 	flag.Parse()
 	dataDir, err := app.DataDir()
@@ -51,7 +50,7 @@ func eventLoop(w *app.Window) error {
 		log.Printf("failed finding application data dir: %v", err)
 	}
 
-	app, err := core.NewApp()
+	app, err := core.NewApp(dataDir)
 	if err != nil {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
@@ -60,10 +59,6 @@ func eventLoop(w *app.Window) error {
 	appState, err := NewAppState(dataDir)
 	if err != nil {
 		return err
-	}
-	if *address != "" {
-		appState.Settings.Address = *address
-		appState.RestartWorker()
 	}
 
 	viewManager := NewViewManager(w, appState.Theme, *profile)
