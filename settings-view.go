@@ -78,7 +78,7 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	if c.ConnectionForm.Submitted() {
 		c.Settings().SetAddress(c.ConnectionForm.Text())
 		settingsChanged = true
-		c.ArborState.RestartWorker(c.Settings().Address())
+		c.Sprout().ConnectTo(c.Settings().Address())
 	}
 	if c.ConnectionForm.PasteRequested() {
 		c.manager.RequestClipboardPaste()

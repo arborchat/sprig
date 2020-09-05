@@ -19,6 +19,7 @@ type ArborService interface {
 }
 
 type arborService struct {
+	SettingsService
 	grove store.ExtendedStore
 	rl    *ds.ReplyList
 	cl    *ds.CommunityList
@@ -28,7 +29,7 @@ var _ ArborService = &arborService{}
 
 // newArborService creates a new instance of the Arbor Service using
 // the provided Settings within the app to acquire configuration.
-func newArborService(app App) (ArborService, error) {
+func newArborService(settings SettingsService) (ArborService, error) {
 	baseStore := func() (s forest.Store) {
 		defer func() {
 			if s == nil {
@@ -38,9 +39,9 @@ func newArborService(app App) (ArborService, error) {
 		}()
 		var (
 			err       error
-			grovePath string = app.Settings().GrovePath()
+			grovePath string = settings.GrovePath()
 		)
-		if err := os.MkdirAll(grovePath, 0770); err == nil {
+		if err := os.MkdirAll(grovePath, 0770); err != nil {
 			log.Printf("unable to create directory for grove: %v", err)
 			return
 		}
@@ -51,7 +52,8 @@ func newArborService(app App) (ArborService, error) {
 		return
 	}()
 	a := &arborService{
-		grove: store.NewArchive(baseStore),
+		SettingsService: settings,
+		grove:           store.NewArchive(baseStore),
 	}
 	rl, err := ds.NewReplyList(a.grove)
 	if err != nil {

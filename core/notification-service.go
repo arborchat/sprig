@@ -22,7 +22,8 @@ type NotificationService interface {
 // methods to send notifications and choose (based on settings)
 // whether to notify for a given arbor message.
 type notificationManager struct {
-	App
+	SettingsService
+	ArborService
 	niotify.Manager
 	TimeLaunched uint64
 }
@@ -31,15 +32,16 @@ var _ NotificationService = &notificationManager{}
 
 // newNotificationService constructs a new NotificationService for the
 // provided App.
-func newNotificationService(app App) (NotificationService, error) {
+func newNotificationService(settings SettingsService, arbor ArborService) (NotificationService, error) {
 	m, err := niotify.NewManager()
 	if err != nil {
 		return nil, fmt.Errorf("failed initializing notification support: %w", err)
 	}
 	return &notificationManager{
-		App:          app,
-		Manager:      m,
-		TimeLaunched: uint64(time.Now().UnixNano() / 1000000),
+		SettingsService: settings,
+		ArborService:    arbor,
+		Manager:         m,
+		TimeLaunched:    uint64(time.Now().UnixNano() / 1000000),
 	}, nil
 }
 
@@ -52,14 +54,14 @@ func (n *notificationManager) Register(s store.ExtendedStore) {
 // shouldNotify returns whether or not a node should generate a notification
 // according to the user's current settings.
 func (n *notificationManager) shouldNotify(reply *forest.Reply) bool {
-	if !n.Settings().NotificationsGloballyAllowed() {
+	if !n.SettingsService.NotificationsGloballyAllowed() {
 		return false
 	}
-	localUserID := n.Settings().ActiveArborIdentityID()
+	localUserID := n.SettingsService.ActiveArborIdentityID()
 	if localUserID == nil {
 		return false
 	}
-	localUserNode, has, err := n.Arbor().Store().GetIdentity(localUserID)
+	localUserNode, has, err := n.ArborService.Store().GetIdentity(localUserID)
 	if err != nil || !has {
 		return false
 	}
@@ -83,7 +85,7 @@ func (n *notificationManager) shouldNotify(reply *forest.Reply) bool {
 		// Notify of new conversation
 		return true
 	}
-	parent, known, err := n.Arbor().Store().Get(reply.ParentID())
+	parent, known, err := n.ArborService.Store().Get(reply.ParentID())
 	if err != nil || !known {
 		// Don't notify if we don't know about this conversation.
 		return false
@@ -98,7 +100,7 @@ func (n *notificationManager) shouldNotify(reply *forest.Reply) bool {
 // Notify sends a notification with the given title and content if
 // notifications are currently allowed.
 func (n *notificationManager) Notify(title, content string) error {
-	if !n.Settings().NotificationsGloballyAllowed() {
+	if !n.SettingsService.NotificationsGloballyAllowed() {
 		return nil
 	}
 	_, err := n.CreateNotification(title, content)
@@ -118,7 +120,7 @@ func (n *notificationManager) handleNode(node forest.Node) {
 				return
 			}
 			var title, authorName string
-			author, _, err := n.Arbor().Store().GetIdentity(&reply.Author)
+			author, _, err := n.ArborService.Store().GetIdentity(&reply.Author)
 			if err != nil {
 				authorName = "???"
 			} else {

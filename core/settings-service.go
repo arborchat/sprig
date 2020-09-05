@@ -53,7 +53,6 @@ type Settings struct {
 }
 
 type settingsService struct {
-	App
 	Settings
 	dataDir string
 	// state used for authoring messages
@@ -63,7 +62,7 @@ type settingsService struct {
 
 var _ SettingsService = &settingsService{}
 
-func newSettingsService(app App, stateDir string) (SettingsService, error) {
+func newSettingsService(stateDir string) (SettingsService, error) {
 	s := &settingsService{
 		dataDir: stateDir,
 	}

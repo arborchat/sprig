@@ -47,7 +47,7 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 	if c.Form.Submitted() {
 		c.Settings().SetAddress(c.Form.Text())
 		go c.Settings().Persist()
-		c.ArborState.RestartWorker(c.Settings().Address())
+		c.Sprout().ConnectTo(c.Settings().Address())
 		c.manager.RequestViewSwitch(IdentityFormID)
 	}
 	if c.Form.PasteRequested() {

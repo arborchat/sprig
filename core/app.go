@@ -9,6 +9,7 @@ type App interface {
 	Notifications() NotificationService
 	Arbor() ArborService
 	Settings() SettingsService
+	Sprout() SproutService
 }
 
 // app bundles services together.
@@ -16,6 +17,7 @@ type app struct {
 	NotificationService
 	SettingsService
 	ArborService
+	SproutService
 }
 
 var _ App = &app{}
@@ -29,17 +31,28 @@ func NewApp(stateDir string) (application App, err error) {
 		}
 	}()
 	a := &app{}
+
+	// Instantiate all of the services.
 	// Settings must be initialized first, as other services rely on derived
 	// values from it
-	if a.SettingsService, err = newSettingsService(a, stateDir); err != nil {
+	if a.SettingsService, err = newSettingsService(stateDir); err != nil {
 		return nil, err
 	}
-	if a.NotificationService, err = newNotificationService(a); err != nil {
+	if a.ArborService, err = newArborService(a.SettingsService); err != nil {
 		return nil, err
 	}
-	if a.ArborService, err = newArborService(a); err != nil {
+	if a.NotificationService, err = newNotificationService(a.SettingsService, a.ArborService); err != nil {
 		return nil, err
 	}
+	if a.SproutService, err = newSproutService(a.ArborService); err != nil {
+		return nil, err
+	}
+
+	// Connect services together
+	if addr := a.Settings().Address(); addr != "" {
+		a.Sprout().ConnectTo(addr)
+	}
+	a.Notifications().Register(a.Arbor().Store())
 
 	return a, nil
 }
@@ -57,4 +70,9 @@ func (a *app) Arbor() ArborService {
 // Notifications returns the app's notification service implementation.
 func (a *app) Notifications() NotificationService {
 	return a.NotificationService
+}
+
+// Sprout returns the app's sprout service implementation.
+func (a *app) Sprout() SproutService {
+	return a.SproutService
 }

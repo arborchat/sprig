@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
 
 	"gioui.org/app"
 	"gioui.org/f32"
@@ -39,11 +40,10 @@ func eventLoop(w *app.Window) error {
 		log.Printf("failed finding application data dir: %v", err)
 	}
 
-	app, err := core.NewApp(dataDir)
+	app, err := core.NewApp(filepath.Join(dataDir, "sprig"))
 	if err != nil {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
-	app.Notifications().Register(app.Arbor().Store())
 
 	theme := sprigTheme.New()
 
