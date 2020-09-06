@@ -29,6 +29,7 @@ type SettingsView struct {
 	ThemeingSwitch          widget.Bool
 	NotificationsSwitch     widget.Bool
 	TestNotificationsButton widget.Clickable
+	TestResults             string
 	BottomBarSwitch         widget.Bool
 }
 
@@ -89,7 +90,12 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		settingsChanged = true
 	}
 	if c.TestNotificationsButton.Clicked() {
-		_ = c.Notifications().Notify("Testing!", "This is a test notification from sprig.")
+		err := c.Notifications().Notify("Testing!", "This is a test notification from sprig.")
+		if err == nil {
+			c.TestResults = "Sent without errors"
+		} else {
+			c.TestResults = "Failed: " + err.Error()
+		}
 	}
 	if c.BottomBarSwitch.Changed() {
 		c.Settings().SetBottomAppBar(c.BottomBarSwitch.Value)
@@ -156,6 +162,9 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return itemInset.Layout(gtx, material.Button(theme, &c.TestNotificationsButton, "Test").Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Body2(theme, c.TestResults).Layout)
 						}),
 					)
 				}),
