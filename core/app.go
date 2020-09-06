@@ -11,6 +11,7 @@ type App interface {
 	Arbor() ArborService
 	Settings() SettingsService
 	Sprout() SproutService
+	Status() StatusService
 }
 
 // app bundles services together.
@@ -19,6 +20,7 @@ type app struct {
 	SettingsService
 	ArborService
 	SproutService
+	StatusService
 }
 
 var _ App = &app{}
@@ -53,12 +55,16 @@ func NewApp(stateDir string) (application App, err error) {
 	if a.SproutService, err = newSproutService(a.ArborService); err != nil {
 		return nil, err
 	}
+	if a.StatusService, err = newStatusService(); err != nil {
+		return nil, err
+	}
 
 	// Connect services together
 	if addr := a.Settings().Address(); addr != "" {
 		a.Sprout().ConnectTo(addr)
 	}
 	a.Notifications().Register(a.Arbor().Store())
+	a.Status().Register(a.Arbor().Store())
 
 	return a, nil
 }
@@ -81,4 +87,9 @@ func (a *app) Notifications() NotificationService {
 // Sprout returns the app's sprout service implementation.
 func (a *app) Sprout() SproutService {
 	return a.SproutService
+}
+
+// Status returns the app's sprout service implementation.
+func (a *app) Status() StatusService {
+	return a.StatusService
 }
