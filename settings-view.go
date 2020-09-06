@@ -21,14 +21,15 @@ type SettingsView struct {
 	*sprigTheme.Theme
 
 	layout.List
-	ConnectionForm      sprigWidget.TextForm
-	IdentityButton      widget.Clickable
-	CommunityList       layout.List
-	CommunityBoxes      []widget.Bool
-	ProfilingSwitch     widget.Bool
-	ThemeingSwitch      widget.Bool
-	NotificationsSwitch widget.Bool
-	BottomBarSwitch     widget.Bool
+	ConnectionForm          sprigWidget.TextForm
+	IdentityButton          widget.Clickable
+	CommunityList           layout.List
+	CommunityBoxes          []widget.Bool
+	ProfilingSwitch         widget.Bool
+	ThemeingSwitch          widget.Bool
+	NotificationsSwitch     widget.Bool
+	TestNotificationsButton widget.Clickable
+	BottomBarSwitch         widget.Bool
 }
 
 var _ View = &SettingsView{}
@@ -86,6 +87,9 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	if c.NotificationsSwitch.Changed() {
 		c.Settings().SetNotificationsGloballyAllowed(c.NotificationsSwitch.Value)
 		settingsChanged = true
+	}
+	if c.TestNotificationsButton.Clicked() {
+		_ = c.Notifications().Notify("Testing!", "This is a test notification from sprig.")
 	}
 	if c.BottomBarSwitch.Changed() {
 		c.Settings().SetBottomAppBar(c.BottomBarSwitch.Value)
@@ -149,6 +153,9 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Rigid(func(gtx C) D {
 							return itemInset.Layout(gtx, material.Body1(theme, "Enable notifications").Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Button(theme, &c.TestNotificationsButton, "Test").Layout)
 						}),
 					)
 				}),
