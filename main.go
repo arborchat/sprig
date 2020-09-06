@@ -33,14 +33,16 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
-	profile := flag.Bool("profile", false, "log profiling data")
-	flag.Parse()
 	dataDir, err := app.DataDir()
 	if err != nil {
 		log.Printf("failed finding application data dir: %v", err)
 	}
+	dataDir = filepath.Join(dataDir, "sprig")
+	profile := flag.Bool("profile", false, "log profiling data")
+	flag.StringVar(&dataDir, "data-dir", dataDir, "application state directory")
+	flag.Parse()
 
-	app, err := core.NewApp(filepath.Join(dataDir, "sprig"))
+	app, err := core.NewApp(dataDir)
 	if err != nil {
 		log.Fatalf("Failed initializing application: %v", err)
 	}

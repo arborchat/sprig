@@ -2,6 +2,7 @@ package core
 
 import (
 	"fmt"
+	"os"
 )
 
 // App bundles core application services into a single convenience type.
@@ -31,6 +32,11 @@ func NewApp(stateDir string) (application App, err error) {
 		}
 	}()
 	a := &app{}
+
+	// ensure our state directory exists
+	if err := os.MkdirAll(stateDir, 0770); err != nil {
+		return nil, err
+	}
 
 	// Instantiate all of the services.
 	// Settings must be initialized first, as other services rely on derived
