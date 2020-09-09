@@ -24,6 +24,8 @@ type SettingsService interface {
 	SetAddress(string)
 	BottomAppBar() bool
 	SetBottomAppBar(bool)
+	DockNavDrawer() bool
+	SetDockNavDrawer(bool)
 	ActiveArborIdentityID() *fields.QualifiedHash
 	Identity() (*forest.Identity, error)
 	GrovePath() string
@@ -50,6 +52,10 @@ type Settings struct {
 
 	// whether the user wants the app bar anchored at the bottom of the UI
 	BottomAppBar bool
+
+	// whether the user wants the navigation drawer to dock to the side of
+	// the UI instead of appearing on top
+	DockNavDrawer bool
 }
 
 type settingsService struct {
@@ -82,6 +88,14 @@ func (s *settingsService) Load() error {
 		return fmt.Errorf("couldn't parse json settings: %w", err)
 	}
 	return nil
+}
+
+func (s *settingsService) DockNavDrawer() bool {
+	return s.Settings.DockNavDrawer
+}
+
+func (s *settingsService) SetDockNavDrawer(shouldDock bool) {
+	s.Settings.DockNavDrawer = shouldDock
 }
 
 func (s *settingsService) AcknowledgedNoticeVersion() int {

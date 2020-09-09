@@ -31,6 +31,7 @@ type SettingsView struct {
 	TestNotificationsButton widget.Clickable
 	TestResults             string
 	BottomBarSwitch         widget.Bool
+	DockNavSwitch           widget.Bool
 }
 
 var _ View = &SettingsView{}
@@ -99,6 +100,10 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	}
 	if c.BottomBarSwitch.Changed() {
 		c.Settings().SetBottomAppBar(c.BottomBarSwitch.Value)
+		settingsChanged = true
+	}
+	if c.DockNavSwitch.Changed() {
+		c.Settings().SetDockNavDrawer(c.DockNavSwitch.Value)
 		settingsChanged = true
 	}
 	if settingsChanged {
@@ -190,6 +195,19 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx C) D {
 					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on mobile devices.").Layout)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Switch(theme, &c.DockNavSwitch).Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Body1(theme, "Dock navigation to the left edge of the UI").Layout)
+						}),
+					)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on desktop devices.").Layout)
 				}),
 			)
 		},

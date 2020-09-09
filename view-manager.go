@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"runtime"
+	"time"
 
 	"gioui.org/app"
 	"gioui.org/f32"
@@ -55,11 +56,16 @@ type viewManager struct {
 	Theme   *sprigTheme.Theme
 
 	*materials.ModalLayer
+	materials.NavDrawer
+	navAnim materials.VisibilityAnimation
 	*materials.ModalNavDrawer
 	*materials.AppBar
 
 	// tracking the handling of "back" events
 	viewStack []ViewID
+
+	// dock the navigation drawer?
+	dockDrawer bool
 
 	// runtime profiling data
 	profiling   bool
@@ -73,16 +79,22 @@ type viewManager struct {
 
 func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) ViewManager {
 	modal := materials.NewModal()
+	drawer := materials.NewNav(theme.Theme, "Sprig", "Arbor chat client")
 	vm := &viewManager{
-		views:          make(map[ViewID]View),
-		window:         window,
-		profiling:      profile,
-		Theme:          theme,
-		themeView:      NewThemeEditorView(theme),
-		ModalLayer:     modal,
-		ModalNavDrawer: materials.NewModalNav(theme.Theme, modal, "Sprig", "Arbor chat client"),
-		AppBar:         materials.NewAppBar(theme.Theme, modal),
+		views:      make(map[ViewID]View),
+		window:     window,
+		profiling:  profile,
+		Theme:      theme,
+		themeView:  NewThemeEditorView(theme),
+		ModalLayer: modal,
+		NavDrawer:  drawer,
+		navAnim: materials.VisibilityAnimation{
+			Duration: time.Millisecond * 250,
+			State:    materials.Invisible,
+		},
+		AppBar: materials.NewAppBar(theme.Theme, modal),
 	}
+	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.AppBar.NavigationIcon = icons.MenuIcon
 	return vm
 }
@@ -94,6 +106,7 @@ func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	}
 	vm.AppBar.Anchor = anchor
 	vm.ModalNavDrawer.Anchor = anchor
+	vm.dockDrawer = settings.DockNavDrawer()
 }
 
 func (vm *viewManager) RegisterView(id ViewID, view View) {
@@ -171,7 +184,12 @@ func (vm *viewManager) Pop() {
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 	if vm.AppBar.NavigationClicked(gtx) {
-		vm.ModalNavDrawer.ToggleVisibility(gtx.Now)
+		if vm.dockDrawer {
+			vm.navAnim.ToggleVisibility(gtx.Now)
+		} else {
+			vm.navAnim.Disappear(gtx.Now)
+			vm.ModalNavDrawer.ToggleVisibility(gtx.Now)
+		}
 	}
 	if vm.ModalNavDrawer.NavDestinationChanged() {
 		vm.RequestViewSwitch(vm.ModalNavDrawer.CurrentNavDestination().(ViewID))
@@ -210,7 +228,15 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 		return layout.Dimensions{}
 	})
 	content := layout.Flexed(1, func(gtx C) D {
-		return view.Layout(gtx)
+		return layout.Flex{}.Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				gtx.Constraints.Max.X /= 3
+				return vm.NavDrawer.Layout(gtx, &vm.navAnim)
+			}),
+			layout.Flexed(1, func(gtx C) D {
+				return view.Layout(gtx)
+			}),
+		)
 	})
 	flex := layout.Flex{
 		Axis: layout.Vertical,
