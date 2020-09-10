@@ -61,6 +61,9 @@ type viewManager struct {
 	*materials.ModalNavDrawer
 	*materials.AppBar
 
+	// track the tag of the overflow action selected within the last frame
+	selectedOverflowTag interface{}
+
 	// tracking the handling of "back" events
 	viewStack []ViewID
 
@@ -147,7 +150,7 @@ func (vm *viewManager) DismissOverflow(gtx layout.Context) {
 }
 
 func (vm *viewManager) SelectedOverflowTag() interface{} {
-	return vm.AppBar.SelectedOverflowAction()
+	return vm.selectedOverflowTag
 }
 
 func (vm *viewManager) RequestClipboardPaste() {
@@ -183,12 +186,21 @@ func (vm *viewManager) Pop() {
 }
 
 func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
-	if vm.AppBar.NavigationClicked(gtx) {
-		if vm.dockDrawer {
-			vm.navAnim.ToggleVisibility(gtx.Now)
-		} else {
-			vm.navAnim.Disappear(gtx.Now)
-			vm.ModalNavDrawer.ToggleVisibility(gtx.Now)
+	vm.selectedOverflowTag = nil
+	th := vm.App.Theme().Current()
+	vm.AppBar.Theme = th.Theme
+	vm.NavDrawer.Theme = th.Theme
+	for _, event := range vm.AppBar.Events(gtx) {
+		switch event := event.(type) {
+		case materials.AppBarNavigationClicked:
+			if vm.dockDrawer {
+				vm.navAnim.ToggleVisibility(gtx.Now)
+			} else {
+				vm.navAnim.Disappear(gtx.Now)
+				vm.ModalNavDrawer.ToggleVisibility(gtx.Now)
+			}
+		case materials.AppBarOverflowActionClicked:
+			vm.selectedOverflowTag = event.Tag
 		}
 	}
 	if vm.ModalNavDrawer.NavDestinationChanged() {
