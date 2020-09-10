@@ -31,6 +31,7 @@ type SettingsView struct {
 	TestResults             string
 	BottomBarSwitch         widget.Bool
 	DockNavSwitch           widget.Bool
+	DarkModeSwitch          widget.Bool
 }
 
 var _ View = &SettingsView{}
@@ -104,6 +105,10 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	}
 	if c.DockNavSwitch.Changed() {
 		c.Settings().SetDockNavDrawer(c.DockNavSwitch.Value)
+		settingsChanged = true
+	}
+	if c.DarkModeSwitch.Changed() {
+		c.Settings().SetDarkMode(c.DarkModeSwitch.Value)
 		settingsChanged = true
 	}
 	if settingsChanged {
@@ -210,6 +215,16 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx C) D {
 					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on desktop devices.").Layout)
+				}),
+				layout.Rigid(func(gtx C) D {
+					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Switch(theme, &c.DarkModeSwitch).Layout)
+						}),
+						layout.Rigid(func(gtx C) D {
+							return itemInset.Layout(gtx, material.Body1(theme, "Dark Mode").Layout)
+						}),
+					)
 				}),
 			)
 		},

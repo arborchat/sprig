@@ -111,6 +111,7 @@ func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	vm.AppBar.Anchor = anchor
 	vm.ModalNavDrawer.Anchor = anchor
 	vm.dockDrawer = settings.DockNavDrawer()
+	vm.App.Theme().SetDarkMode(settings.DarkMode())
 }
 
 func (vm *viewManager) RegisterView(id ViewID, view View) {
@@ -191,6 +192,9 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 	th := vm.App.Theme().Current()
 	vm.AppBar.Theme = th.Theme
 	vm.NavDrawer.Theme = th.Theme
+	if vm.Settings().DarkMode() {
+		// set background color to black
+	}
 	for _, event := range vm.AppBar.Events(gtx) {
 		switch event := event.(type) {
 		case materials.AppBarNavigationClicked:

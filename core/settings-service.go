@@ -26,6 +26,8 @@ type SettingsService interface {
 	SetBottomAppBar(bool)
 	DockNavDrawer() bool
 	SetDockNavDrawer(bool)
+	DarkMode() bool
+	SetDarkMode(bool)
 	ActiveArborIdentityID() *fields.QualifiedHash
 	Identity() (*forest.Identity, error)
 	GrovePath() string
@@ -52,6 +54,8 @@ type Settings struct {
 
 	// whether the user wants the app bar anchored at the bottom of the UI
 	BottomAppBar bool
+
+	DarkMode bool
 
 	// whether the user wants the navigation drawer to dock to the side of
 	// the UI instead of appearing on top
@@ -136,6 +140,14 @@ func (s *settingsService) BottomAppBar() bool {
 
 func (s *settingsService) SetBottomAppBar(bottom bool) {
 	s.Settings.BottomAppBar = bottom
+}
+
+func (s *settingsService) DarkMode() bool {
+	return s.Settings.DarkMode
+}
+
+func (s *settingsService) SetDarkMode(enabled bool) {
+	s.Settings.DarkMode = enabled
 }
 
 func (s *settingsService) SettingsFile() string {

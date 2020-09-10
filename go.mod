@@ -13,7 +13,7 @@ require (
 	git.wow.st/gmp/jni v0.0.0-20200827154156-014cd5c7c4c0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/exp v0.0.0-20200908183739-ae8ad444f925
-	golang.org/x/sys v0.0.0-20200905004654-be1d3432aa8f // indirect
+	golang.org/x/sys v0.0.0-20200909081042-eff7692f9009 // indirect
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/tools v0.0.0-20200909210914-44a2922940c2 // indirect
 )
