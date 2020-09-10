@@ -15,15 +15,13 @@ type ConnectFormView struct {
 	Form    sprigWidget.TextForm
 
 	core.App
-	*sprigTheme.Theme
 }
 
 var _ View = &ConnectFormView{}
 
-func NewConnectFormView(app core.App, theme *sprigTheme.Theme) View {
+func NewConnectFormView(app core.App) View {
 	c := &ConnectFormView{
-		App:   app,
-		Theme: theme,
+		App: app,
 	}
 	return c
 }
@@ -56,17 +54,17 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 }
 
 func (c *ConnectFormView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
+	theme := c.Theme().Current()
 	inset := layout.UniformInset(unit.Dp(8))
 	return inset.Layout(gtx, func(gtx C) D {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx C) D {
 				return inset.Layout(gtx,
-					material.H6(theme, "Arbor Relay Address:").Layout,
+					material.H6(theme.Theme, "Arbor Relay Address:").Layout,
 				)
 			}),
 			layout.Rigid(func(gtx C) D {
-				return inset.Layout(gtx, sprigTheme.TextForm(c.Theme, &c.Form, "Connect", "HOST:PORT").Layout)
+				return inset.Layout(gtx, sprigTheme.TextForm(theme, &c.Form, "Connect", "HOST:PORT").Layout)
 			}),
 		)
 	})

@@ -47,15 +47,13 @@ func eventLoop(w *app.Window) error {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
 
-	theme := sprigTheme.New()
-
-	viewManager := NewViewManager(w, theme, *profile)
+	viewManager := NewViewManager(w, app, *profile)
 	viewManager.ApplySettings(app.Settings())
-	viewManager.RegisterView(ReplyViewID, NewReplyListView(app, theme))
-	viewManager.RegisterView(ConnectFormID, NewConnectFormView(app, theme))
-	viewManager.RegisterView(SettingsID, NewCommunityMenuView(app, theme))
-	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(app, theme))
-	viewManager.RegisterView(ConsentViewID, NewConsentView(app, theme))
+	viewManager.RegisterView(ReplyViewID, NewReplyListView(app))
+	viewManager.RegisterView(ConnectFormID, NewConnectFormView(app))
+	viewManager.RegisterView(SettingsID, NewCommunityMenuView(app))
+	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(app))
+	viewManager.RegisterView(ConsentViewID, NewConsentView(app))
 	if app.Settings().AcknowledgedNoticeVersion() < NoticeVersion {
 		viewManager.RequestViewSwitch(ConsentViewID)
 	} else if app.Settings().Address() == "" {
@@ -82,9 +80,10 @@ func eventLoop(w *app.Window) error {
 			}
 		case system.FrameEvent:
 			gtx := layout.NewContext(&ops, event)
+			th := app.Theme().Current()
 			layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
-					return sprigTheme.DrawRect(gtx, theme.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+					return sprigTheme.DrawRect(gtx, th.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
 				}),
 				layout.Stacked(func(gtx C) D {
 					return layout.Inset{
@@ -95,7 +94,7 @@ func eventLoop(w *app.Window) error {
 					}.Layout(gtx, func(gtx C) D {
 						return layout.Stack{}.Layout(gtx,
 							layout.Expanded(func(gtx C) D {
-								return sprigTheme.DrawRect(gtx, theme.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+								return sprigTheme.DrawRect(gtx, th.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
 							}),
 							layout.Stacked(viewManager.Layout),
 						)

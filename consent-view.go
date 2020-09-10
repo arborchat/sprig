@@ -8,7 +8,6 @@ import (
 
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/core"
-	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type ConsentView struct {
@@ -16,15 +15,13 @@ type ConsentView struct {
 	AgreeButton widget.Clickable
 
 	core.App
-	*sprigTheme.Theme
 }
 
 var _ View = &ConsentView{}
 
-func NewConsentView(app core.App, theme *sprigTheme.Theme) View {
+func NewConsentView(app core.App) View {
 	c := &ConsentView{
-		App:   app,
-		Theme: theme,
+		App: app,
 	}
 
 	return c
@@ -63,20 +60,20 @@ const (
 )
 
 func (c *ConsentView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
+	theme := c.Theme().Current()
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.H2(theme, "Notice").Layout,
+						material.H2(theme.Theme, "Notice").Layout,
 					)
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.Body1(theme, Notice).Layout,
+						material.Body1(theme.Theme, Notice).Layout,
 					)
 				})
 			}),
@@ -84,7 +81,7 @@ func (c *ConsentView) Layout(gtx layout.Context) layout.Dimensions {
 				if c.Settings().AcknowledgedNoticeVersion() != 0 {
 					return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 						return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-							material.Body2(theme, UpdateText).Layout,
+							material.Body2(theme.Theme, UpdateText).Layout,
 						)
 					})
 				}
@@ -93,7 +90,7 @@ func (c *ConsentView) Layout(gtx layout.Context) layout.Dimensions {
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.Button(theme, &(c.AgreeButton), "I Understand And Agree").Layout,
+						material.Button(theme.Theme, &(c.AgreeButton), "I Understand And Agree").Layout,
 					)
 				})
 			}),

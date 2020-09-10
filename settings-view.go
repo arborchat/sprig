@@ -18,7 +18,6 @@ type SettingsView struct {
 	manager ViewManager
 
 	core.App
-	*sprigTheme.Theme
 
 	layout.List
 	ConnectionForm          sprigWidget.TextForm
@@ -36,10 +35,9 @@ type SettingsView struct {
 
 var _ View = &SettingsView{}
 
-func NewCommunityMenuView(app core.App, theme *sprigTheme.Theme) View {
+func NewCommunityMenuView(app core.App) View {
 	c := &SettingsView{
-		App:   app,
-		Theme: theme,
+		App: app,
 	}
 	c.List.Axis = layout.Vertical
 	c.ConnectionForm.SetText(c.Settings().Address())
@@ -119,7 +117,8 @@ func (c *SettingsView) BecomeVisible() {
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
+	sTheme := c.Theme().Current()
+	theme := sTheme.Theme
 	itemInset := layout.UniformInset(unit.Dp(8))
 	areas := []func(C) D{
 		func(gtx C) D {
@@ -143,7 +142,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx C) D {
 					return itemInset.Layout(gtx, func(gtx C) D {
-						form := sprigTheme.TextForm(c.Theme, &c.ConnectionForm, "Connect", "HOST:PORT")
+						form := sprigTheme.TextForm(sTheme, &c.ConnectionForm, "Connect", "HOST:PORT")
 						return form.Layout(gtx)
 					})
 				}),

@@ -7,7 +7,6 @@ import (
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/core"
-	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type IdentityFormView struct {
@@ -16,15 +15,13 @@ type IdentityFormView struct {
 	CreateButton widget.Clickable
 
 	core.App
-	*sprigTheme.Theme
 }
 
 var _ View = &IdentityFormView{}
 
-func NewIdentityFormView(app core.App, theme *sprigTheme.Theme) View {
+func NewIdentityFormView(app core.App) View {
 	c := &IdentityFormView{
-		App:   app,
-		Theme: theme,
+		App: app,
 	}
 
 	return c
@@ -52,7 +49,7 @@ func (c *IdentityFormView) Update(gtx layout.Context) {
 }
 
 func (c *IdentityFormView) Layout(gtx layout.Context) layout.Dimensions {
-	theme := c.Theme.Theme
+	theme := c.Theme().Current().Theme
 	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {

@@ -53,7 +53,8 @@ type viewManager struct {
 	views   map[ViewID]View
 	current ViewID
 	window  *app.Window
-	Theme   *sprigTheme.Theme
+
+	core.App
 
 	*materials.ModalLayer
 	materials.NavDrawer
@@ -80,22 +81,22 @@ type viewManager struct {
 	themeView View
 }
 
-func NewViewManager(window *app.Window, theme *sprigTheme.Theme, profile bool) ViewManager {
+func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager {
 	modal := materials.NewModal()
-	drawer := materials.NewNav(theme.Theme, "Sprig", "Arbor chat client")
+	drawer := materials.NewNav(app.Theme().Current().Theme, "Sprig", "Arbor chat client")
 	vm := &viewManager{
+		App:        app,
 		views:      make(map[ViewID]View),
 		window:     window,
 		profiling:  profile,
-		Theme:      theme,
-		themeView:  NewThemeEditorView(theme),
+		themeView:  NewThemeEditorView(app.Theme().Current()),
 		ModalLayer: modal,
 		NavDrawer:  drawer,
 		navAnim: materials.VisibilityAnimation{
 			Duration: time.Millisecond * 250,
 			State:    materials.Invisible,
 		},
-		AppBar: materials.NewAppBar(theme.Theme, modal),
+		AppBar: materials.NewAppBar(app.Theme().Current().Theme, modal),
 	}
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.AppBar.NavigationIcon = icons.MenuIcon
@@ -287,7 +288,7 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			return sprigTheme.DrawRect(gtx,
-				vm.Theme.Background.Light,
+				vm.App.Theme().Current().Background.Light,
 				f32.Point{
 					X: float32(gtx.Constraints.Min.X),
 					Y: float32(gtx.Constraints.Min.Y),
@@ -296,7 +297,7 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 		}),
 		layout.Stacked(func(gtx C) D {
 			return layout.Inset{Top: unit.Dp(4), Left: unit.Dp(4)}.Layout(gtx, func(gtx C) D {
-				label := material.Body1(vm.Theme.Theme, text)
+				label := material.Body1(vm.App.Theme().Current().Theme, text)
 				label.Font.Variant = "Mono"
 				return label.Layout(gtx)
 			})

@@ -30,7 +30,6 @@ type ReplyListView struct {
 	manager ViewManager
 
 	core.App
-	*sprigTheme.Theme
 
 	CopyReplyButton widget.Clickable
 
@@ -74,10 +73,9 @@ type ReplyListView struct {
 
 var _ View = &ReplyListView{}
 
-func NewReplyListView(app core.App, th *sprigTheme.Theme) View {
+func NewReplyListView(app core.App) View {
 	c := &ReplyListView{
-		App:   app,
-		Theme: th,
+		App: app,
 		ReplyAnim: anim.Normal{
 			Duration: time.Millisecond * 100,
 		},
@@ -104,7 +102,7 @@ func (c *ReplyListView) NavItem() *materials.NavItem {
 }
 
 func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
-	th := c.Theme.Theme
+	th := c.Theme().Current().Theme
 	return true, "Messages", []materials.AppBarAction{
 			materials.SimpleIconAction(
 				th,
@@ -147,7 +145,7 @@ func (c *ReplyListView) HandleClipboard(contents string) {
 }
 
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
-	th := c.Theme.Theme
+	th := c.Theme().Current().Theme
 	return []materials.AppBarAction{
 		materials.SimpleIconAction(
 			th,
@@ -512,12 +510,13 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 }
 
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
+	theme := c.Theme().Current()
 	key.InputOp{Tag: c, Focus: c.ShouldRequestKeyboardFocus}.Add(gtx.Ops)
 	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: c.Theme.Background.Default,
+				Color: theme.Background.Default,
 				Size:  layout.FPt(gtx.Constraints.Max),
 			}.Layout(gtx)
 			return layout.Dimensions{}
@@ -581,6 +580,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
 		stateIndex = 0
 		dims       layout.Dimensions
+		th         = c.Theme().Current()
 	)
 	gtx.Constraints.Min = gtx.Constraints.Max
 	c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
@@ -645,7 +645,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 								Left:   interpolateInset(anim, c.ReplyAnim.Progress(gtx)),
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								replyWidget := sprigTheme.Reply(c.Theme, anim, reply)
+								replyWidget := sprigTheme.Reply(th, anim, reply)
 								replyWidget.CollapseMetadata = collapseMetadata
 								return replyWidget.Layout(gtx)
 							})
@@ -673,8 +673,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							Right: unit.Dp(scrollSlotWidthDp),
 						}.Layout(gtx, func(gtx C) D {
 							return material.IconButtonStyle{
-								Background: c.Theme.Secondary.Light,
-								Color:      c.Theme.Background.Dark,
+								Background: th.Secondary.Light,
+								Color:      th.Background.Dark,
 								Button:     &c.CreateReplyButton,
 								Icon:       icons.ReplyIcon,
 								Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
@@ -689,19 +689,19 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	sprigTheme.ScrollBar{
 		Scrollable: &c.ScrollBar,
 		Progress:   float32(c.ReplyList.Position.First) / float32(c.replyCount),
-		Color:      sprigTheme.WithAlpha(c.Theme.Background.Dark, 200),
+		Color:      sprigTheme.WithAlpha(th.Background.Dark, 200),
 	}.Layout(gtx)
 	return dims
 }
 
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	var (
-		th = c.Theme.Theme
+		th = c.Theme().Current()
 	)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: c.Theme.Primary.Light,
+				Color: th.Primary.Light,
 				Size: f32.Point{
 					X: float32(gtx.Constraints.Max.X),
 					Y: float32(gtx.Constraints.Max.Y),
@@ -718,9 +718,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								gtx.Constraints.Max.X = gtx.Px(unit.Dp(30))
 								gtx.Constraints.Min.X = gtx.Constraints.Max.X
 								if c.CreatingConversation {
-									return material.Body1(th, "In:").Layout(gtx)
+									return material.Body1(th.Theme, "In:").Layout(gtx)
 								}
-								return material.Body1(th, "Re:").Layout(gtx)
+								return material.Body1(th.Theme, "Re:").Layout(gtx)
 
 							})
 						}),
@@ -734,17 +734,17 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 											if c.CommunityChoice.Value == "" && index == 0 {
 												c.CommunityChoice.Value = community.ID().String()
 											}
-											radio := material.RadioButton(th, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
-											radio.IconColor = c.Theme.Secondary.Default
+											radio := material.RadioButton(th.Theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
+											radio.IconColor = th.Secondary.Default
 											return radio.Layout(gtx)
 										})
 									})
 									return dims
 								}
-								reply := sprigTheme.Reply(c.Theme, &theme.ReplyAnimationState{
+								reply := sprigTheme.Reply(th, &theme.ReplyAnimationState{
 									Normal: &c.ReplyAnim,
 								}, c.ReplyingTo)
-								reply.Highlight = c.Theme.Primary.Default
+								reply.Highlight = th.Primary.Default
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
 							})
@@ -752,7 +752,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  c.Theme,
+									Theme:  th,
 									Button: &c.CancelReplyButton,
 									Icon:   icons.CancelReplyIcon,
 								}.Layout(gtx)
@@ -765,7 +765,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  c.Theme,
+									Theme:  th,
 									Button: &c.PasteIntoReplyButton,
 									Icon:   icons.PasteIcon,
 								}.Layout(gtx)
@@ -776,7 +776,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								return layout.Stack{}.Layout(gtx,
 									layout.Expanded(func(gtx C) D {
 										return sprigTheme.Rect{
-											Color: c.Theme.Background.Light,
+											Color: th.Background.Light,
 											Size: f32.Point{
 												X: float32(gtx.Constraints.Max.X),
 												Y: float32(gtx.Constraints.Min.Y),
@@ -787,7 +787,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-											editor := material.Editor(th, &c.ReplyEditor, "type your reply here")
+											editor := material.Editor(th.Theme, &c.ReplyEditor, "type your reply here")
 											editor.Editor.Submit = true
 											return editor.Layout(gtx)
 										})
@@ -798,7 +798,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  c.Theme,
+									Theme:  th,
 									Button: &c.SendReplyButton,
 									Icon:   icons.SendReplyIcon,
 								}.Layout(gtx)
