@@ -114,6 +114,7 @@ func (c *SettingsView) BecomeVisible() {
 	c.ConnectionForm.SetText(c.Settings().Address())
 	c.NotificationsSwitch.Value = c.Settings().NotificationsGloballyAllowed()
 	c.BottomBarSwitch.Value = c.Settings().BottomAppBar()
+	c.DockNavSwitch.Value = c.Settings().DockNavDrawer()
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
