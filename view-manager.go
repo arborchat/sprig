@@ -124,7 +124,7 @@ func (vm *viewManager) RegisterView(id ViewID, view View) {
 func (vm *viewManager) RequestViewSwitch(id ViewID) {
 	vm.Push(vm.current)
 	vm.current = id
-	vm.ModalNavDrawer.SetNavDestination(id)
+	//vm.ModalNavDrawer.SetNavDestination(id)
 	view := vm.views[vm.current]
 	if showBar, title, actions, overflow := view.AppBarData(); showBar {
 		vm.AppBar.Title = title
