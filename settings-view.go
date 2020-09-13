@@ -41,6 +41,8 @@ func NewCommunityMenuView(app core.App) View {
 	}
 	c.List.Axis = layout.Vertical
 	c.ConnectionForm.SetText(c.Settings().Address())
+	c.ConnectionForm.Editor.SingleLine = true
+	c.ConnectionForm.Editor.Submit = true
 	return c
 }
 

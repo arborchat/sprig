@@ -23,6 +23,8 @@ func NewConnectFormView(app core.App) View {
 	c := &ConnectFormView{
 		App: app,
 	}
+	c.Form.Editor.SingleLine = true
+	c.Form.Editor.Submit = true
 	return c
 }
 
