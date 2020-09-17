@@ -69,9 +69,10 @@ func (n *notificationManager) shouldNotify(reply *forest.Reply) bool {
 	twigData, err := reply.TwigMetadata()
 	if err != nil {
 		log.Printf("Error checking whether to notify while parsing twig metadata for node %s", reply.ID())
-	}
-	if twigData.Contains("invisible", 1) {
-		return false
+	} else {
+		if twigData.Contains("invisible", 1) {
+			return false
+		}
 	}
 
 	localUser := localUserNode.(*forest.Identity)
