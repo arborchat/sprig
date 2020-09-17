@@ -3,8 +3,8 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20200912153211-2f67feafc0a2
-	gioui.org/cmd v0.0.0-20200829162755-829ee4559c5a
+	gioui.org v0.0.0-20200917085049-ef7b3e75f4dc
+	gioui.org/cmd v0.0.0-20200917085049-ef7b3e75f4dc
 	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200908023146-ee23841ca265
 	git.sr.ht/~whereswaldon/materials v0.0.0-20200913214226-fffc71ca41aa
