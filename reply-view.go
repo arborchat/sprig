@@ -1,9 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	"log"
+	"net/url"
+	"os/exec"
 	"runtime"
 	"strings"
 	"time"
@@ -357,19 +360,47 @@ func (c *ReplyListView) sendReply() {
 }
 
 func (c *ReplyListView) processMessagePointerEvents(gtx C) {
+	tryOpenLink := func(handler *sprigWidget.Reply) {
+		if u, err := url.Parse(strings.TrimSpace(handler.Content)); err == nil {
+			var args []string
+			switch runtime.GOOS {
+			case "darwin":
+				args = []string{"open"}
+			case "windows":
+				args = []string{"cmd", "/c", "start"}
+			default:
+				args = []string{"xdg-open"}
+			}
+			cmd := exec.Command(args[0], append(args[1:], u.String())...)
+			if out, err := cmd.CombinedOutput(); err != nil {
+				fmt.Printf("opening link: %s %s\n", string(out), err)
+			}
+		}
+	}
+	clicked := func(c *widget.Clickable) (widget.Click, bool) {
+		clicks := c.Clicks()
+		if len(clicks) == 0 {
+			return widget.Click{}, false
+		}
+		return clicks[len(clicks)-1], true
+	}
 	for i := range c.ReplyStates {
-		clickHandler := &c.ReplyStates[i]
-		if clickHandler.Clicked() {
-			c.requestKeyboardFocus()
-			clickedOnFocused := clickHandler.Reply.Equals(c.Focused)
-			if !clickedOnFocused {
-				c.StateRefreshNeeded = true
-				c.Focused = clickHandler.Reply
-				reply, _, _ := c.Arbor().Store().Get(clickHandler.Reply)
-				c.Conversation = &reply.(*forest.Reply).ConversationID
-				c.dismissReplyContextMenu(gtx)
+		handler := &c.ReplyStates[i]
+		if click, ok := clicked(&handler.Clickable); ok {
+			if click.Modifiers.Contain(key.ModCtrl) {
+				tryOpenLink(handler)
 			} else {
-				c.triggerReplyContextMenu(gtx)
+				c.requestKeyboardFocus()
+				clickedOnFocused := handler.Hash.Equals(c.Focused)
+				if !clickedOnFocused {
+					c.StateRefreshNeeded = true
+					c.Focused = handler.Hash
+					reply, _, _ := c.Arbor().Store().Get(handler.Hash)
+					c.Conversation = &reply.(*forest.Reply).ConversationID
+					c.dismissReplyContextMenu(gtx)
+				} else {
+					c.triggerReplyContextMenu(gtx)
+				}
 			}
 		}
 	}
@@ -591,7 +622,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			if stateIndex >= len(c.ReplyStates) {
 				c.ReplyStates = append(c.ReplyStates, sprigWidget.Reply{})
 			}
-
 			var (
 				state            = &c.ReplyStates[stateIndex]
 				reply            = replies[index]
@@ -605,7 +635,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 					return false
 				}()
 			)
-
 			if c.shouldFilter(reply.Reply, status) {
 				// do not render
 				return layout.Dimensions{}
@@ -652,7 +681,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Expanded(func(gtx C) D {
 							dims := state.Clickable.Layout(gtx)
-							state.Reply = reply.ID()
+							state.Hash = reply.ID()
+							state.Content = string(reply.Content.Blob)
 							return dims
 						}),
 					)

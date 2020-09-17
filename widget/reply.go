@@ -7,5 +7,6 @@ import (
 
 type Reply struct {
 	widget.Clickable
-	Reply *fields.QualifiedHash
+	Hash    *fields.QualifiedHash
+	Content string
 }
