@@ -360,8 +360,8 @@ func (c *ReplyListView) sendReply() {
 }
 
 func (c *ReplyListView) processMessagePointerEvents(gtx C) {
-	tryOpenLink := func(handler *sprigWidget.Reply) {
-		if u, err := url.Parse(strings.TrimSpace(handler.Content)); err == nil {
+	tryOpenLink := func(word string) {
+		if u, err := url.ParseRequestURI(word); err == nil {
 			var args []string
 			switch runtime.GOOS {
 			case "darwin":
@@ -388,7 +388,9 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		handler := &c.ReplyStates[i]
 		if click, ok := clicked(&handler.Clickable); ok {
 			if click.Modifiers.Contain(key.ModCtrl) {
-				tryOpenLink(handler)
+				for _, word := range strings.Fields(handler.Content) {
+					tryOpenLink(word)
+				}
 			} else {
 				c.requestKeyboardFocus()
 				clickedOnFocused := handler.Hash.Equals(c.Focused)
