@@ -130,6 +130,11 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	)
 }
 
+func (r ReplyStyle) HideMetadata(b bool) ReplyStyle {
+	r.CollapseMetadata = b
+	return r
+}
+
 func max(is ...int) int {
 	max := is[0]
 	for i := range is {
