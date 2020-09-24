@@ -11,8 +11,8 @@ git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7 h1:mifEjr
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7/go.mod h1:r9pvrmlC21HDzv1lW5Udi/+01w4jIWf4NHPi2yHhjk8=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200908023146-ee23841ca265 h1:fk98DKjCg7OIAHQCqr2yLCyXSyGhFidEHHe8IgfqjNI=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20200908023146-ee23841ca265/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200913214226-fffc71ca41aa h1:joGop3C10V08GL4cW3fKcE7YDPKQsrshJgFcVnwAVLI=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200913214226-fffc71ca41aa/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
+git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0 h1:myWAjtX6fyH5xXChuLVbW93l27DitpamcKSb3vfkFrQ=
+git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f/go.mod h1:c237AiA2cwcg+n865LzGlKY4z6H3UbCJHWOumUj7fGk=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200908122259-60e4aacb6740 h1:Uu3AIFJNHGLMEDIT6/MfSxbj8M9R8bK2Ur6PiTiOCMQ=
