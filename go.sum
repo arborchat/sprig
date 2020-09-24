@@ -15,6 +15,8 @@ git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0 h1:myWAjtX6
 git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f/go.mod h1:c237AiA2cwcg+n865LzGlKY4z6H3UbCJHWOumUj7fGk=
+git.sr.ht/~whereswaldon/scroll v0.0.0-20200922135109-2d7be1c23e95 h1:SIkUCGa2FBfJSQCB7hwYydDvlczRODXnSxA3q96uawE=
+git.sr.ht/~whereswaldon/scroll v0.0.0-20200922135109-2d7be1c23e95/go.mod h1:q3+lwQfiXW6M+whVAVSOwfL1Cf+6kun10n+z2ZQuAqw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200908122259-60e4aacb6740 h1:Uu3AIFJNHGLMEDIT6/MfSxbj8M9R8bK2Ur6PiTiOCMQ=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200908122259-60e4aacb6740/go.mod h1:qP+nfEb283lduTciw9fX2MdAaDtmqmCw9MLgxxqNdRU=
 git.wow.st/gmp/jni v0.0.0-20200626194017-b74a17279b1f/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=

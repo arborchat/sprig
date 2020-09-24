@@ -17,9 +17,13 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/scroll"
+
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -60,7 +64,7 @@ type ReplyListView struct {
 	CommunityChoice                     widget.Enum
 	CommunityList                       layout.List
 
-	ScrollBar sprigTheme.Scrollable
+	scroll.Scrollable
 
 	// Filtered determines whether or not the visible nodes should be
 	// filtered to only those related to the selected node
@@ -510,8 +514,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.SendReplyButton.Clicked() {
 		c.sendReply()
 	}
-	if c.ScrollBar.Scrolled() {
-		c.reveal(int(float32(c.replyCount) * c.ScrollBar.Progress))
+	if did, progress := c.Scrollable.Scrolled(); did {
+		c.reveal(int(float32(c.replyCount) * progress))
 	}
 }
 
@@ -619,8 +623,9 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
-		dims layout.Dimensions
-		th   = c.Theme().Current()
+		dims       layout.Dimensions
+		th         = c.Theme().Current()
+		numReplies int
 	)
 	c.States.Begin()
 	gtx.Constraints.Min = gtx.Constraints.Max
@@ -628,6 +633,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
+		numReplies = len(replies)
 		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
 			var (
 				state            = c.States.Next()
@@ -709,11 +715,14 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
-	sprigTheme.ScrollBar{
-		Scrollable: &c.ScrollBar,
-		Progress:   float32(c.ReplyList.Position.First) / float32(c.replyCount),
-		Color:      sprigTheme.WithAlpha(th.Background.Dark, 200),
-	}.Layout(gtx)
+	progress := float32(c.ReplyList.Position.First) / float32(c.replyCount)
+	visibleFraction := float32(0)
+	if numReplies > 0 {
+		visibleFraction = float32(c.States.Current) / float32(numReplies)
+	}
+	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
+	bar.Color = materials.AlphaMultiply(th.Color.Text, 200)
+	bar.Layout(gtx)
 	return dims
 }
 
