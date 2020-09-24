@@ -122,6 +122,7 @@ func (c *SettingsView) BecomeVisible() {
 	c.NotificationsSwitch.Value = c.Settings().NotificationsGloballyAllowed()
 	c.BottomBarSwitch.Value = c.Settings().BottomAppBar()
 	c.DockNavSwitch.Value = c.Settings().DockNavDrawer()
+	c.DarkModeSwitch.Value = c.Settings().DarkMode()
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
