@@ -89,7 +89,7 @@ func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager 
 		views:      make(map[ViewID]View),
 		window:     window,
 		profiling:  profile,
-		themeView:  NewThemeEditorView(app.Theme().Current()),
+		themeView:  NewThemeEditorView(app),
 		ModalLayer: modal,
 		NavDrawer:  drawer,
 		navAnim: materials.VisibilityAnimation{
@@ -118,6 +118,7 @@ func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	vm.NavDrawer.Theme = th.Theme
 	vm.AppBar.Theme = th.Theme
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
+	vm.themeView.BecomeVisible()
 }
 
 func (vm *viewManager) RegisterView(id ViewID, view View) {

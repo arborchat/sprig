@@ -10,6 +10,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
+	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 
@@ -18,6 +19,7 @@ import (
 
 type ThemeEditorView struct {
 	manager ViewManager
+	core.App
 
 	PrimaryDefault colorpicker.State
 	PrimaryDark    colorpicker.State
@@ -65,105 +67,111 @@ type muxListElement struct {
 
 var _ View = &ThemeEditorView{}
 
-func NewThemeEditorView(theme *sprigTheme.Theme) View {
+func NewThemeEditorView(app core.App) View {
 	c := &ThemeEditorView{
-		Theme:       theme,
+		App:         app,
 		widgetTheme: material.NewTheme(gofont.Collection()),
 	}
-	c.PrimaryDefault.SetColor(c.Theme.Primary.Default)
-	c.PrimaryDark.SetColor(c.Theme.Primary.Dark)
-	c.PrimaryLight.SetColor(c.Theme.Primary.Light)
-	c.SecondaryDefault.SetColor(c.Theme.Secondary.Default)
-	c.SecondaryDark.SetColor(c.Theme.Secondary.Dark)
-	c.SecondaryLight.SetColor(c.Theme.Secondary.Light)
-	c.BackgroundDefault.SetColor(c.Theme.Background.Default)
-	c.BackgroundDark.SetColor(c.Theme.Background.Dark)
-	c.BackgroundLight.SetColor(c.Theme.Background.Light)
+
+	c.ConfigurePickersFor(app.Theme().Current())
+	return c
+}
+
+func (c *ThemeEditorView) ConfigurePickersFor(th *sprigTheme.Theme) {
+	c.PrimaryDefault.SetColor(th.Primary.Default)
+	c.PrimaryDark.SetColor(th.Primary.Dark)
+	c.PrimaryLight.SetColor(th.Primary.Light)
+	c.SecondaryDefault.SetColor(th.Secondary.Default)
+	c.SecondaryDark.SetColor(th.Secondary.Dark)
+	c.SecondaryLight.SetColor(th.Secondary.Light)
+	c.BackgroundDefault.SetColor(th.Background.Default)
+	c.BackgroundDark.SetColor(th.Background.Dark)
+	c.BackgroundLight.SetColor(th.Background.Light)
 
 	c.ColorsList.Axis = layout.Vertical
 	c.listElems = []colorListElement{
 		{
 			Label: "Primary",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Primary.Default,
-				&c.Theme.Theme.Color.Primary,
+				&th.Primary.Default,
+				&th.Theme.Color.Primary,
 			},
 			State: &c.PrimaryDefault,
 		},
 		{
 			Label: "Primary Light",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Primary.Light,
+				&th.Primary.Light,
 			},
 			State: &c.PrimaryLight,
 		},
 		{
 			Label: "Primary Dark",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Primary.Dark,
+				&th.Primary.Dark,
 			},
 			State: &c.PrimaryDark,
 		},
 		{
 			Label: "Secondary",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Secondary.Default,
+				&th.Secondary.Default,
 			},
 			State: &c.SecondaryDefault,
 		},
 		{
 			Label: "Secondary Light",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Secondary.Light,
+				&th.Secondary.Light,
 			},
 			State: &c.SecondaryLight,
 		},
 		{
 			Label: "Secondary Dark",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Secondary.Dark,
+				&th.Secondary.Dark,
 			},
 			State: &c.SecondaryDark,
 		},
 		{
 			Label: "Background",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Background.Default,
+				&th.Background.Default,
 			},
 			State: &c.BackgroundDefault,
 		},
 		{
 			Label: "Background Light",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Background.Light,
+				&th.Background.Light,
 			},
 			State: &c.BackgroundLight,
 		},
 		{
 			Label: "Background Dark",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Background.Dark,
+				&th.Background.Dark,
 			},
 			State: &c.BackgroundDark,
 		},
 		{
 			Label: "Text",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Theme.Color.Text,
+				&th.Theme.Color.Text,
 			},
 			State: &c.TextColor,
 		},
 		{
 			Label: "Hint",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Theme.Color.Hint,
+				&th.Theme.Color.Hint,
 			},
 			State: &c.HintColor,
 		},
 		{
 			Label: "Inverted Text",
 			TargetColors: []*color.RGBA{
-				&c.Theme.Theme.Color.InvText,
+				&th.Theme.Color.InvText,
 			},
 			State: &c.InvertedTextColor,
 		},
@@ -184,37 +192,36 @@ func NewThemeEditorView(theme *sprigTheme.Theme) View {
 		{
 			Label:       "Ancestors",
 			MuxState:    &c.AncestorMux,
-			TargetColor: &c.Theme.Ancestors,
+			TargetColor: &th.Ancestors,
 		},
 		{
 			Label:       "Descendants",
 			MuxState:    &c.DescendantMux,
-			TargetColor: &c.Theme.Descendants,
+			TargetColor: &th.Descendants,
 		},
 		{
 			Label:       "Selected",
 			MuxState:    &c.SelectedMux,
-			TargetColor: &c.Theme.Selected,
+			TargetColor: &th.Selected,
 		},
 		{
 			Label:       "Siblings",
 			MuxState:    &c.SiblingMux,
-			TargetColor: &c.Theme.Siblings,
+			TargetColor: &th.Siblings,
 		},
 		{
 			Label:       "Unselected",
 			MuxState:    &c.NonselectedMux,
-			TargetColor: &c.Theme.Unselected,
+			TargetColor: &th.Unselected,
 		},
 	}
 	for _, mux := range c.muxListElems {
 		*mux.MuxState = colorpicker.NewMuxState(muxOptions...)
 	}
-
-	return c
 }
 
 func (c *ThemeEditorView) BecomeVisible() {
+	c.ConfigurePickersFor(c.App.Theme().Current())
 }
 
 func (c *ThemeEditorView) NavItem() *materials.NavItem {

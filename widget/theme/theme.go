@@ -22,6 +22,17 @@ var (
 	darkGray     = color.RGBA{R: 100, G: 100, B: 100, A: 255}
 	veryDarkGray = color.RGBA{R: 50, G: 50, B: 50, A: 255}
 	black        = color.RGBA{A: 255}
+
+	purple1           = color.RGBA{R: 69, G: 56, B: 127, A: 255}
+	lightPurple1      = color.RGBA{R: 121, G: 121, B: 174, A: 255}
+	darkPurple1       = color.RGBA{R: 99, G: 41, B: 115, A: 255}
+	purple2           = color.RGBA{R: 127, G: 96, B: 183, A: 255}
+	lightPurple2      = color.RGBA{R: 121, G: 150, B: 223, A: 255}
+	darkPurple2       = color.RGBA{R: 101, G: 89, B: 223, A: 255}
+	dmBackground      = color.RGBA{R: 12, G: 12, B: 15, A: 255}
+	dmDarkBackground  = black
+	dmLightBackground = color.RGBA{R: 27, G: 22, B: 33, A: 255}
+	dmText            = color.RGBA{R: 194, G: 196, B: 199, A: 255}
 )
 
 func New() *Theme {
@@ -59,6 +70,20 @@ func (t *Theme) ToDark() {
 	t.Color.Text = white
 	t.Color.InvText = black
 	t.Color.Hint = lightGray
+	t.Primary.Default = purple1
+	t.Primary.Light = lightPurple1
+	t.Primary.Dark = darkPurple1
+	t.Theme.Color.Primary = t.Primary.Default
+	t.Secondary.Default = purple2
+	t.Secondary.Light = lightPurple2
+	t.Secondary.Dark = darkPurple2
+
+	t.Background.Default = dmBackground
+	t.Background.Light = dmLightBackground
+	t.Background.Dark = dmDarkBackground
+
+	t.Theme.Color.Text = dmText
+	t.Theme.Color.InvText = white
 }
 
 type Theme struct {
