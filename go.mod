@@ -20,3 +20,5 @@ require (
 )
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
+
+replace gioui.org => git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c

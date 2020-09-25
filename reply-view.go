@@ -221,17 +221,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 }
 
 func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
-	currentFirst := c.ReplyList.Position.First
-	notInFirstFive := currentFirst+5 > focusedIndex
-	if currentFirst <= focusedIndex && notInFirstFive {
-		return
-	}
-	c.ReplyList.Position.First = focusedIndex
-	if notInFirstFive {
-		//		c.ReplyList.Position.First++
-	}
-	c.ReplyList.Position.Offset = 0
-	c.ReplyList.Position.BeforeEnd = true
+	c.ReplyList.ScrollTo(focusedIndex)
 }
 
 func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
