@@ -5,7 +5,7 @@ go 1.14
 require (
 	gioui.org v0.0.0-20200917085049-ef7b3e75f4dc
 	gioui.org/cmd v0.0.0-20200917085049-ef7b3e75f4dc
-	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200801012301-b0b7a5822cd7
+	git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200924201440-0799d8d3d092
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20200908023146-ee23841ca265
 	git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0
 	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f

@@ -2,6 +2,7 @@ package main
 
 import (
 	"image/color"
+	"log"
 
 	"gioui.org/f32"
 	"gioui.org/font/gofont"
@@ -239,18 +240,20 @@ func (c *ThemeEditorView) HandleClipboard(contents string) {
 }
 
 func (c *ThemeEditorView) Update(gtx layout.Context) {
-	for _, elem := range c.listElems {
+	for i, elem := range c.listElems {
 		if elem.Changed() {
 			for _, target := range elem.TargetColors {
 				*target = elem.Color()
 			}
 			op.InvalidateOp{}.Add(gtx.Ops)
+			log.Printf("picker %d changed", i)
 		}
 	}
 	for _, elem := range c.muxListElems {
 		if elem.Changed() {
 			*elem.TargetColor = elem.Color()
 			op.InvalidateOp{}.Add(gtx.Ops)
+			log.Printf("mux changed")
 		}
 	}
 }
@@ -282,7 +285,8 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 						}),
 						layout.Stacked(func(gtx C) D {
 							elem := c.listElems[index]
-							return colorpicker.Picker(c.widgetTheme, elem.State, elem.Label).Layout(gtx)
+							dims := colorpicker.Picker(c.widgetTheme, elem.State, elem.Label).Layout(gtx)
+							return dims
 						}),
 					)
 				})
