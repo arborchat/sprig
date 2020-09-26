@@ -312,7 +312,7 @@ func (s *settingsService) Persist() error {
 	}
 	err = ioutil.WriteFile(s.SettingsFile(), data, 0770)
 	if err != nil {
-		fmt.Errorf("couldn't save settings file: %w", err)
+		return fmt.Errorf("couldn't save settings file: %w", err)
 	}
 	return nil
 }
