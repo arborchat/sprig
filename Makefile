@@ -62,6 +62,9 @@ $(MACOS_APP): $(MACOS_BIN) $(MACOS_APP).template
 	cp -rv $(MACOS_APP).template $(MACOS_APP)
 	mkdir -p $(MACOS_APP)/Contents/MacOS
 	cp $(MACOS_BIN) $(MACOS_APP)/Contents/MacOS/$(MACOS_BIN)
+	mkdir -p $(MACOS_APP)/Contents/Resources
+	go install github.com/jackmordaunt/icns/cmd/icnsify && go mod tidy
+	cat appicon.png | icnsify > $(MACOS_APP)/Contents/Resources/sprig.icns
 	codesign -s - $(MACOS_APP)
 
 $(MACOS_BIN): $(SOURCE)
