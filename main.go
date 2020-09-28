@@ -4,6 +4,7 @@ import (
 	"flag"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
 
 	"gioui.org/app"
@@ -67,41 +68,69 @@ func eventLoop(w *app.Window) error {
 	app.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
 		w.Invalidate()
 	})
+
+	// handle ctrl+c to shutdown
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt)
+
+	// this function should perform any and all cleanup work, and it must block
+	// for the necessary duration of that work.
+	shutdown := func() {
+		log.Printf("cleaning up")
+		// connections := app.Sprout().Connections()
+		// for _, conn := range connections {
+		// 	if worker := app.Sprout().WorkerFor(conn); worker != nil {
+		// 		var nodes []forest.Node
+		// 		if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
+		// 			log.Printf("error sending shutdown messages: %v", err)
+		// 		}
+		// 	}
+		// }
+		log.Printf("shutting down")
+	}
+
 	var ops op.Ops
 	for {
-		switch event := (<-w.Events()).(type) {
-		case system.DestroyEvent:
-			return event.Err
-		case system.ClipboardEvent:
-			viewManager.HandleClipboard(event.Text)
-		case *system.CommandEvent:
-			if event.Type == system.CommandBack {
-				viewManager.HandleBackNavigation(event)
+		select {
+		case <-sigs:
+			shutdown()
+			return nil
+		case event := (<-w.Events()):
+			switch event := event.(type) {
+			case system.DestroyEvent:
+				shutdown()
+				return event.Err
+			case system.ClipboardEvent:
+				viewManager.HandleClipboard(event.Text)
+			case *system.CommandEvent:
+				if event.Type == system.CommandBack {
+					viewManager.HandleBackNavigation(event)
+				}
+			case system.FrameEvent:
+				gtx := layout.NewContext(&ops, event)
+				th := app.Theme().Current()
+				layout.Stack{}.Layout(gtx,
+					layout.Expanded(func(gtx C) D {
+						return sprigTheme.DrawRect(gtx, th.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+					}),
+					layout.Stacked(func(gtx C) D {
+						return layout.Inset{
+							Bottom: event.Insets.Bottom,
+							Left:   event.Insets.Left,
+							Right:  event.Insets.Right,
+							Top:    event.Insets.Top,
+						}.Layout(gtx, func(gtx C) D {
+							return layout.Stack{}.Layout(gtx,
+								layout.Expanded(func(gtx C) D {
+									return sprigTheme.DrawRect(gtx, th.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+								}),
+								layout.Stacked(viewManager.Layout),
+							)
+						})
+					}),
+				)
+				event.Frame(gtx.Ops)
 			}
-		case system.FrameEvent:
-			gtx := layout.NewContext(&ops, event)
-			th := app.Theme().Current()
-			layout.Stack{}.Layout(gtx,
-				layout.Expanded(func(gtx C) D {
-					return sprigTheme.DrawRect(gtx, th.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
-				}),
-				layout.Stacked(func(gtx C) D {
-					return layout.Inset{
-						Bottom: event.Insets.Bottom,
-						Left:   event.Insets.Left,
-						Right:  event.Insets.Right,
-						Top:    event.Insets.Top,
-					}.Layout(gtx, func(gtx C) D {
-						return layout.Stack{}.Layout(gtx,
-							layout.Expanded(func(gtx C) D {
-								return sprigTheme.DrawRect(gtx, th.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
-							}),
-							layout.Stacked(viewManager.Layout),
-						)
-					})
-				}),
-			)
-			event.Frame(gtx.Ops)
 		}
 	}
 }
