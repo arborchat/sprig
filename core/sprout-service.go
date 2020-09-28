@@ -1,21 +1,27 @@
 package core
 
 import (
+	"crypto/tls"
+	"fmt"
 	"log"
 	"sync"
+	"time"
 
+	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprout-go"
 )
 
 type SproutService interface {
 	ConnectTo(address string) error
+	Connections() []string
+	WorkerFor(address string) *sprout.Worker
 }
 
 type sproutService struct {
 	ArborService
 	workerLock sync.Mutex
 	workerDone chan struct{}
-	workerLog  *log.Logger
+	workers    map[string]*sprout.Worker
 }
 
 var _ SproutService = &sproutService{}
@@ -23,6 +29,8 @@ var _ SproutService = &sproutService{}
 func newSproutService(arbor ArborService) (SproutService, error) {
 	s := &sproutService{
 		ArborService: arbor,
+		workers:      make(map[string]*sprout.Worker),
+		workerDone:   make(chan struct{}),
 	}
 	return s, nil
 }
@@ -35,7 +43,78 @@ func (s *sproutService) ConnectTo(address string) error {
 		close(s.workerDone)
 	}
 	s.workerDone = make(chan struct{})
-	s.workerLog = log.New(log.Writer(), "worker "+address, log.LstdFlags|log.Lshortfile)
-	go sprout.LaunchSupervisedWorker(s.workerDone, address, s.ArborService.Store(), nil, s.workerLog)
+	go s.launchWorker(address)
 	return nil
+}
+
+func (s *sproutService) Connections() []string {
+	s.workerLock.Lock()
+	defer s.workerLock.Unlock()
+	out := make([]string, 0, len(s.workers))
+	for addr := range s.workers {
+		out = append(out, addr)
+	}
+	return out
+}
+
+func (s *sproutService) WorkerFor(address string) *sprout.Worker {
+	s.workerLock.Lock()
+	defer s.workerLock.Unlock()
+	out, defined := s.workers[address]
+	if !defined {
+		return nil
+	}
+	return out
+}
+
+func (s *sproutService) launchWorker(addr string) {
+	firstAttempt := true
+	logger := log.New(log.Writer(), "worker "+addr, log.LstdFlags|log.Lshortfile)
+	for {
+		if !firstAttempt {
+			logger.Printf("Restarting worker for address %s", addr)
+			time.Sleep(time.Second)
+		}
+		firstAttempt = false
+
+		s.workerLock.Lock()
+		done := s.workerDone
+		s.workerLock.Unlock()
+
+		worker, err := NewWorker(addr, done, s.ArborService.Store())
+		if err != nil {
+			log.Printf("Failed starting worker: %v", err)
+			continue
+		}
+		worker.Logger = log.New(logger.Writer(), fmt.Sprintf("worker-%v ", addr), log.Flags())
+
+		s.workerLock.Lock()
+		s.workers[addr] = worker
+		s.workerLock.Unlock()
+
+		go worker.BootstrapLocalStore(1024)
+
+		worker.Run()
+		select {
+		case <-done:
+			return
+		default:
+		}
+	}
+}
+
+// NewWorker creates a sprout worker connected to the provided address using
+// TLS over TCP as a transport.
+func NewWorker(addr string, done <-chan struct{}, s store.ExtendedStore) (*sprout.Worker, error) {
+	conn, err := tls.Dial("tcp", addr, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to %s: %v", addr, err)
+	}
+
+	worker, err := sprout.NewWorker(done, conn, s)
+	if err != nil {
+		return nil, fmt.Errorf("failed launching worker to connect to address %s: %v", addr, err)
+	}
+
+	return worker, nil
 }
