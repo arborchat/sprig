@@ -15,13 +15,11 @@ import (
 type ArborService interface {
 	Store() store.ExtendedStore
 	Communities() *ds.CommunityList
-	Replies() *ds.ReplyList
 }
 
 type arborService struct {
 	SettingsService
 	grove store.ExtendedStore
-	rl    *ds.ReplyList
 	cl    *ds.CommunityList
 }
 
@@ -55,11 +53,6 @@ func newArborService(settings SettingsService) (ArborService, error) {
 		SettingsService: settings,
 		grove:           store.NewArchive(baseStore),
 	}
-	rl, err := ds.NewReplyList(a.grove)
-	if err != nil {
-		return nil, fmt.Errorf("failed initializing reply list: %w", err)
-	}
-	a.rl = rl
 	cl, err := ds.NewCommunityList(a.grove)
 	if err != nil {
 		return nil, fmt.Errorf("failed initializing community list: %w", err)
@@ -74,8 +67,4 @@ func (a *arborService) Store() store.ExtendedStore {
 
 func (a *arborService) Communities() *ds.CommunityList {
 	return a.cl
-}
-
-func (a *arborService) Replies() *ds.ReplyList {
-	return a.rl
 }

@@ -72,30 +72,26 @@ type ReplyData struct {
 	Author    *forest.Identity
 }
 
-// ReplyList holds a sortable list of replies that can update itself
-// automatically by subscribing to a store.ExtendedStore
-type ReplyList struct {
-	replies  []ReplyData
-	nodelist *NodeList
-}
-
 // populate populates the the fields of a ReplyData object from a given node and a store.
 // It can be used on an unfilled ReplyData instance in place of a constructor. It returns
 // false if the node cannot be processed into ReplyData
-func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool {
+func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool {
 	asReply, ok := reply.(*forest.Reply)
 	if !ok {
+		log.Printf("not a reply")
 		return false
 	}
 	r.Reply = asReply
 	comm, has, err := store.GetCommunity(&asReply.CommunityID)
 
 	if err != nil || !has {
+		log.Printf("couldn't get community")
 		return false
 	}
 	r.Community = comm.(*forest.Community)
 	author, has, err := store.GetIdentity(&asReply.Author)
 	if err != nil || !has {
+		log.Printf("couldn't get author")
 		return false
 	}
 	r.Author = author.(*forest.Identity)
@@ -109,86 +105,6 @@ func (r *ReplyData) populate(reply forest.Node, store store.ExtendedStore) bool 
 	}
 
 	return true
-}
-
-// NewReplyList creates a ReplyList and subscribes it to the provided ExtendedStore.
-// It will prepopulate the list with the contents of the store as well.
-func NewReplyList(s store.ExtendedStore) (*ReplyList, error) {
-	cl := new(ReplyList)
-	var err error
-	var nodes []forest.Node
-	cl.nodelist = NewNodeList(func(node forest.Node) forest.Node {
-		addToList := false
-		var out ReplyData
-
-		if r, ok := node.(ReplyData); ok {
-			addToList = true
-			out = r
-		}
-
-		if !addToList && out.populate(node, s) {
-			addToList = true
-		}
-
-		if addToList {
-			// Revoke node's addition if it is invisible
-			md, _ := out.Reply.TwigMetadata()
-			if md.Contains("invisible", 1) {
-				// Invisible message
-				addToList = false
-			}
-		}
-
-		if addToList {
-			return out
-		}
-
-		return nil
-
-	}, func(a, b forest.Node) bool {
-		return a.(ReplyData).Reply.Created < b.(ReplyData).Reply.Created
-	}, func() []forest.Node {
-		replyDatas := make([]ReplyData, 0, 1024)
-		nodes, err = s.Recent(fields.NodeTypeReply, 1024)
-		for _, node := range nodes {
-			var replyData ReplyData
-			if replyData.populate(node, s) {
-				replyDatas = append(replyDatas, replyData)
-			}
-		}
-		asNodes := make([]forest.Node, len(replyDatas))
-		for i := range replyDatas {
-			asNodes[i] = replyDatas[i]
-		}
-		return asNodes
-	}, s)
-	if err != nil {
-		return nil, fmt.Errorf("failed initializing reply list: %w", err)
-	}
-	return cl, nil
-}
-
-// IndexForID returns the position of the node with the given `id` inside of the ReplyList,
-// or -1 if it is not present.
-func (c *ReplyList) IndexForID(id *fields.QualifiedHash) int {
-	return c.nodelist.IndexForID(id)
-}
-
-func (c *ReplyList) Insert(nodes ...forest.Node) {
-	c.nodelist.Insert(nodes...)
-}
-
-// WithReplies executes an arbitrary closure with access to the replies stored
-// inside of the ReplyList. The closure must not modify the slice that it is
-// given.
-func (c *ReplyList) WithReplies(closure func(replies []ReplyData)) {
-	c.nodelist.WithNodes(func(nodes []forest.Node) {
-		c.replies = c.replies[:0]
-		for _, node := range nodes {
-			c.replies = append(c.replies, node.(ReplyData))
-		}
-		closure(c.replies)
-	})
 }
 
 // NodeList implements a generic data structure for storing ordered lists of forest nodes.

@@ -18,8 +18,10 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 
+	"git.sr.ht/~athorp96/forest-ex/expiration"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/forest-go/twig"
 
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/scroll"
@@ -39,6 +41,8 @@ type ReplyListView struct {
 	core.App
 
 	CopyReplyButton widget.Clickable
+
+	ds.AlphaReplyList
 
 	ReplyList    layout.List
 	States       *States
@@ -95,13 +99,41 @@ func NewReplyListView(app core.App) View {
 		HistoryRequestCount: 2048,
 		States:              &States{},
 	}
+	c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
+		td, err := rd.TwigMetadata()
+		if err != nil {
+			log.Printf("filtering %s due to invalid twig", rd.ID())
+			return false
+		}
+		if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
+			log.Printf("filtering %s due to invisible", rd.ID())
+			return false
+		}
+		if ttl, ok := td.Values[expiration.TTLKey()]; ok {
+			if expiry, err := expiration.UnmarshalTTL(ttl); err != nil {
+				log.Printf("filtering %s due to unreadable expiry", rd.ID())
+				return false
+			} else {
+				log.Printf("filtering %s due to expiration", rd.ID())
+				return time.Now().Before(expiry)
+			}
+		}
+		return true
+	})
 	c.ReplyList.Axis = layout.Vertical
 	// ensure that we are notified when we need to refresh the state of visible nodes
-	c.Arbor().Store().SubscribeToNewMessages(func(forest.Node) {
+	c.Arbor().Store().SubscribeToNewMessages(func(node forest.Node) {
 		c.StateRefreshNeeded = true
+		go func() {
+			var rd ds.ReplyData
+			if rd.Populate(node, c.Arbor().Store()) {
+				c.AlphaReplyList.Insert(rd)
+			}
+		}()
 	})
 	c.ReplyList.ScrollToEnd = true
 	c.ReplyList.Position.BeforeEnd = false
+	c.loadMoreHistory()
 	return c
 }
 
@@ -207,11 +239,11 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
 	}
-	currentIndex := c.Arbor().Replies().IndexForID(c.Focused)
+	currentIndex := c.AlphaReplyList.IndexForID(c.Focused)
 	if currentIndex < 0 {
 		return
 	}
-	c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
+	c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 		for {
 			currentIndex += indexIncrement
 			if currentIndex >= len(replies) || currentIndex < 0 {
@@ -435,18 +467,18 @@ func (c *ReplyListView) startConversation() {
 
 func (c *ReplyListView) Update(gtx layout.Context) {
 	c.replyCount = func() (count int) {
-		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
+		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 			count = len(replies)
 		})
 		return count
 	}()
 	jumpStart := func() {
-		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
+		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 			c.moveFocusStart(replies)
 		})
 	}
 	jumpEnd := func() {
-		c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
+		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 			c.moveFocusEnd(replies)
 		})
 	}
@@ -527,16 +559,38 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.reveal(int(float32(c.replyCount) * progress))
 	}
 	if c.LoadMoreHistoryButton.Clicked() || overflowTag == &c.LoadMoreHistoryButton {
-		go func() {
-			nodes, err := c.Arbor().Store().Recent(fields.NodeTypeReply, c.HistoryRequestCount)
-			c.HistoryRequestCount += c.HistoryRequestCount
-			if err != nil {
-				log.Printf("failed loading extra history: %v", err)
-				return
-			}
-			c.Arbor().Replies().Insert(nodes...)
-		}()
+		go c.loadMoreHistory()
 	}
+}
+
+func (c *ReplyListView) loadMoreHistory() {
+	const newNodeTarget = 1024
+	var (
+		nodes []forest.Node
+		err   error
+	)
+	load := func() {
+		nodes, err = c.Arbor().Store().Recent(fields.NodeTypeReply, c.HistoryRequestCount)
+		c.HistoryRequestCount += newNodeTarget
+		if err != nil {
+			log.Printf("failed loading extra history: %v", err)
+			return
+		}
+	}
+	load()
+	var populated []ds.ReplyData
+	for i := range nodes {
+		var rd ds.ReplyData
+		if rd.Populate(nodes[i], c.Arbor().Store()) {
+			populated = append(populated, rd)
+		} else {
+			log.Printf("filtering out %s due to Populate() failing", rd.ID())
+		}
+	}
+	if len(populated) < newNodeTarget {
+		load()
+	}
+	c.AlphaReplyList.Insert(populated...)
 }
 
 func (c *ReplyListView) resetReplyState() {
@@ -649,7 +703,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	)
 	c.States.Begin()
 	gtx.Constraints.Min = gtx.Constraints.Max
-	c.Arbor().Replies().WithReplies(func(replies []ds.ReplyData) {
+	c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
