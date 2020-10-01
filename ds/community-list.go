@@ -130,12 +130,11 @@ func NewReplyList(s store.ExtendedStore) (*ReplyList, error) {
 			addToList = true
 		}
 
-		// Revoke node's addition if it is invisible
 		if addToList {
+			// Revoke node's addition if it is invisible
 			md, _ := out.Reply.TwigMetadata()
 			if md.Contains("invisible", 1) {
 				// Invisible message
-				log.Printf("Invisible node found. Skipping from ReplyList")
 				addToList = false
 			}
 		}
@@ -167,13 +166,16 @@ func NewReplyList(s store.ExtendedStore) (*ReplyList, error) {
 		return nil, fmt.Errorf("failed initializing reply list: %w", err)
 	}
 	return cl, nil
-
 }
 
 // IndexForID returns the position of the node with the given `id` inside of the ReplyList,
 // or -1 if it is not present.
 func (c *ReplyList) IndexForID(id *fields.QualifiedHash) int {
 	return c.nodelist.IndexForID(id)
+}
+
+func (c *ReplyList) Insert(nodes ...forest.Node) {
+	c.nodelist.Insert(nodes...)
 }
 
 // WithReplies executes an arbitrary closure with access to the replies stored
@@ -204,41 +206,44 @@ type NodeSorter func(a, b forest.Node) bool
 // return value of initialize(). The nodes will be sorted using the provided sort function
 // (via sort.Slice) and nodes will only be inserted into the list if the filter() function
 // returns non-nil for them. The filter function may transform the data before inserting it.
+// The filter function is also responsible for any deduplication.
 func NewNodeList(filter NodeFilter, sort NodeSorter, initialize func() []forest.Node, s store.ExtendedStore) *NodeList {
 	nl := new(NodeList)
 	nl.filter = filter
 	nl.sortFunc = sort
 	nl.withNodesWritable(func() {
 		nl.subscribeTo(s)
-		for _, node := range initialize() {
-			if filtered := filter(node); filtered != nil {
-				nl.nodes = append(nl.nodes, filtered)
-			}
-		}
-		nl.sort()
+		nl.insert(initialize()...)
 	})
 	return nl
+}
+
+func (n *NodeList) Insert(nodes ...forest.Node) {
+	n.withNodesWritable(func() {
+		n.insert(nodes...)
+	})
+}
+
+func (n *NodeList) insert(nodes ...forest.Node) {
+outer:
+	for _, node := range nodes {
+		if filtered := n.filter(node); filtered != nil {
+			for _, element := range n.nodes {
+				if filtered.ID().Equals(element.ID()) {
+					continue outer
+				}
+			}
+			n.nodes = append(n.nodes, filtered)
+		}
+	}
+	n.sort()
 }
 
 func (n *NodeList) subscribeTo(s store.ExtendedStore) {
 	s.SubscribeToNewMessages(func(node forest.Node) {
 		// cannot block in subscription
 		go func() {
-			n.Lock()
-			defer n.Unlock()
-			if filtered := n.filter(node); filtered != nil {
-				alreadyInList := false
-				for _, element := range n.nodes {
-					if element.Equals(filtered) {
-						alreadyInList = true
-						break
-					}
-				}
-				if !alreadyInList {
-					n.nodes = append(n.nodes, filtered)
-					n.sort()
-				}
-			}
+			n.Insert(node)
 		}()
 	})
 }

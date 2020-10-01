@@ -64,6 +64,10 @@ type ReplyListView struct {
 	CommunityChoice                     widget.Enum
 	CommunityList                       layout.List
 
+	LoadMoreHistoryButton widget.Clickable
+	// how many nodes of history does the view want
+	HistoryRequestCount int
+
 	scroll.Scrollable
 
 	// Filtered determines whether or not the visible nodes should be
@@ -88,7 +92,8 @@ func NewReplyListView(app core.App) View {
 				Duration: time.Millisecond * 100,
 			},
 		},
-		States: &States{},
+		HistoryRequestCount: 2048,
+		States:              &States{},
 	}
 	c.ReplyList.Axis = layout.Vertical
 	// ensure that we are notified when we need to refresh the state of visible nodes
@@ -145,6 +150,10 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 			{
 				Name: "Jump to bottom",
 				Tag:  &c.JumpToBottomButton,
+			},
+			{
+				Name: "Load more history",
+				Tag:  &c.LoadMoreHistoryButton,
 			},
 		}
 }
@@ -517,6 +526,17 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if did, progress := c.Scrollable.Scrolled(); did {
 		c.reveal(int(float32(c.replyCount) * progress))
 	}
+	if c.LoadMoreHistoryButton.Clicked() || overflowTag == &c.LoadMoreHistoryButton {
+		go func() {
+			nodes, err := c.Arbor().Store().Recent(fields.NodeTypeReply, c.HistoryRequestCount)
+			c.HistoryRequestCount += c.HistoryRequestCount
+			if err != nil {
+				log.Printf("failed loading extra history: %v", err)
+				return
+			}
+			c.Arbor().Replies().Insert(nodes...)
+		}()
+	}
 }
 
 func (c *ReplyListView) resetReplyState() {
@@ -634,7 +654,16 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			c.moveFocusEnd(replies)
 		}
 		numReplies = len(replies)
-		dims = c.ReplyList.Layout(gtx, len(replies), func(gtx layout.Context, index int) layout.Dimensions {
+		dims = c.ReplyList.Layout(gtx, len(replies)+1, func(gtx layout.Context, index int) layout.Dimensions {
+			if index == 0 {
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						return material.Button(th.Theme, &c.LoadMoreHistoryButton, "Load more history").Layout(gtx)
+					})
+				})
+			}
+			// adjust for the fact that we use the first index as a button
+			index--
 			var (
 				state            = c.States.Next()
 				reply            = replies[index]
