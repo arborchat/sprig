@@ -5,7 +5,6 @@ package ds
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"sync"
 
@@ -78,20 +77,17 @@ type ReplyData struct {
 func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool {
 	asReply, ok := reply.(*forest.Reply)
 	if !ok {
-		log.Printf("not a reply")
 		return false
 	}
 	r.Reply = asReply
 	comm, has, err := store.GetCommunity(&asReply.CommunityID)
 
 	if err != nil || !has {
-		log.Printf("couldn't get community")
 		return false
 	}
 	r.Community = comm.(*forest.Community)
 	author, has, err := store.GetIdentity(&asReply.Author)
 	if err != nil || !has {
-		log.Printf("couldn't get author")
 		return false
 	}
 	r.Author = author.(*forest.Identity)
@@ -99,8 +95,6 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	// Verify twig data parses
 	if _, err := asReply.TwigMetadata(); err != nil {
 		// Malformed metadata
-		log.Printf("Error when fetching twig metadata: %v", err)
-		log.Printf("Twig metadata: %v", asReply.Metadata.Blob)
 		return false
 	}
 

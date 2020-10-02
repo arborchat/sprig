@@ -23,6 +23,7 @@ type (
 )
 
 func main() {
+	log.SetFlags(log.Flags() | log.Lshortfile)
 	go func() {
 		w := app.NewWindow(app.Title("Sprig"))
 		if err := eventLoop(w); err != nil {

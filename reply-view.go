@@ -102,19 +102,15 @@ func NewReplyListView(app core.App) View {
 	c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
 		td, err := rd.TwigMetadata()
 		if err != nil {
-			log.Printf("filtering %s due to invalid twig", rd.ID())
 			return false
 		}
 		if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
-			log.Printf("filtering %s due to invisible", rd.ID())
 			return false
 		}
 		if ttl, ok := td.Values[expiration.TTLKey()]; ok {
 			if expiry, err := expiration.UnmarshalTTL(ttl); err != nil {
-				log.Printf("filtering %s due to unreadable expiry", rd.ID())
 				return false
 			} else {
-				log.Printf("filtering %s due to expiration", rd.ID())
 				return time.Now().Before(expiry)
 			}
 		}
