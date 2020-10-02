@@ -11,7 +11,7 @@ require (
 	git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0
 	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f
 	git.sr.ht/~whereswaldon/scroll v0.0.0-20200922135109-2d7be1c23e95
-	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20200908122259-60e4aacb6740
+	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20201002170148-ce87ee60caf0
 	git.wow.st/gmp/jni v0.0.0-20200827154156-014cd5c7c4c0 // indirect
 	golang.org/x/crypto v0.0.0-20200820211705-5c72a883971a
 	golang.org/x/exp v0.0.0-20200908183739-ae8ad444f925
