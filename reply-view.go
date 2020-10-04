@@ -83,6 +83,8 @@ type ReplyListView struct {
 
 	// Cache the number of replies during update.
 	replyCount int
+	// Maximum number of visible replies encountered.
+	maxRepliesVisible int
 }
 
 var _ View = &ReplyListView{}
@@ -693,9 +695,8 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
-		dims       layout.Dimensions
-		th         = c.Theme().Current()
-		numReplies int
+		dims layout.Dimensions
+		th   = c.Theme().Current()
 	)
 	c.States.Begin()
 	gtx.Constraints.Min = gtx.Constraints.Max
@@ -703,7 +704,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
-		numReplies = len(replies)
 		dims = c.ReplyList.Layout(gtx, len(replies)+1, func(gtx layout.Context, index int) layout.Dimensions {
 			if index == 0 {
 				return layout.Center.Layout(gtx, func(gtx C) D {
@@ -796,8 +796,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	})
 	progress := float32(c.ReplyList.Position.First) / float32(c.replyCount)
 	visibleFraction := float32(0)
-	if numReplies > 0 {
-		visibleFraction = float32(c.States.Current) / float32(numReplies)
+	if c.replyCount > 0 {
+		if c.States.Current > c.maxRepliesVisible {
+			c.maxRepliesVisible = c.States.Current
+		}
+		visibleFraction = float32(c.maxRepliesVisible) / float32(c.replyCount)
 	}
 	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
 	bar.Color = materials.AlphaMultiply(th.Color.Text, 200)
