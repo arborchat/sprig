@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
+	"git.sr.ht/~athorp96/forest-ex/expiration"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/store"
@@ -21,6 +23,7 @@ type arborService struct {
 	SettingsService
 	grove store.ExtendedStore
 	cl    *ds.CommunityList
+	done  chan struct{}
 }
 
 var _ ArborService = &arborService{}
@@ -52,12 +55,18 @@ func newArborService(settings SettingsService) (ArborService, error) {
 	a := &arborService{
 		SettingsService: settings,
 		grove:           store.NewArchive(baseStore),
+		done:            make(chan struct{}),
 	}
 	cl, err := ds.NewCommunityList(a.grove)
 	if err != nil {
 		return nil, fmt.Errorf("failed initializing community list: %w", err)
 	}
 	a.cl = cl
+	expiration.ExpiredPurger{
+		Logger:        log.New(log.Writer(), "purge ", log.Flags()),
+		ExtendedStore: a.grove,
+		PurgeInterval: time.Hour,
+	}.Start(a.done)
 	return a, nil
 }
 
