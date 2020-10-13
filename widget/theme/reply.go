@@ -8,6 +8,7 @@ import (
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/unit"
+	"gioui.org/widget"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/materials"
@@ -48,6 +49,15 @@ func (r ReplyStatus) HighlightColor(th *Theme) color.RGBA {
 	}
 }
 
+func (r ReplyStatus) BorderColor(th *Theme) color.RGBA {
+	switch r {
+	case Selected:
+		return *th.Selected
+	default:
+		return th.Background.Light
+	}
+}
+
 // ReplyAnimationState holds the state of an in-progress animation for a reply.
 // The anim.Normal field defines how far through the animation the node is, and
 // the Begin and End fields define the two states that the node is transitioning
@@ -69,6 +79,11 @@ func (r *ReplyAnimationState) Style(gtx C, reply *ReplyStyle) {
 	endColor := r.End.HighlightColor(reply.Theme)
 	current := materials.Interpolate(startColor, endColor, progress)
 	reply.Highlight = current
+
+	startBorder := r.Begin.BorderColor(reply.Theme)
+	endBorder := r.End.BorderColor(reply.Theme)
+	currentBorder := materials.Interpolate(startBorder, endBorder, progress)
+	reply.Border = currentBorder
 }
 
 type ReplyStyle struct {
@@ -76,6 +91,7 @@ type ReplyStyle struct {
 	Highlight  color.RGBA
 	Background color.RGBA
 	TextColor  color.RGBA
+	Border     color.RGBA
 	// MaxLines limits the maximum number of lines of content text that should
 	// be displayed. Values less than 1 indicate unlimited.
 	MaxLines       int
@@ -106,9 +122,16 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	r.ReplyAnimationState.Style(gtx, &r)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			max := layout.FPt(gtx.Constraints.Min)
-			radii := float32(gtx.Px(unit.Dp(5)))
-			return DrawRect(gtx, r.Background, max, radii)
+			radiiDp := unit.Dp(5)
+			radii := float32(gtx.Px(radiiDp))
+			return widget.Border{
+				Color:        r.Border,
+				Width:        unit.Dp(2),
+				CornerRadius: radiiDp,
+			}.Layout(gtx, func(gtx C) D {
+				max := layout.FPt(gtx.Constraints.Min)
+				return DrawRect(gtx, r.Background, max, radii)
+			})
 		}),
 		layout.Stacked(func(gtx C) D {
 			return layout.Stack{}.Layout(gtx,
