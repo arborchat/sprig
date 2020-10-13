@@ -695,8 +695,9 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	var (
-		dims layout.Dimensions
-		th   = c.Theme().Current()
+		dims                 layout.Dimensions
+		th                       = c.Theme().Current()
+		totalUnfilteredNodes int = 1 + len(c.Ancestry) + len(c.Descendants)
 	)
 	c.States.Begin()
 	gtx.Constraints.Min = gtx.Constraints.Max
@@ -715,7 +716,6 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			// adjust for the fact that we use the first index as a button
 			index--
 			var (
-				state            = c.States.Next()
 				reply            = replies[index]
 				status           = c.statusOf(reply.Reply)
 				anim             = c.Animations.Update(gtx, reply.Reply, status)
@@ -731,6 +731,9 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			if c.shouldFilter(reply.Reply, status) {
 				return layout.Dimensions{}
 			}
+			// Only acquire a state after ensuring the node should be rendered. This allows
+			// us to count used states in order to determine how many nodes were rendered.
+			var state = c.States.Next()
 			return layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx C) D {
 					var (
@@ -794,13 +797,22 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			)
 		})
 	})
+	totalNodes := func() int {
+		if c.Filtered {
+			return totalUnfilteredNodes
+		}
+		return c.replyCount
+	}()
 	progress := float32(c.ReplyList.Position.First) / float32(c.replyCount)
 	visibleFraction := float32(0)
 	if c.replyCount > 0 {
 		if c.States.Current > c.maxRepliesVisible {
 			c.maxRepliesVisible = c.States.Current
 		}
-		visibleFraction = float32(c.maxRepliesVisible) / float32(c.replyCount)
+		visibleFraction = float32(c.maxRepliesVisible) / float32(totalNodes)
+		if visibleFraction > 1 {
+			visibleFraction = 1
+		}
 	}
 	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
 	bar.Color = materials.AlphaMultiply(th.Color.Text, 200)
