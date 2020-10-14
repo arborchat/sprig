@@ -179,7 +179,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx,
 					func(gtx layout.Context) layout.Dimensions {
 						nameMacro := op.Record(gtx.Ops)
-						nameDim := inset.Layout(gtx, AuthorName(r.Theme.Theme, r.ReplyData.Author, r.ShowActive).Layout)
+						nameDim := inset.Layout(gtx, AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive).Layout)
 						nameWidget := nameMacro.Stop()
 
 						communityMacro := op.Record(gtx.Ops)
@@ -274,11 +274,11 @@ func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
 
 type AuthorNameStyle struct {
 	*forest.Identity
-	*material.Theme
+	*Theme
 	Active bool
 }
 
-func AuthorName(theme *material.Theme, identity *forest.Identity, active bool) AuthorNameStyle {
+func AuthorName(theme *Theme, identity *forest.Identity, active bool) AuthorNameStyle {
 	return AuthorNameStyle{
 		Identity: identity,
 		Theme:    theme,
@@ -293,7 +293,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 
 	return layout.Flex{}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			name := material.Body2(a.Theme, string(a.Identity.Name.Blob))
+			name := material.Body2(a.Theme.Theme, string(a.Identity.Name.Blob))
 			name.Font.Weight = text.Bold
 			name.MaxLines = 1
 			return name.Layout(gtx)
@@ -301,7 +301,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 		layout.Rigid(func(gtx C) D {
 			suffix := a.Identity.ID().Blob
 			suffix = suffix[len(suffix)-2:]
-			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
+			suffixLabel := material.Body2(a.Theme.Theme, "#"+hex.EncodeToString(suffix))
 			suffixLabel.Color.A = 150
 			suffixLabel.MaxLines = 1
 			return suffixLabel.Layout(gtx)
@@ -310,8 +310,8 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 			if !a.Active {
 				return D{}
 			}
-			name := material.Body2(a.Theme, "���")
-			name.Color = a.Theme.Color.Primary
+			name := material.Body2(a.Theme.Theme, "●")
+			name.Color = a.Theme.Primary.Light
 			name.Font.Weight = text.Bold
 			return name.Layout(gtx)
 		}),

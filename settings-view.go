@@ -138,7 +138,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx C) D {
 					if c.Settings().ActiveArborIdentityID() != nil {
 						id, _ := c.Settings().Identity()
-						return itemInset.Layout(gtx, sprigTheme.AuthorName(theme, id, true).Layout)
+						return itemInset.Layout(gtx, sprigTheme.AuthorName(sTheme, id, true).Layout)
 					}
 					return itemInset.Layout(gtx, material.Button(theme, &c.IdentityButton, "Create new Identity").Layout)
 				}),
