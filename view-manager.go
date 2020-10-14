@@ -47,6 +47,8 @@ type ViewManager interface {
 	SetThemeing(bool)
 	// apply settings changes relevant to the UI
 	ApplySettings(core.SettingsService)
+	// show persistent status indicator with activity icon
+	ShowPersistent(message string)
 }
 
 type viewManager struct {
@@ -61,6 +63,8 @@ type viewManager struct {
 	navAnim materials.VisibilityAnimation
 	*materials.ModalNavDrawer
 	*materials.AppBar
+
+	PersistentMessage string
 
 	// track the tag of the overflow action selected within the last frame
 	selectedOverflowTag interface{}
@@ -235,6 +239,28 @@ func (vm *viewManager) Layout(gtx layout.Context) layout.Dimensions {
 	)
 }
 
+func (vm *viewManager) layoutPersistentMessage(gtx C) D {
+	if vm.PersistentMessage == "" {
+		return D{}
+	}
+	return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+		th := vm.App.Theme().Current().Theme
+		return layout.Flex{
+			Spacing: layout.SpaceSides,
+		}.Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				return material.Body1(th, vm.PersistentMessage).Layout(gtx)
+			}),
+			layout.Rigid(func(gtx C) D {
+				return layout.Inset{Left: unit.Dp(8)}.Layout(gtx, func(gtx C) D {
+					return material.Loader(th).Layout(gtx)
+				})
+			}),
+		)
+
+	})
+}
+
 func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	view := vm.views[vm.current]
 	view.Update(gtx)
@@ -259,14 +285,17 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	flex := layout.Flex{
 		Axis: layout.Vertical,
 	}
+	persistent := layout.Rigid(vm.layoutPersistentMessage)
 	var dimensions layout.Dimensions
 	if vm.AppBar.Anchor == materials.Top {
 		dimensions = flex.Layout(gtx,
 			bar,
+			persistent,
 			content,
 		)
 	} else {
 		dimensions = flex.Layout(gtx,
+			persistent,
 			content,
 			bar,
 		)
@@ -321,4 +350,8 @@ func (vm *viewManager) SetThemeing(isThemeing bool) {
 func (vm *viewManager) layoutThemeing(gtx C) D {
 	vm.themeView.Update(gtx)
 	return vm.themeView.Layout(gtx)
+}
+
+func (vm *viewManager) ShowPersistent(message string) {
+	vm.PersistentMessage = message
 }

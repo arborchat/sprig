@@ -136,6 +136,7 @@ func NewReplyListView(app core.App) View {
 }
 
 func (c *ReplyListView) BecomeVisible() {
+	c.manager.ShowPersistent("testing")
 }
 
 func (c *ReplyListView) NavItem() *materials.NavItem {
