@@ -57,7 +57,7 @@ type ReplyListView struct {
 
 	CreatingConversation                bool
 	ReplyingTo                          ds.ReplyData
-	ReplyEditor                         widget.Editor
+	ReplyEditor                         materials.TextField
 	FilterButton                        widget.Clickable
 	CancelReplyButton                   widget.Clickable
 	CreateReplyButton                   widget.Clickable
@@ -917,9 +917,8 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-											editor := material.Editor(th.Theme, &c.ReplyEditor, "type your reply here")
-											editor.Editor.Submit = true
-											return editor.Layout(gtx)
+											c.ReplyEditor.Submit = true
+											return c.ReplyEditor.Layout(gtx, th.Theme, "Compose your reply")
 										})
 									}),
 								)

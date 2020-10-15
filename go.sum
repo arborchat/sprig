@@ -13,6 +13,8 @@ git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c h1:xmqaRcYyU7cG5A
 git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0 h1:myWAjtX6fyH5xXChuLVbW93l27DitpamcKSb3vfkFrQ=
 git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
+git.sr.ht/~whereswaldon/materials v0.0.0-20201015013335-6ed9b4f9179b h1:j2C2S347zWh9jNyy2X/KwMUhsau7b28J21xuABBW704=
+git.sr.ht/~whereswaldon/materials v0.0.0-20201015013335-6ed9b4f9179b/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f/go.mod h1:c237AiA2cwcg+n865LzGlKY4z6H3UbCJHWOumUj7fGk=
 git.sr.ht/~whereswaldon/scroll v0.0.0-20200922135109-2d7be1c23e95 h1:SIkUCGa2FBfJSQCB7hwYydDvlczRODXnSxA3q96uawE=
