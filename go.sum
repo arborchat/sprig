@@ -1,4 +1,9 @@
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
+gioui.org v0.0.0-20200726090130-3b95e2918359/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
+gioui.org v0.0.0-20200726090339-83673ecb203f/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV+s9GbhG13KcD+gEpkU=
+gioui.org v0.0.0-20200912153211-2f67feafc0a2/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
+gioui.org v0.0.0-20201013133119-2ddd4f19855f h1:KnKLAwwL91VKEK2LfiZk0bObu0mCZrn3ghBwgqbNENE=
+gioui.org v0.0.0-20201013133119-2ddd4f19855f/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
 gioui.org/cmd v0.0.0-20201011093930-f942db9e25bb h1:Eufx74rjafvnpNg+sgcwODVSXP9ow6gDoxOdCo+U1vo=
 gioui.org/cmd v0.0.0-20201011093930-f942db9e25bb/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
@@ -9,10 +14,6 @@ git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200924201440-0799d8d3d092 h1:mefEjn
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20200924201440-0799d8d3d092/go.mod h1:r9pvrmlC21HDzv1lW5Udi/+01w4jIWf4NHPi2yHhjk8=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86 h1:skl5CR7Na2FyoA0xowlsIbhtYSMrxMwQN8awbgVxQHY=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c h1:xmqaRcYyU7cG5A5D1HnXS686Jpwyp4oFp+aKzhx7s9I=
-git.sr.ht/~whereswaldon/gio v0.0.0-20200925152212-09ffc2f4508c/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0 h1:myWAjtX6fyH5xXChuLVbW93l27DitpamcKSb3vfkFrQ=
-git.sr.ht/~whereswaldon/materials v0.0.0-20200924184430-3da9082c86c0/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
 git.sr.ht/~whereswaldon/materials v0.0.0-20201015013335-6ed9b4f9179b h1:j2C2S347zWh9jNyy2X/KwMUhsau7b28J21xuABBW704=
 git.sr.ht/~whereswaldon/materials v0.0.0-20201015013335-6ed9b4f9179b/go.mod h1:83h9SWCZR03wxWMs7qUlaexugfSlEorznGkxgCwsrC8=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
