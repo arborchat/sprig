@@ -14,10 +14,11 @@ type TextFormStyle struct {
 	State *widget.TextForm
 	// internal widget separation distance
 	layout.Inset
-	PasteButton  material.IconButtonStyle
-	SubmitButton material.ButtonStyle
-	material.EditorStyle
+	PasteButton      material.IconButtonStyle
+	SubmitButton     material.ButtonStyle
+	EditorHint       string
 	EditorBackground color.RGBA
+	*Theme
 }
 
 func TextForm(th *Theme, state *widget.TextForm, submitText, formHint string) TextFormStyle {
@@ -26,8 +27,9 @@ func TextForm(th *Theme, state *widget.TextForm, submitText, formHint string) Te
 		Inset:            layout.UniformInset(unit.Dp(8)),
 		PasteButton:      material.IconButton(th.Theme, &state.PasteButton, icons.PasteIcon),
 		SubmitButton:     material.Button(th.Theme, &state.SubmitButton, submitText),
-		EditorStyle:      material.Editor(th.Theme, &state.Editor, formHint),
+		EditorHint:       formHint,
 		EditorBackground: th.Background.Light,
+		Theme:            th,
 	}
 	t.PasteButton.Inset = layout.UniformInset(unit.Dp(4))
 	return t
@@ -50,7 +52,9 @@ func (t TextFormStyle) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Stacked(func(gtx C) D {
 					gtx.Constraints.Min.X = gtx.Constraints.Max.X
-					return t.Inset.Layout(gtx, t.EditorStyle.Layout)
+					return t.Inset.Layout(gtx, func(gtx C) D {
+						return t.State.TextField.Layout(gtx, t.Theme.Theme, t.EditorHint)
+					})
 				}),
 			)
 		}),

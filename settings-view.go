@@ -41,9 +41,9 @@ func NewCommunityMenuView(app core.App) View {
 		App: app,
 	}
 	c.List.Axis = layout.Vertical
-	c.ConnectionForm.SetText(c.Settings().Address())
-	c.ConnectionForm.Editor.SingleLine = true
-	c.ConnectionForm.Editor.Submit = true
+	c.ConnectionForm.TextField.SetText(c.Settings().Address())
+	c.ConnectionForm.TextField.SingleLine = true
+	c.ConnectionForm.TextField.Submit = true
 	return c
 }
 
@@ -80,7 +80,7 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		c.manager.SetThemeing(c.ThemeingSwitch.Value)
 	}
 	if c.ConnectionForm.Submitted() {
-		c.Settings().SetAddress(c.ConnectionForm.Text())
+		c.Settings().SetAddress(c.ConnectionForm.TextField.Text())
 		settingsChanged = true
 		c.Sprout().ConnectTo(c.Settings().Address())
 	}
@@ -118,7 +118,7 @@ func (c *SettingsView) Update(gtx layout.Context) {
 }
 
 func (c *SettingsView) BecomeVisible() {
-	c.ConnectionForm.SetText(c.Settings().Address())
+	c.ConnectionForm.TextField.SetText(c.Settings().Address())
 	c.NotificationsSwitch.Value = c.Settings().NotificationsGloballyAllowed()
 	c.BottomBarSwitch.Value = c.Settings().BottomAppBar()
 	c.DockNavSwitch.Value = c.Settings().DockNavDrawer()

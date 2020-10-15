@@ -3,6 +3,7 @@ package widget
 import (
 	"gioui.org/layout"
 	"gioui.org/widget"
+	"git.sr.ht/~whereswaldon/materials"
 )
 
 // TextForm holds the theme-independent state of a simple form that
@@ -12,15 +13,15 @@ import (
 type TextForm struct {
 	submitted      bool
 	pasteRequested bool
-	widget.Editor
-	SubmitButton widget.Clickable
-	PasteButton  widget.Clickable
+	TextField      materials.TextField
+	SubmitButton   widget.Clickable
+	PasteButton    widget.Clickable
 }
 
 func (c *TextForm) Layout(gtx layout.Context) layout.Dimensions {
 	c.submitted = false
 	c.pasteRequested = false
-	for _, e := range c.Editor.Events() {
+	for _, e := range c.TextField.Events() {
 		if _, ok := e.(widget.SubmitEvent); ok {
 			c.submitted = true
 		}
@@ -43,5 +44,5 @@ func (c *TextForm) PasteRequested() bool {
 }
 
 func (c *TextForm) Paste(data string) {
-	c.Editor.Insert(data)
+	c.TextField.Insert(data)
 }

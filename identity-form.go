@@ -7,11 +7,12 @@ import (
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/core"
+	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 )
 
 type IdentityFormView struct {
 	manager ViewManager
-	widget.Editor
+	sprigWidget.TextForm
 	CreateButton widget.Clickable
 
 	core.App
@@ -23,6 +24,7 @@ func NewIdentityFormView(app core.App) View {
 	c := &IdentityFormView{
 		App: app,
 	}
+	c.TextForm.TextField.Editor.SingleLine = true
 
 	return c
 }
@@ -43,7 +45,7 @@ func (c *IdentityFormView) HandleClipboard(contents string) {
 
 func (c *IdentityFormView) Update(gtx layout.Context) {
 	if c.CreateButton.Clicked() {
-		c.Settings().CreateIdentity(c.Editor.Text())
+		c.Settings().CreateIdentity(c.TextField.Text())
 		c.manager.RequestViewSwitch(ReplyViewID)
 	}
 }
@@ -61,9 +63,9 @@ func (c *IdentityFormView) Layout(gtx layout.Context) layout.Dimensions {
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
-						material.Editor(theme, &(c.Editor), "username").Layout,
-					)
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						return c.TextField.Layout(gtx, theme, "Username")
+					})
 				})
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {

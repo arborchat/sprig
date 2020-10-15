@@ -23,8 +23,8 @@ func NewConnectFormView(app core.App) View {
 	c := &ConnectFormView{
 		App: app,
 	}
-	c.Form.Editor.SingleLine = true
-	c.Form.Editor.Submit = true
+	c.Form.TextField.SingleLine = true
+	c.Form.TextField.Submit = true
 	return c
 }
 
@@ -45,7 +45,7 @@ func (c *ConnectFormView) HandleClipboard(contents string) {
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
 	if c.Form.Submitted() {
-		c.Settings().SetAddress(c.Form.Text())
+		c.Settings().SetAddress(c.Form.TextField.Text())
 		go c.Settings().Persist()
 		c.Sprout().ConnectTo(c.Settings().Address())
 		c.manager.RequestViewSwitch(IdentityFormID)
