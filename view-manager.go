@@ -119,6 +119,18 @@ func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	vm.AppBar.Theme = th.Theme
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.themeView.BecomeVisible()
+
+	if settings.DarkMode() {
+		vm.NavDrawer.AlphaPalette = materials.AlphaPalette{
+			Hover:    100,
+			Selected: 150,
+		}
+	} else {
+		vm.NavDrawer.AlphaPalette = materials.AlphaPalette{
+			Hover:    25,
+			Selected: 50,
+		}
+	}
 }
 
 func (vm *viewManager) RegisterView(id ViewID, view View) {
