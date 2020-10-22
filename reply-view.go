@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"context"
 	"image"
 	"image/color"
 	"log"
@@ -424,9 +424,11 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 			default:
 				args = []string{"xdg-open"}
 			}
-			cmd := exec.Command(args[0], append(args[1:], u.String())...)
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+			defer cancel()
+			cmd := exec.CommandContext(ctx, args[0], append(args[1:], u.String())...)
 			if out, err := cmd.CombinedOutput(); err != nil {
-				fmt.Printf("opening link: %s %s\n", string(out), err)
+				log.Printf("failed opening link: %s %s\n", string(out), err)
 			}
 		}
 	}
@@ -442,7 +444,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		if click, ok := clicked(&handler.Clickable); ok {
 			if click.Modifiers.Contain(key.ModCtrl) {
 				for _, word := range strings.Fields(handler.Content) {
-					tryOpenLink(word)
+					go tryOpenLink(word)
 				}
 			} else {
 				c.requestKeyboardFocus()
