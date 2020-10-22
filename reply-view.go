@@ -411,6 +411,9 @@ func (c *ReplyListView) postReplies(author *forest.Identity, replies []*forest.R
 
 func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	tryOpenLink := func(word string) {
+		if !strings.HasPrefix(word, "http") {
+			return
+		}
 		if u, err := url.ParseRequestURI(word); err == nil {
 			var args []string
 			switch runtime.GOOS {
