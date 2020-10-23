@@ -48,7 +48,11 @@ func (t TextFormStyle) Layout(gtx layout.Context) layout.Dimensions {
 		layout.Flexed(1, func(gtx C) D {
 			return layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
-					return DrawRect(gtx, t.EditorBackground, layout.FPt(gtx.Constraints.Min), float32(gtx.Px(unit.Dp(4))))
+					return Rect{
+						Color: t.EditorBackground,
+						Size:  layout.FPt(gtx.Constraints.Min),
+						Radii: float32(gtx.Px(unit.Dp(4))),
+					}.Layout(gtx)
 				}),
 				layout.Stacked(func(gtx C) D {
 					gtx.Constraints.Min.X = gtx.Constraints.Max.X

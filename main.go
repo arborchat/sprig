@@ -147,7 +147,13 @@ func eventLoop(w *app.Window) error {
 				th := app.Theme().Current()
 				layout.Stack{}.Layout(gtx,
 					layout.Expanded(func(gtx C) D {
-						return sprigTheme.DrawRect(gtx, th.Background.Dark, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+						return sprigTheme.Rect{
+							Color: th.Background.Dark,
+							Size: f32.Point{
+								X: float32(gtx.Constraints.Max.X),
+								Y: float32(gtx.Constraints.Max.Y),
+							},
+						}.Layout(gtx)
 					}),
 					layout.Stacked(func(gtx C) D {
 						return layout.Inset{
@@ -158,7 +164,13 @@ func eventLoop(w *app.Window) error {
 						}.Layout(gtx, func(gtx C) D {
 							return layout.Stack{}.Layout(gtx,
 								layout.Expanded(func(gtx C) D {
-									return sprigTheme.DrawRect(gtx, th.Background.Default, f32.Pt(float32(gtx.Constraints.Max.X), float32(gtx.Constraints.Max.Y)), 0)
+									return sprigTheme.Rect{
+										Color: th.Background.Default,
+										Size: f32.Point{
+											X: float32(gtx.Constraints.Max.X),
+											Y: float32(gtx.Constraints.Max.Y),
+										},
+									}.Layout(gtx)
 								}),
 								layout.Stacked(viewManager.Layout),
 							)

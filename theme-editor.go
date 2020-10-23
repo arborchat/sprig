@@ -269,19 +269,25 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 		}
 		return layout.Stack{}.Layout(gtx,
 			layout.Expanded(func(gtx C) D {
-				return sprigTheme.DrawRect(gtx, color.RGBA{A: 255}, f32.Point{
-					X: float32(gtx.Constraints.Min.X),
-					Y: float32(gtx.Constraints.Min.Y),
-				}, 0)
+				return sprigTheme.Rect{
+					Color: color.RGBA{A: 255},
+					Size: f32.Point{
+						X: float32(gtx.Constraints.Min.X),
+						Y: float32(gtx.Constraints.Min.Y),
+					},
+				}.Layout(gtx)
 			}),
 			layout.Stacked(func(gtx C) D {
 				return layout.UniformInset(unit.Dp(3)).Layout(gtx, func(gtx C) D {
 					return layout.Stack{}.Layout(gtx,
 						layout.Expanded(func(gtx C) D {
-							return sprigTheme.DrawRect(gtx, color.RGBA{R: 255, G: 255, B: 255, A: 255}, f32.Point{
-								X: float32(gtx.Constraints.Min.X),
-								Y: float32(gtx.Constraints.Min.Y),
-							}, 0)
+							return sprigTheme.Rect{
+								Color: color.RGBA{R: 255, G: 255, B: 255, A: 255},
+								Size: f32.Point{
+									X: float32(gtx.Constraints.Min.X),
+									Y: float32(gtx.Constraints.Min.Y),
+								},
+							}.Layout(gtx)
 						}),
 						layout.Stacked(func(gtx C) D {
 							elem := c.listElems[index]
@@ -298,10 +304,13 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 func (c *ThemeEditorView) layoutMuxes(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			return sprigTheme.DrawRect(gtx, color.RGBA{R: 255, G: 255, B: 255, A: 255}, f32.Point{
-				X: float32(gtx.Constraints.Min.X),
-				Y: float32(gtx.Constraints.Min.Y),
-			}, 0)
+			return sprigTheme.Rect{
+				Color: color.RGBA{R: 255, G: 255, B: 255, A: 255},
+				Size: f32.Point{
+					X: float32(gtx.Constraints.Min.X),
+					Y: float32(gtx.Constraints.Min.Y),
+				},
+			}.Layout(gtx)
 		}),
 		layout.Stacked(func(gtx C) D {
 			return c.MuxList.Layout(gtx, len(c.muxListElems), func(gtx C, index int) D {

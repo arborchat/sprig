@@ -21,13 +21,6 @@ type Rect struct {
 
 // Layout renders the Rect into the provided context
 func (r Rect) Layout(gtx C) D {
-	return DrawRect(gtx, r.Color, r.Size, r.Radii)
-}
-
-// DrawRect creates a rectangle of the provided background color with
-// Dimensions specified by size and a corner radius (on all corners)
-// specified by radii.
-func DrawRect(gtx C, background color.RGBA, size f32.Point, radii float32) D {
-	paint.FillShape(gtx.Ops, clip.UniformRRect(f32.Rectangle{Max: size}, radii).Op(gtx.Ops), background)
-	return layout.Dimensions{Size: image.Pt(int(size.X), int(size.Y))}
+	paint.FillShape(gtx.Ops, clip.UniformRRect(f32.Rectangle{Max: r.Size}, r.Radii).Op(gtx.Ops), r.Color)
+	return layout.Dimensions{Size: image.Pt(int(r.Size.X), int(r.Size.Y))}
 }

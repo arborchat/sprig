@@ -133,7 +133,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 				CornerRadius: radiiDp,
 			}.Layout(gtx, func(gtx C) D {
 				max := layout.FPt(gtx.Constraints.Min)
-				return DrawRect(gtx, r.Background, max, radii)
+				return Rect{Color: r.Background, Size: max, Radii: radii}.Layout(gtx)
 			})
 		}),
 		layout.Stacked(func(gtx C) D {
@@ -142,7 +142,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 					max := layout.FPt(gtx.Constraints.Min)
 					max.X = float32(gtx.Px(r.highlightWidth))
 					radii := float32(gtx.Px(unit.Dp(5)))
-					return DrawRect(gtx, r.Highlight, max, radii)
+					return Rect{Color: r.Highlight, Size: max, Radii: radii}.Layout(gtx)
 				}),
 				layout.Stacked(func(gtx C) D {
 					inset := layout.UniformInset(unit.Dp(4))

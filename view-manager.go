@@ -304,13 +304,13 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 	text := fmt.Sprintf("m: %d %s", mallocs, vm.profile.Timings)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			return sprigTheme.DrawRect(gtx,
-				vm.App.Theme().Current().Background.Light,
-				f32.Point{
+			return sprigTheme.Rect{
+				Color: vm.App.Theme().Current().Background.Light,
+				Size: f32.Point{
 					X: float32(gtx.Constraints.Min.X),
 					Y: float32(gtx.Constraints.Min.Y),
 				},
-				0)
+			}.Layout(gtx)
 		}),
 		layout.Stacked(func(gtx C) D {
 			return layout.Inset{Top: unit.Dp(4), Left: unit.Dp(4)}.Layout(gtx, func(gtx C) D {
