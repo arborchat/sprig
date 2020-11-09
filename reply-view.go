@@ -350,6 +350,9 @@ func (c *ReplyListView) startReply() {
 }
 
 func (c *ReplyListView) sendReply() {
+	if c.ReplyEditor.Text() == "" {
+		return
+	}
 	var newReplies []*forest.Reply
 	var author *forest.Identity
 	var parent forest.Node
@@ -488,36 +491,38 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
-			switch event.Name {
-			case "K", key.NameUpArrow:
-				c.moveFocusUp()
-			case "J", key.NameDownArrow:
-				c.moveFocusDown()
-			case key.NameHome:
-				jumpStart()
-			case "G":
-				if !event.Modifiers.Contain(key.ModShift) {
+			if event.State == key.Press {
+				switch event.Name {
+				case "K", key.NameUpArrow:
+					c.moveFocusUp()
+				case "J", key.NameDownArrow:
+					c.moveFocusDown()
+				case key.NameHome:
 					jumpStart()
-					break
+				case "G":
+					if !event.Modifiers.Contain(key.ModShift) {
+						jumpStart()
+						break
+					}
+					fallthrough
+				case key.NameEnd:
+					jumpEnd()
+				case key.NameReturn, key.NameEnter:
+					c.startReply()
+				case "C":
+					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+						c.copyFocused()
+					} else {
+						c.startConversation()
+					}
+				case "V":
+					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+						// TODO: move this handling code to the editor somehow, since that's where the paste needs to happen
+						c.manager.RequestClipboardPaste()
+					}
+				case " ", "F":
+					c.toggleFilter()
 				}
-				fallthrough
-			case key.NameEnd:
-				jumpEnd()
-			case key.NameReturn, key.NameEnter:
-				c.startReply()
-			case "C":
-				if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
-					c.copyFocused()
-				} else {
-					c.startConversation()
-				}
-			case "V":
-				if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
-					// TODO: move this handling code to the editor somehow, since that's where the paste needs to happen
-					c.manager.RequestClipboardPaste()
-				}
-			case " ", "F":
-				c.toggleFilter()
 			}
 		}
 	}

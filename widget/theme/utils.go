@@ -21,6 +21,6 @@ type Rect struct {
 
 // Layout renders the Rect into the provided context
 func (r Rect) Layout(gtx C) D {
-	paint.FillShape(gtx.Ops, clip.UniformRRect(f32.Rectangle{Max: r.Size}, r.Radii).Op(gtx.Ops), r.Color)
+	paint.FillShape(gtx.Ops, r.Color, clip.UniformRRect(f32.Rectangle{Max: r.Size}, r.Radii).Op(gtx.Ops))
 	return layout.Dimensions{Size: image.Pt(int(r.Size.X), int(r.Size.Y))}
 }
