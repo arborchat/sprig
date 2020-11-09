@@ -23,6 +23,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/twig"
 
+	"git.sr.ht/~whereswaldon/events"
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/scroll"
 
@@ -635,6 +636,15 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 	return sprigTheme.None
 }
 
+func (c *ReplyListView) shouldDisplayEditor() bool {
+	return c.ReplyingTo.Reply != nil || c.CreatingConversation
+}
+
+func (c *ReplyListView) hideEditor() {
+	c.ReplyingTo.Reply = nil
+	c.CreatingConversation = false
+}
+
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
 	key.InputOp{Tag: c, Focus: c.ShouldRequestKeyboardFocus}.Add(gtx.Ops)
@@ -653,7 +663,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					return c.layoutReplyList(gtx)
 				}),
 				layout.Rigid(func(gtx C) D {
-					if c.ReplyingTo.Reply != nil || c.CreatingConversation {
+					if c.shouldDisplayEditor() {
 						return c.layoutEditor(gtx)
 					}
 					return layout.Dimensions{}
@@ -836,9 +846,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	var (
-		th = c.Theme().Current()
+		th  = c.Theme().Current()
+		spy *events.Spy
 	)
-	return layout.Stack{}.Layout(gtx,
+	spy, gtx = events.Enspy(gtx)
+	dims := layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
 				Color: th.Primary.Light,
@@ -948,6 +960,20 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 			)
 		}),
 	)
+	for _, ev := range spy.AllEvents() {
+		switch ev := ev.(type) {
+		case key.Event:
+			if ev.State == key.Press {
+				switch {
+				case ev.Name == "V" && (ev.Modifiers.Contain(key.ModCtrl) || ev.Modifiers.Contain(key.ModCommand)):
+					c.manager.RequestClipboardPaste()
+				case ev.Name == key.NameEscape || (ev.Name == "[" && ev.Modifiers.Contain(key.ModCtrl)):
+					c.hideEditor()
+				}
+			}
+		}
+	}
+	return dims
 }
 
 func (c *ReplyListView) SetManager(mgr ViewManager) {
