@@ -4,11 +4,11 @@ gioui.org v0.0.0-20200726090339-83673ecb203f/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV
 gioui.org v0.0.0-20201105153338-edaa112c40df/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org v0.0.0-20201106195654-dbc0796d0207 h1:tB+woXgNaCiudnpU7QmRD7J92YrBz7R4NAGgEjOnEzQ=
 gioui.org v0.0.0-20201106195654-dbc0796d0207/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20201109100145-fb70fb1c95ca h1:RmXl6o34WI2Kvw378blAZ98MbJZYhpBLoxur+lb28Eo=
-gioui.org v0.0.0-20201109100145-fb70fb1c95ca/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
+gioui.org v0.0.0-20201110145814-8e4940e6a85d h1:8y7DUBc/1zEaigNFhDHQ/KdYWTGy0yiROGPWez8PcNs=
+gioui.org v0.0.0-20201110145814-8e4940e6a85d/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
-gioui.org/cmd v0.0.0-20201109100145-fb70fb1c95ca h1:emfeh4ZFudTgUsiUs4segxmkSxTJPhpjP57W7hJh2/E=
-gioui.org/cmd v0.0.0-20201109100145-fb70fb1c95ca/go.mod h1:rb6Y4o4cRygUtCpmJVQizWNnyYx6HdfcDIuCcSNoGlE=
+gioui.org/cmd v0.0.0-20201110145814-8e4940e6a85d h1:zw6Jxn0S7ET0qLp2ATo+0fJ77N+3h+gruf93D1zRFAQ=
+gioui.org/cmd v0.0.0-20201110145814-8e4940e6a85d/go.mod h1:rb6Y4o4cRygUtCpmJVQizWNnyYx6HdfcDIuCcSNoGlE=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1 h1:quRwMtoF0S/VUHQBoL8fkqrKq/uYYB7pEGAGAFzLoXA=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
 git.sr.ht/~whereswaldon/colorpicker v0.0.0-20201108174423-c10ee301fc9a h1:uQlIMzaixJXcv+so/cUtS+gt2M5KYk3x1kSf101n/zU=
