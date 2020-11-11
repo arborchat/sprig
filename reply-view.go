@@ -86,6 +86,8 @@ type ReplyListView struct {
 	replyCount int
 	// Maximum number of visible replies encountered.
 	maxRepliesVisible int
+	// Loading if replies are loading.
+	loading bool
 }
 
 var _ View = &ReplyListView{}
@@ -102,37 +104,41 @@ func NewReplyListView(app core.App) View {
 		HistoryRequestCount: 2048,
 		States:              &States{},
 	}
-	c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
-		td, err := rd.TwigMetadata()
-		if err != nil {
-			return false
-		}
-		if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
-			return false
-		}
-		if ttl, ok := td.Values[expiration.TTLKey()]; ok {
-			if expiry, err := expiration.UnmarshalTTL(ttl); err != nil {
+	c.loading = true
+	go func() {
+		defer func() { c.loading = false }()
+		c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
+			td, err := rd.TwigMetadata()
+			if err != nil {
 				return false
-			} else {
-				return time.Now().Before(expiry)
 			}
-		}
-		return true
-	})
-	c.ReplyList.Axis = layout.Vertical
-	// ensure that we are notified when we need to refresh the state of visible nodes
-	c.Arbor().Store().SubscribeToNewMessages(func(node forest.Node) {
-		c.StateRefreshNeeded = true
-		go func() {
-			var rd ds.ReplyData
-			if rd.Populate(node, c.Arbor().Store()) {
-				c.AlphaReplyList.Insert(rd)
+			if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
+				return false
 			}
-		}()
-	})
-	c.ReplyList.ScrollToEnd = true
-	c.ReplyList.Position.BeforeEnd = false
-	c.loadMoreHistory()
+			if ttl, ok := td.Values[expiration.TTLKey()]; ok {
+				if expiry, err := expiration.UnmarshalTTL(ttl); err != nil {
+					return false
+				} else {
+					return time.Now().Before(expiry)
+				}
+			}
+			return true
+		})
+		c.ReplyList.Axis = layout.Vertical
+		// ensure that we are notified when we need to refresh the state of visible nodes
+		c.Arbor().Store().SubscribeToNewMessages(func(node forest.Node) {
+			c.StateRefreshNeeded = true
+			go func() {
+				var rd ds.ReplyData
+				if rd.Populate(node, c.Arbor().Store()) {
+					c.AlphaReplyList.Insert(rd)
+				}
+			}()
+		})
+		c.ReplyList.ScrollToEnd = true
+		c.ReplyList.Position.BeforeEnd = false
+		c.loadMoreHistory()
+	}()
 	return c
 }
 
@@ -714,13 +720,18 @@ func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.Repl
 }
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
+	gtx.Constraints.Min = gtx.Constraints.Max
 	var (
 		dims                 layout.Dimensions
 		th                       = c.Theme().Current()
 		totalUnfilteredNodes int = 1 + len(c.Ancestry) + len(c.Descendants)
 	)
+	if c.loading {
+		return layout.Center.Layout(gtx, func(gtx C) D {
+			return material.Loader(th.Theme).Layout(gtx)
+		})
+	}
 	c.States.Begin()
-	gtx.Constraints.Min = gtx.Constraints.Max
 	c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)

@@ -51,39 +51,24 @@ func eventLoop(w *app.Window) error {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
 
-	viewManager := NewViewManager(w, app, *profile)
-	viewManager.ApplySettings(app.Settings())
-	viewManager.RegisterView(ReplyViewID, NewReplyListView(app))
-	viewManager.RegisterView(ConnectFormID, NewConnectFormView(app))
-	viewManager.RegisterView(SettingsID, NewCommunityMenuView(app))
-	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(app))
-	viewManager.RegisterView(ConsentViewID, NewConsentView(app))
-	if app.Settings().AcknowledgedNoticeVersion() < NoticeVersion {
-		viewManager.RequestViewSwitch(ConsentViewID)
-	} else if app.Settings().Address() == "" {
-		viewManager.RequestViewSwitch(ConnectFormID)
-	} else if app.Settings().ActiveArborIdentityID() == nil {
-		viewManager.RequestViewSwitch(IdentityFormID)
-	} else {
-		viewManager.RequestViewSwitch(ReplyViewID)
-	}
-
-	// Start active-status heartbeat
-	app.Arbor().Communities().WithCommunities(func(c []*forest.Community) {
-		if app.Settings().ActiveArborIdentityID() != nil {
-			builder, err := app.Settings().Builder()
-			if err == nil {
-				log.Printf("Begining active-status heartbeat")
-				go status.StartActivityHeartBeat(app.Arbor().Store(), c, builder, time.Minute*5)
-			} else {
-				log.Printf("Could not acquire builder: %v", err)
+	go func() {
+		// Start active-status heartbeat
+		app.Arbor().Communities().WithCommunities(func(c []*forest.Community) {
+			if app.Settings().ActiveArborIdentityID() != nil {
+				builder, err := app.Settings().Builder()
+				if err == nil {
+					log.Printf("Begining active-status heartbeat")
+					go status.StartActivityHeartBeat(app.Arbor().Store(), c, builder, time.Minute*5)
+				} else {
+					log.Printf("Could not acquire builder: %v", err)
+				}
 			}
-		}
-	})
+		})
+		app.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
+			w.Invalidate()
+		})
+	}()
 
-	app.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
-		w.Invalidate()
-	})
 	// handle ctrl+c to shutdown
 	sigs := make(chan os.Signal, 1)
 	signal.Notify(sigs, os.Interrupt)
@@ -123,6 +108,24 @@ func eventLoop(w *app.Window) error {
 			}
 		}
 		log.Printf("shutting down")
+	}
+
+	viewManager := NewViewManager(w, app, *profile)
+	viewManager.ApplySettings(app.Settings())
+	viewManager.RegisterView(ReplyViewID, NewReplyListView(app))
+	viewManager.RegisterView(ConnectFormID, NewConnectFormView(app))
+	viewManager.RegisterView(SettingsID, NewCommunityMenuView(app))
+	viewManager.RegisterView(IdentityFormID, NewIdentityFormView(app))
+	viewManager.RegisterView(ConsentViewID, NewConsentView(app))
+
+	if app.Settings().AcknowledgedNoticeVersion() < NoticeVersion {
+		viewManager.RequestViewSwitch(ConsentViewID)
+	} else if app.Settings().Address() == "" {
+		viewManager.RequestViewSwitch(ConnectFormID)
+	} else if app.Settings().ActiveArborIdentityID() == nil {
+		viewManager.RequestViewSwitch(IdentityFormID)
+	} else {
+		viewManager.RequestViewSwitch(ReplyViewID)
 	}
 
 	var ops op.Ops
