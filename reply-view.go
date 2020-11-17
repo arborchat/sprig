@@ -115,12 +115,8 @@ func NewReplyListView(app core.App) View {
 			if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
 				return false
 			}
-			if ttl, ok := td.Values[expiration.TTLKey()]; ok {
-				if expiry, err := expiration.UnmarshalTTL(ttl); err != nil {
-					return false
-				} else {
-					return time.Now().Before(expiry)
-				}
+			if expired, err := expiration.IsExpired(rd.Reply); err != nil || expired {
+    			return false
 			}
 			return true
 		})
