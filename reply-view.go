@@ -116,7 +116,7 @@ func NewReplyListView(app core.App) View {
 				return false
 			}
 			if expired, err := expiration.IsExpired(rd.Reply); err != nil || expired {
-    			return false
+				return false
 			}
 			return true
 		})
@@ -438,16 +438,22 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 			}
 		}
 	}
-	clicked := func(c *widget.Clickable) (widget.Click, bool) {
+	clicked := func(c *sprigWidget.Polyclick) (widget.Click, bool) {
 		clicks := c.Clicks()
 		if len(clicks) == 0 {
 			return widget.Click{}, false
 		}
 		return clicks[len(clicks)-1], true
 	}
+	focus := func(handler *sprigWidget.Reply) {
+		c.StateRefreshNeeded = true
+		c.Focused = handler.Hash
+		reply, _, _ := c.Arbor().Store().Get(handler.Hash)
+		c.Conversation = &reply.(*forest.Reply).ConversationID
+	}
 	for i := range c.States.Buffer {
 		handler := &c.States.Buffer[i]
-		if click, ok := clicked(&handler.Clickable); ok {
+		if click, ok := clicked(&handler.Polyclick); ok {
 			if click.Modifiers.Contain(key.ModCtrl) {
 				for _, word := range strings.Fields(handler.Content) {
 					go tryOpenLink(word)
@@ -456,15 +462,15 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 				c.requestKeyboardFocus()
 				clickedOnFocused := handler.Hash.Equals(c.Focused)
 				if !clickedOnFocused {
-					c.StateRefreshNeeded = true
-					c.Focused = handler.Hash
-					reply, _, _ := c.Arbor().Store().Get(handler.Hash)
-					c.Conversation = &reply.(*forest.Reply).ConversationID
-					c.dismissReplyContextMenu(gtx)
-				} else {
-					c.triggerReplyContextMenu(gtx)
+					focus(handler)
 				}
 			}
+			if click.NumClicks > 1 {
+				c.toggleFilter()
+			}
+		}
+		if handler.Polyclick.LongPressed() {
+			c.triggerReplyContextMenu(gtx)
 		}
 	}
 }

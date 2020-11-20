@@ -1,15 +1,14 @@
 package widget
 
 import (
-	"gioui.org/widget"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 )
 
 // Reply holds ui state for each reply.
 type Reply struct {
-	widget.Clickable
 	Hash    *fields.QualifiedHash
 	Content string
+	Polyclick
 }
 
 func (r *Reply) WithHash(h *fields.QualifiedHash) *Reply {
