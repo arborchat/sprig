@@ -12,7 +12,6 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"git.sr.ht/~whereswaldon/haptic"
 	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
@@ -63,8 +62,6 @@ type viewManager struct {
 	*materials.ModalNavDrawer
 	*materials.AppBar
 
-	*haptic.Buzzer
-
 	// track the tag of the overflow action selected within the last frame
 	selectedOverflowTag interface{}
 
@@ -95,7 +92,6 @@ func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager 
 		themeView:  NewThemeEditorView(app),
 		ModalLayer: modal,
 		NavDrawer:  drawer,
-		Buzzer:     haptic.NewBuzzer(window),
 		navAnim: materials.VisibilityAnimation{
 			Duration: time.Millisecond * 250,
 			State:    materials.Invisible,

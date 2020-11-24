@@ -17,7 +17,7 @@ type TextFormStyle struct {
 	PasteButton      material.IconButtonStyle
 	SubmitButton     material.ButtonStyle
 	EditorHint       string
-	EditorBackground color.RGBA
+	EditorBackground color.NRGBA
 	*Theme
 }
 

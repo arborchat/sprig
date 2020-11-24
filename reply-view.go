@@ -165,7 +165,7 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 					Name: "Filter by selected",
 					Tag:  &c.FilterButton,
 				},
-				Layout: func(gtx C, bg, fg color.RGBA) D {
+				Layout: func(gtx C, bg, fg color.NRGBA) D {
 					btn := materials.SimpleIconButton(th, &c.FilterButton, icons.FilterIcon)
 					btn.Background = bg
 					btn.Color = fg
@@ -463,6 +463,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 				clickedOnFocused := handler.Hash.Equals(c.Focused)
 				if !clickedOnFocused {
 					focus(handler)
+					c.dismissReplyContextMenu(gtx)
 				}
 			}
 			if click.NumClicks > 1 {
@@ -470,6 +471,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 			}
 		}
 		if handler.Polyclick.LongPressed() {
+			focus(handler)
 			c.triggerReplyContextMenu(gtx)
 		}
 	}

@@ -8,31 +8,31 @@ import (
 )
 
 var (
-	teal         = color.RGBA{R: 0x44, G: 0xa8, B: 0xad, A: 255}
-	brightTeal   = color.RGBA{R: 0x79, G: 0xda, B: 0xdf, A: 255}
-	darkTeal     = color.RGBA{R: 0x00, G: 0x79, B: 0x7e, A: 255}
-	green        = color.RGBA{R: 0x45, G: 0xae, B: 0x7f, A: 255}
-	brightGreen  = color.RGBA{R: 0x79, G: 0xe0, B: 0xae, A: 255}
-	darkGreen    = color.RGBA{R: 0x00, G: 0x7e, B: 0x52, A: 255}
-	gold         = color.RGBA{R: 255, G: 214, B: 79, A: 255}
-	lightGold    = color.RGBA{R: 255, G: 255, B: 129, A: 255}
-	darkGold     = color.RGBA{R: 200, G: 165, B: 21, A: 255}
-	white        = color.RGBA{R: 255, G: 255, B: 255, A: 255}
-	lightGray    = color.RGBA{R: 225, G: 225, B: 225, A: 255}
-	darkGray     = color.RGBA{R: 100, G: 100, B: 100, A: 255}
-	veryDarkGray = color.RGBA{R: 50, G: 50, B: 50, A: 255}
-	black        = color.RGBA{A: 255}
+	teal         = color.NRGBA{R: 0x44, G: 0xa8, B: 0xad, A: 255}
+	brightTeal   = color.NRGBA{R: 0x79, G: 0xda, B: 0xdf, A: 255}
+	darkTeal     = color.NRGBA{R: 0x00, G: 0x79, B: 0x7e, A: 255}
+	green        = color.NRGBA{R: 0x45, G: 0xae, B: 0x7f, A: 255}
+	brightGreen  = color.NRGBA{R: 0x79, G: 0xe0, B: 0xae, A: 255}
+	darkGreen    = color.NRGBA{R: 0x00, G: 0x7e, B: 0x52, A: 255}
+	gold         = color.NRGBA{R: 255, G: 214, B: 79, A: 255}
+	lightGold    = color.NRGBA{R: 255, G: 255, B: 129, A: 255}
+	darkGold     = color.NRGBA{R: 200, G: 165, B: 21, A: 255}
+	white        = color.NRGBA{R: 255, G: 255, B: 255, A: 255}
+	lightGray    = color.NRGBA{R: 225, G: 225, B: 225, A: 255}
+	darkGray     = color.NRGBA{R: 100, G: 100, B: 100, A: 255}
+	veryDarkGray = color.NRGBA{R: 50, G: 50, B: 50, A: 255}
+	black        = color.NRGBA{A: 255}
 
-	purple1           = color.RGBA{R: 69, G: 56, B: 127, A: 255}
-	lightPurple1      = color.RGBA{R: 121, G: 121, B: 174, A: 255}
-	darkPurple1       = color.RGBA{R: 99, G: 41, B: 115, A: 255}
-	purple2           = color.RGBA{R: 127, G: 96, B: 183, A: 255}
-	lightPurple2      = color.RGBA{R: 121, G: 150, B: 223, A: 255}
-	darkPurple2       = color.RGBA{R: 101, G: 89, B: 223, A: 255}
-	dmBackground      = color.RGBA{R: 12, G: 12, B: 15, A: 255}
+	purple1           = color.NRGBA{R: 69, G: 56, B: 127, A: 255}
+	lightPurple1      = color.NRGBA{R: 121, G: 121, B: 174, A: 255}
+	darkPurple1       = color.NRGBA{R: 99, G: 41, B: 115, A: 255}
+	purple2           = color.NRGBA{R: 127, G: 96, B: 183, A: 255}
+	lightPurple2      = color.NRGBA{R: 121, G: 150, B: 223, A: 255}
+	darkPurple2       = color.NRGBA{R: 101, G: 89, B: 223, A: 255}
+	dmBackground      = color.NRGBA{R: 12, G: 12, B: 15, A: 255}
 	dmDarkBackground  = black
-	dmLightBackground = color.RGBA{R: 27, G: 22, B: 33, A: 255}
-	dmText            = color.RGBA{R: 194, G: 196, B: 199, A: 255}
+	dmLightBackground = color.NRGBA{R: 27, G: 22, B: 33, A: 255}
+	dmText            = color.NRGBA{R: 194, G: 196, B: 199, A: 255}
 )
 
 func New() *Theme {
@@ -92,9 +92,9 @@ type Theme struct {
 	Secondary  Colors
 	Background Colors
 
-	Ancestors, Descendants, Selected, Siblings, Unselected *color.RGBA
+	Ancestors, Descendants, Selected, Siblings, Unselected *color.NRGBA
 }
 
 type Colors struct {
-	Default, Light, Dark color.RGBA
+	Default, Light, Dark color.NRGBA
 }

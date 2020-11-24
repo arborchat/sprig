@@ -57,13 +57,13 @@ type ThemeEditorView struct {
 type colorListElement struct {
 	*colorpicker.State
 	Label        string
-	TargetColors []*color.RGBA
+	TargetColors []*color.NRGBA
 }
 
 type muxListElement struct {
 	*colorpicker.MuxState
 	Label       string
-	TargetColor **color.RGBA
+	TargetColor **color.NRGBA
 }
 
 var _ View = &ThemeEditorView{}
@@ -93,7 +93,7 @@ func (c *ThemeEditorView) ConfigurePickersFor(th *sprigTheme.Theme) {
 	c.listElems = []colorListElement{
 		{
 			Label: "Primary",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Primary.Default,
 				&th.Theme.Color.Primary,
 			},
@@ -101,77 +101,77 @@ func (c *ThemeEditorView) ConfigurePickersFor(th *sprigTheme.Theme) {
 		},
 		{
 			Label: "Primary Light",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Primary.Light,
 			},
 			State: &c.PrimaryLight,
 		},
 		{
 			Label: "Primary Dark",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Primary.Dark,
 			},
 			State: &c.PrimaryDark,
 		},
 		{
 			Label: "Secondary",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Secondary.Default,
 			},
 			State: &c.SecondaryDefault,
 		},
 		{
 			Label: "Secondary Light",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Secondary.Light,
 			},
 			State: &c.SecondaryLight,
 		},
 		{
 			Label: "Secondary Dark",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Secondary.Dark,
 			},
 			State: &c.SecondaryDark,
 		},
 		{
 			Label: "Background",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Background.Default,
 			},
 			State: &c.BackgroundDefault,
 		},
 		{
 			Label: "Background Light",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Background.Light,
 			},
 			State: &c.BackgroundLight,
 		},
 		{
 			Label: "Background Dark",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Background.Dark,
 			},
 			State: &c.BackgroundDark,
 		},
 		{
 			Label: "Text",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Theme.Color.Text,
 			},
 			State: &c.TextColor,
 		},
 		{
 			Label: "Hint",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Theme.Color.Hint,
 			},
 			State: &c.HintColor,
 		},
 		{
 			Label: "Inverted Text",
-			TargetColors: []*color.RGBA{
+			TargetColors: []*color.NRGBA{
 				&th.Theme.Color.InvText,
 			},
 			State: &c.InvertedTextColor,
@@ -270,7 +270,7 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 		return layout.Stack{}.Layout(gtx,
 			layout.Expanded(func(gtx C) D {
 				return sprigTheme.Rect{
-					Color: color.RGBA{A: 255},
+					Color: color.NRGBA{A: 255},
 					Size: f32.Point{
 						X: float32(gtx.Constraints.Min.X),
 						Y: float32(gtx.Constraints.Min.Y),
@@ -282,7 +282,7 @@ func (c *ThemeEditorView) layoutPickers(gtx layout.Context) layout.Dimensions {
 					return layout.Stack{}.Layout(gtx,
 						layout.Expanded(func(gtx C) D {
 							return sprigTheme.Rect{
-								Color: color.RGBA{R: 255, G: 255, B: 255, A: 255},
+								Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
 								Size: f32.Point{
 									X: float32(gtx.Constraints.Min.X),
 									Y: float32(gtx.Constraints.Min.Y),
@@ -305,7 +305,7 @@ func (c *ThemeEditorView) layoutMuxes(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			return sprigTheme.Rect{
-				Color: color.RGBA{R: 255, G: 255, B: 255, A: 255},
+				Color: color.NRGBA{R: 255, G: 255, B: 255, A: 255},
 				Size: f32.Point{
 					X: float32(gtx.Constraints.Min.X),
 					Y: float32(gtx.Constraints.Min.Y),

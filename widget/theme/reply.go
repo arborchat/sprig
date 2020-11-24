@@ -32,7 +32,7 @@ const (
 	ConversationRoot
 )
 
-func (r ReplyStatus) HighlightColor(th *Theme) color.RGBA {
+func (r ReplyStatus) HighlightColor(th *Theme) color.NRGBA {
 	switch r {
 	case Selected:
 		return *th.Selected
@@ -49,7 +49,7 @@ func (r ReplyStatus) HighlightColor(th *Theme) color.RGBA {
 	}
 }
 
-func (r ReplyStatus) BorderColor(th *Theme) color.RGBA {
+func (r ReplyStatus) BorderColor(th *Theme) color.NRGBA {
 	switch r {
 	case Selected:
 		return *th.Selected
@@ -88,10 +88,10 @@ func (r *ReplyAnimationState) Style(gtx C, reply *ReplyStyle) {
 
 type ReplyStyle struct {
 	*Theme
-	Highlight  color.RGBA
-	Background color.RGBA
-	TextColor  color.RGBA
-	Border     color.RGBA
+	Highlight  color.NRGBA
+	Background color.NRGBA
+	TextColor  color.NRGBA
+	Border     color.NRGBA
 	// MaxLines limits the maximum number of lines of content text that should
 	// be displayed. Values less than 1 indicate unlimited.
 	MaxLines       int

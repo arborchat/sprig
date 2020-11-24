@@ -40,6 +40,7 @@ func (p *Polyclick) update(gtx layout.Context) {
 
 func (p *Polyclick) processCancel(event gesture.ClickEvent, gtx layout.Context) {
 	p.pressed = false
+	p.longPressReported = false
 }
 func (p *Polyclick) processPress(event gesture.ClickEvent, gtx layout.Context) {
 	p.pressed = true
@@ -63,7 +64,7 @@ func (p *Polyclick) Clicks() (out []widget.Click) {
 
 func (p *Polyclick) LongPressed() bool {
 	elapsed := p.currentTime.Sub(p.pressStart)
-	if !p.longPressReported && p.pressed && elapsed > time.Millisecond*100 {
+	if !p.longPressReported && p.pressed && elapsed > time.Millisecond*250 {
 		p.longPressReported = true
 		return true
 	}

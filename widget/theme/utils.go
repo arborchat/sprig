@@ -14,7 +14,7 @@ import (
 // Dimensions specified by size and a corner radius (on all corners)
 // specified by radii.
 type Rect struct {
-	Color color.RGBA
+	Color color.NRGBA
 	Size  f32.Point
 	Radii float32
 }
