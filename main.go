@@ -46,7 +46,7 @@ func eventLoop(w *app.Window) error {
 	flag.StringVar(&dataDir, "data-dir", dataDir, "application state directory")
 	flag.Parse()
 
-	app, err := core.NewApp(dataDir)
+	app, err := core.NewApp(w, dataDir)
 	if err != nil {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
@@ -181,6 +181,8 @@ func eventLoop(w *app.Window) error {
 					}),
 				)
 				event.Frame(gtx.Ops)
+			default:
+				ProcessPlatformEvent(app, event)
 			}
 		}
 	}

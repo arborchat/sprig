@@ -3,6 +3,8 @@ package core
 import (
 	"fmt"
 	"os"
+
+	gioapp "gioui.org/app"
 )
 
 // App bundles core application services into a single convenience type.
@@ -13,6 +15,7 @@ type App interface {
 	Sprout() SproutService
 	Theme() ThemeService
 	Status() StatusService
+	Haptic() HapticService
 }
 
 // app bundles services together.
@@ -23,13 +26,14 @@ type app struct {
 	SproutService
 	ThemeService
 	StatusService
+	HapticService
 }
 
 var _ App = &app{}
 
 // NewApp constructs an App or fails with an error. This process will fail
 // if any of the application services fail to initialize correctly.
-func NewApp(stateDir string) (application App, err error) {
+func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	defer func() {
 		if err != nil {
 			err = fmt.Errorf("failed constructing app: %w", err)
@@ -63,6 +67,7 @@ func NewApp(stateDir string) (application App, err error) {
 	if a.StatusService, err = newStatusService(); err != nil {
 		return nil, err
 	}
+	a.HapticService = newHapticService(w)
 
 	// Connect services together
 	if addr := a.Settings().Address(); addr != "" {
@@ -102,4 +107,9 @@ func (a *app) Theme() ThemeService {
 // Status returns the app's sprout service implementation.
 func (a *app) Status() StatusService {
 	return a.StatusService
+}
+
+// Haptic returns the app's sprout service implementation.
+func (a *app) Haptic() HapticService {
+	return a.HapticService
 }

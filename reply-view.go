@@ -472,6 +472,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		}
 		if handler.Polyclick.LongPressed() {
 			focus(handler)
+			c.Haptic().Buzz()
 			c.triggerReplyContextMenu(gtx)
 		}
 	}
