@@ -200,20 +200,20 @@ func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []mate
 	return []materials.AppBarAction{
 		materials.SimpleIconAction(
 			th,
-			&c.CreateReplyButton,
-			icons.ReplyIcon,
-			materials.OverflowAction{
-				Name: "Reply to selected",
-				Tag:  &c.CreateReplyButton,
-			},
-		),
-		materials.SimpleIconAction(
-			th,
 			&c.CopyReplyButton,
 			icons.CopyIcon,
 			materials.OverflowAction{
 				Name: "Copy reply text",
 				Tag:  &c.CopyReplyButton,
+			},
+		),
+		materials.SimpleIconAction(
+			th,
+			&c.CreateReplyButton,
+			icons.ReplyIcon,
+			materials.OverflowAction{
+				Name: "Reply to selected",
+				Tag:  &c.CreateReplyButton,
 			},
 		),
 	}, []materials.OverflowAction{}
