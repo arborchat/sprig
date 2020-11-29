@@ -30,7 +30,7 @@ func (h *hapticService) UpdateAndroidViewRef(view uintptr) {
 func (h *hapticService) Buzz() {
 	defer func() {
 		if err := recover(); err != nil {
-			log.Println("Recovered from buzz panic: %v", err)
+			log.Printf("Recovered from buzz panic: %v", err)
 		}
 	}()
 	h.Buzzer.Buzz()
