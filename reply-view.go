@@ -909,9 +909,10 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
+								isActive := c.Status().IsActive(&c.ReplyingTo.Reply.Author)
 								reply := sprigTheme.Reply(th, &theme.ReplyAnimationState{
 									Normal: &c.Animations.Normal,
-								}, c.ReplyingTo, true)
+								}, c.ReplyingTo, isActive)
 								reply.Highlight = th.Primary.Default
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
