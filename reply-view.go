@@ -36,6 +36,14 @@ import (
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
+type FilterState uint8
+
+const (
+	Off FilterState = iota
+	Conversation
+	Message
+)
+
 type ReplyListView struct {
 	manager ViewManager
 
@@ -75,9 +83,7 @@ type ReplyListView struct {
 
 	scroll.Scrollable
 
-	// Filtered determines whether or not the visible nodes should be
-	// filtered to only those related to the selected node
-	Filtered          bool
+	FilterState
 	PrefilterPosition layout.Position
 
 	ShouldRequestKeyboardFocus bool
@@ -138,6 +144,10 @@ func NewReplyListView(app core.App) View {
 	return c
 }
 
+func (c *ReplyListView) Filtered() bool {
+	return c.FilterState != Off
+}
+
 func (c *ReplyListView) BecomeVisible() {
 }
 
@@ -166,13 +176,44 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 					Tag:  &c.FilterButton,
 				},
 				Layout: func(gtx C, bg, fg color.NRGBA) D {
-					btn := materials.SimpleIconButton(th, &c.FilterButton, icons.FilterIcon)
-					btn.Background = bg
-					btn.Color = fg
-					if c.Filtered {
-						btn.Color, btn.Background = btn.Background, btn.Color
+					var buttonForeground, buttonBackground color.NRGBA
+					var buttonText string
+					btn := material.ButtonLayout(th, &c.FilterButton)
+					switch c.FilterState {
+					case Conversation:
+						buttonForeground = bg
+						buttonBackground = fg
+						buttonBackground.A = 150
+						buttonText = "Cvn"
+					case Message:
+						buttonForeground = bg
+						buttonBackground = fg
+						buttonText = "Msg"
+					default:
+						buttonForeground = fg
+						buttonBackground = bg
+						buttonText = "Off"
 					}
-					return btn.Layout(gtx)
+					btn.Background = buttonBackground
+					return btn.Layout(gtx, func(gtx C) D {
+						return layout.UniformInset(unit.Dp(12)).Layout(gtx, func(gtx C) D {
+							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+								layout.Rigid(func(gtx C) D {
+									icon := icons.FilterIcon
+									icon.Color = buttonForeground
+									return icon.Layout(gtx, unit.Dp(24))
+								}),
+								layout.Rigid(func(gtx C) D {
+									gtx.Constraints.Max.X = gtx.Px(unit.Dp(40))
+									gtx.Constraints.Min.X = gtx.Constraints.Max.X
+									label := material.Body1(th, buttonText)
+									label.Color = buttonForeground
+									label.MaxLines = 1
+									return layout.Inset{Left: unit.Dp(6)}.Layout(gtx, label.Layout)
+								}),
+							)
+						})
+					})
 				},
 			},
 		}, []materials.OverflowAction{
@@ -254,6 +295,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 			if c.shouldFilter(replies[currentIndex].Reply, status) {
 				continue
 			}
+			c.Conversation = &replies[currentIndex].Reply.ConversationID
 			c.Focused = replies[currentIndex].Reply.ID()
 			c.StateRefreshNeeded = true
 			c.ensureFocusedVisible(currentIndex)
@@ -319,12 +361,16 @@ func (c *ReplyListView) refreshNodeStatus(gtx C) {
 }
 
 func (c *ReplyListView) toggleFilter() {
-	if c.Filtered {
+	switch c.FilterState {
+	case Conversation:
+		c.FilterState = Message
+	case Message:
 		c.ReplyList.Position = c.PrefilterPosition
-	} else {
+		c.FilterState = Off
+	default:
 		c.PrefilterPosition = c.ReplyList.Position
+		c.FilterState = Conversation
 	}
-	c.Filtered = !c.Filtered
 }
 
 func (c *ReplyListView) copyFocused() {
@@ -721,7 +767,14 @@ const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
 func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.ReplyStatus) bool {
-	return c.Filtered && (status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot)
+	switch c.FilterState {
+	case Conversation:
+		return status == sprigTheme.None || status == sprigTheme.ConversationRoot
+	case Message:
+		return status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot
+	default:
+		return false
+	}
 }
 
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
@@ -838,7 +891,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	})
 
 	totalNodes := func() int {
-		if c.Filtered {
+		if c.Filtered() {
 			return totalUnfilteredNodes
 		}
 		return c.replyCount
