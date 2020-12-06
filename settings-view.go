@@ -254,6 +254,9 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 						}),
 					)
 				}),
+				layout.Rigid(func(gtx C) D {
+					return itemInset.Layout(gtx, material.Body1(theme, VersionString).Layout)
+				}),
 			)
 		},
 	}

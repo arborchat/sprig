@@ -5,6 +5,10 @@ APPID := chat.arbor.sprig.dev
 ANDROID_CONFIG = $(HOME)/.android
 KEYSTORE = $(ANDROID_CONFIG)/debug.keystore
 
+EMBEDDED_VERSION := $(shell git describe --tags --dirty --always || echo "git")
+
+GOFLAGS := -ldflags=-X=main.Version="$(EMBEDDED_VERSION)"
+
 ANDROID_APK = sprig.apk
 ANDROID_SDK_ROOT := $(ANDROID_HOME)
 
@@ -27,10 +31,13 @@ MACOS_ARCHIVE = sprig-macos.tar.gz
 IOS_APP = sprig.ipa
 IOS_VERSION := 0
 
+tag:
+	echo "flags" $(GOFLAGS)
+
 android: $(ANDROID_APK)
 
 $(ANDROID_APK): $(SOURCE) $(KEYSTORE)
-	env ANDROID_SDK_ROOT=$(ANDROID_SDK_ROOT) go run gioui.org/cmd/gogio -x -target android -appid $(APPID) .
+	env ANDROID_SDK_ROOT=$(ANDROID_SDK_ROOT) go run gioui.org/cmd/gogio $(GOFLAGS) -x -target android -appid $(APPID) .
 
 $(KEYSTORE):
 	mkdir -p $(ANDROID_CONFIG)
@@ -42,7 +49,7 @@ $(WINDOWS_ARCHIVE): $(WINDOWS_BIN)
 	zip $(WINDOWS_ARCHIVE) $(WINDOWS_BIN)
 
 $(WINDOWS_BIN): $(SOURCE)
-	env GOOS=windows go build -o $(WINDOWS_BIN) .
+	env GOOS=windows GOFLAGS=$(GOFLAGS) go build -o $(WINDOWS_BIN) .
 
 linux: $(LINUX_ARCHIVE)
 
@@ -50,7 +57,7 @@ $(LINUX_ARCHIVE): $(LINUX_BIN)
 	tar -cJf $(LINUX_ARCHIVE) $(LINUX_FILES)
 
 $(LINUX_BIN): $(SOURCE)
-	env GOOS=linux go build -o $(LINUX_BIN) .
+	env GOOS=linux GOFLAGS=$(GOFLAGS) go build -o $(LINUX_BIN) .
 
 macos: $(MACOS_ARCHIVE)
 
@@ -68,14 +75,14 @@ $(MACOS_APP): $(MACOS_BIN) $(MACOS_APP).template
 	codesign -s - $(MACOS_APP)
 
 $(MACOS_BIN): $(SOURCE)
-	env GOOS=darwin CGO_CFLAGS=-mmacosx-version-min=10.14 \
+	env GOOS=darwin GOFLAGS=$(GOFLAGS) CGO_CFLAGS=-mmacosx-version-min=10.14 \
 	CGO_LDFLAGS=-mmacosx-version-min=10.14 \
 	go build -o $(MACOS_BIN) -ldflags -v .
 
 ios: $(IOS_APP)
 
 $(IOS_APP): $(SOURCE)
-	gogio -target ios -appid chat.arbor.sprig -version $(IOS_VERSION) .
+	 go run gioui.org/cmd/gogio $(GOFLAGS) -target ios -appid chat.arbor.sprig -version $(IOS_VERSION) .
 
 android_install: $(ANDROID_APK)
 	adb install $(ANDROID_APK)
