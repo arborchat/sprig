@@ -34,6 +34,56 @@ type SettingsView struct {
 	DarkModeSwitch          widget.Bool
 }
 
+type Section struct {
+	*material.Theme
+	Heading string
+	Items   []layout.Widget
+}
+
+var sectionItemInset = layout.UniformInset(unit.Dp(8))
+var itemInset = layout.Inset{
+	Left:   unit.Dp(8),
+	Right:  unit.Dp(8),
+	Top:    unit.Dp(2),
+	Bottom: unit.Dp(2),
+}
+
+func (s Section) Layout(gtx C) D {
+	items := make([]layout.FlexChild, len(s.Items)+1)
+	items[0] = layout.Rigid(func(gtx C) D {
+		return sectionItemInset.Layout(gtx, material.H6(s.Theme, s.Heading).Layout)
+	})
+	for i := range s.Items {
+		items[i+1] = layout.Rigid(s.Items[i])
+	}
+	return layout.Flex{Axis: layout.Vertical}.Layout(gtx, items...)
+}
+
+type SimpleSectionItem struct {
+	*material.Theme
+	Control layout.Widget
+	Context string
+}
+
+func (s SimpleSectionItem) Layout(gtx C) D {
+	return layout.Inset{
+		Top:    unit.Dp(4),
+		Bottom: unit.Dp(4),
+	}.Layout(gtx, func(gtx C) D {
+		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				return s.Control(gtx)
+			}),
+			layout.Rigid(func(gtx C) D {
+				if s.Context == "" {
+					return D{}
+				}
+				return itemInset.Layout(gtx, material.Body2(s.Theme, s.Context).Layout)
+			}),
+		)
+	})
+}
+
 var _ View = &SettingsView{}
 
 func NewCommunityMenuView(app core.App) View {
@@ -128,141 +178,144 @@ func (c *SettingsView) BecomeVisible() {
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
-	itemInset := layout.UniformInset(unit.Dp(8))
-	areas := []func(C) D{
-		func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.H6(theme, "Identity").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
+	sections := []Section{
+		{
+			Heading: "Identity",
+			Items: []layout.Widget{
+				func(gtx C) D {
 					if c.Settings().ActiveArborIdentityID() != nil {
 						id, _ := c.Settings().Identity()
 						return itemInset.Layout(gtx, sprigTheme.AuthorName(sTheme, id, true).Layout)
 					}
 					return itemInset.Layout(gtx, material.Button(theme, &c.IdentityButton, "Create new Identity").Layout)
-				}),
-			)
+				},
+			},
 		},
-		func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.H6(theme, "Connection").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, func(gtx C) D {
-						form := sprigTheme.TextForm(sTheme, &c.ConnectionForm, "Connect", "HOST:PORT")
-						return form.Layout(gtx)
-					})
-				}),
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.Body2(theme, "You can restart your connection to a relay by hitting the Connect button above without changing the address.").Layout)
-				}),
-			)
+		{
+			Heading: "Connection",
+			Items: []layout.Widget{
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return itemInset.Layout(gtx, func(gtx C) D {
+							form := sprigTheme.TextForm(sTheme, &c.ConnectionForm, "Connect", "HOST:PORT")
+							return form.Layout(gtx)
+						})
+					},
+					Context: "You can restart your connection to a relay by hitting the Connect button above without changing the address.",
+				}.Layout,
+			},
 		},
-		func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.H6(theme, "Notifications").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.NotificationsSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Enable notifications").Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Button(theme, &c.TestNotificationsButton, "Test").Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body2(theme, c.TestResults).Layout)
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.Body2(theme, "Currently supported on Android and Linux/BSD. macOS support coming soon.").Layout)
-				}),
-			)
+		{
+			Heading: "Notifications",
+			Items: []layout.Widget{
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.NotificationsSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Enable notifications").Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Button(theme, &c.TestNotificationsButton, "Test").Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body2(theme, c.TestResults).Layout)
+							}),
+						)
+					},
+					Context: "Currently supported on Android and Linux/BSD. macOS support coming soon.",
+				}.Layout,
+			},
 		},
-		func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.H6(theme, "User Interface").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.BottomBarSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Use bottom app bar").Layout)
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on mobile devices.").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.DockNavSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Dock navigation to the left edge of the UI").Layout)
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.Body2(theme, "Only recommended on desktop devices.").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.DarkModeSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Dark Mode").Layout)
-						}),
-					)
-				}),
-			)
+		{
+			Heading: "User Interface",
+			Items: []layout.Widget{
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.BottomBarSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Use bottom app bar").Layout)
+							}),
+						)
+					},
+					Context: "Only recommended on mobile devices.",
+				}.Layout,
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.DockNavSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Dock navigation to the left edge of the UI").Layout)
+							}),
+						)
+					},
+					Context: "Only recommended on desktop devices.",
+				}.Layout,
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.DarkModeSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Dark Mode").Layout)
+							}),
+						)
+					},
+				}.Layout,
+			},
 		},
-		func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return itemInset.Layout(gtx, material.H6(theme, "Developer").Layout)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Display graphics profiling").Layout)
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Switch(theme, &c.ThemeingSwitch).Layout)
-						}),
-						layout.Rigid(func(gtx C) D {
-							return itemInset.Layout(gtx, material.Body1(theme, "Display theme editor").Layout)
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
+		{
+			Heading: "Developer",
+			Items: []layout.Widget{
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Display graphics profiling").Layout)
+							}),
+						)
+					},
+				}.Layout,
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.ThemeingSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Display theme editor").Layout)
+							}),
+						)
+					},
+				}.Layout,
+				func(gtx C) D {
 					return itemInset.Layout(gtx, material.Body1(theme, VersionString).Layout)
-				}),
-			)
+				},
+			},
 		},
 	}
-	return c.List.Layout(gtx, len(areas), func(gtx C, index int) D {
+	return c.List.Layout(gtx, len(sections), func(gtx C, index int) D {
 		return itemInset.Layout(gtx, func(gtx C) D {
-			return areas[index](gtx)
+			sections[index].Theme = theme
+			return sections[index].Layout(gtx)
 		})
 	})
 }
