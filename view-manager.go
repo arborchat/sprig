@@ -29,6 +29,8 @@ type ViewManager interface {
 	HandleClipboard(contents string)
 	// set the system clipboard to the value
 	UpdateClipboard(string)
+	// request a screen invalidation from outside of a render context
+	RequestInvalidate()
 	// handle logical "back" navigation operations
 	HandleBackNavigation(*system.CommandEvent)
 	// trigger a contextual app menu with the given title and actions
@@ -101,6 +103,10 @@ func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager 
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.AppBar.NavigationIcon = icons.MenuIcon
 	return vm
+}
+
+func (vm *viewManager) RequestInvalidate() {
+	vm.window.Invalidate()
 }
 
 func (vm *viewManager) ApplySettings(settings core.SettingsService) {

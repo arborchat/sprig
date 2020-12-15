@@ -129,12 +129,14 @@ func NewReplyListView(app core.App) View {
 		c.ReplyList.Axis = layout.Vertical
 		// ensure that we are notified when we need to refresh the state of visible nodes
 		c.Arbor().Store().SubscribeToNewMessages(func(node forest.Node) {
-			c.StateRefreshNeeded = true
 			go func() {
 				var rd ds.ReplyData
-				if rd.Populate(node, c.Arbor().Store()) {
-					c.AlphaReplyList.Insert(rd)
+				if !rd.Populate(node, c.Arbor().Store()) {
+					return
 				}
+				c.AlphaReplyList.Insert(rd)
+				c.StateRefreshNeeded = true
+				c.manager.RequestInvalidate()
 			}()
 		})
 		c.ReplyList.ScrollToEnd = true
