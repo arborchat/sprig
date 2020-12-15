@@ -1,7 +1,6 @@
 package core
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"time"
@@ -59,7 +58,7 @@ func newArborService(settings SettingsService) (ArborService, error) {
 	}
 	cl, err := ds.NewCommunityList(a.grove)
 	if err != nil {
-		return nil, fmt.Errorf("failed initializing community list: %w", err)
+		return nil, err
 	}
 	a.cl = cl
 	expiration.ExpiredPurger{
