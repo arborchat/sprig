@@ -5,7 +5,6 @@ package ds
 
 import (
 	"fmt"
-	"log"
 	"sort"
 	"sync"
 
@@ -96,12 +95,9 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	// Verify twig data parses and node is not invisible
 	if md, err := asReply.TwigMetadata(); err != nil {
 		// Malformed metadata
-		log.Printf("Error when fetching twig metadata: %v", err)
-		log.Printf("Twig metadata: %v", asReply.Metadata.Blob)
 		return false
 	} else if md.Contains("invisible", 1) {
 		// Invisible message
-		log.Printf("Invisible node found. Not populating as a reply")
 		return false
 	}
 
