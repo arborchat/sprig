@@ -45,11 +45,14 @@ func newArborService(settings SettingsService) (ArborService, error) {
 			log.Printf("unable to create directory for grove: %v", err)
 			return
 		}
-		s, err = grove.New(grovePath)
+		g, err := grove.New(grovePath)
 		if err != nil {
 			log.Printf("Failed creating grove: %v", err)
 		}
-		return
+		g.SetCorruptNodeHandler(func(id string) {
+			log.Printf("Grove reported corrupt node %s", id)
+		})
+		return g
 	}()
 	a := &arborService{
 		SettingsService: settings,
