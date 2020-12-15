@@ -649,8 +649,6 @@ func (c *ReplyListView) loadMoreHistory() {
 		var rd ds.ReplyData
 		if rd.Populate(nodes[i], c.Arbor().Store()) {
 			populated = append(populated, rd)
-		} else {
-			log.Printf("filtering out %s due to Populate() failing", rd.ID())
 		}
 	}
 	if len(populated) < newNodeTarget {
