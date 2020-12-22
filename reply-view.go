@@ -52,6 +52,8 @@ type ReplyListView struct {
 	CopyReplyButton widget.Clickable
 
 	ds.AlphaReplyList
+	// Communities is the set of communities visible in this ReplyListView
+	Communities []*fields.QualifiedHash
 
 	ReplyList    layout.List
 	States       *States
@@ -98,7 +100,7 @@ type ReplyListView struct {
 
 var _ View = &ReplyListView{}
 
-func NewReplyListView(app core.App) View {
+func NewReplyListView(app core.App, communities ...*fields.QualifiedHash) View {
 	c := &ReplyListView{
 		App: app,
 		Animations: &Animation{
@@ -109,11 +111,22 @@ func NewReplyListView(app core.App) View {
 		},
 		HistoryRequestCount: 2048,
 		States:              &States{},
+		Communities:         communities,
 	}
 	c.loading = true
 	go func() {
 		defer func() { c.loading = false }()
 		c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
+			match := false
+			for _, id := range communities {
+				if rd.CommunityID.Equals(id) {
+					match = true
+					break
+				}
+			}
+			if !match {
+				return false
+			}
 			td, err := rd.TwigMetadata()
 			if err != nil {
 				return false
