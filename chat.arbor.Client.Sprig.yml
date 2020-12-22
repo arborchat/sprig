@@ -40,4 +40,5 @@ modules:
     sources:
       - type: git
         url: https://git.sr.ht/~whereswaldon/sprig
+        branch: main
 

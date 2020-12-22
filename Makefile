@@ -12,18 +12,6 @@ GOFLAGS := -ldflags=-X=main.Version="$(EMBEDDED_VERSION)"
 ANDROID_APK = sprig.apk
 ANDROID_SDK_ROOT := $(ANDROID_HOME)
 
-WINDOWS_BIN = sprig.exe
-WINDOWS_ARCHIVE = sprig-windows.zip
-
-LINUX_BIN = sprig
-LINUX_ARCHIVE = sprig-linux.tar.xz
-LINUX_FILES = $(LINUX_BIN) ./desktop-assets ./install-linux.sh ./appicon.png ./LICENSE.txt
-
-FPNAME = chat.arbor.Client.Sprig
-FPCONFIG = $(FPNAME).yml
-FPBUILD = pakbuild
-FPREPO := /data/fp-repo
-
 MACOS_BIN = sprig-mac
 MACOS_APP = sprig.app
 MACOS_ARCHIVE = sprig-macos.tar.gz
@@ -43,21 +31,11 @@ $(KEYSTORE):
 	mkdir -p $(ANDROID_CONFIG)
 	keytool -genkey -v -keystore $(ANDROID_CONFIG)/debug.keystore -alias androiddebugkey -storepass android -keypass android -keyalg RSA -validity 14000
 
-windows: $(WINDOWS_ARCHIVE)
+windows:
+	mage windows
 
-$(WINDOWS_ARCHIVE): $(WINDOWS_BIN)
-	zip $(WINDOWS_ARCHIVE) $(WINDOWS_BIN)
-
-$(WINDOWS_BIN): $(SOURCE)
-	env GOOS=windows GOFLAGS=$(GOFLAGS) go build -o $(WINDOWS_BIN) .
-
-linux: $(LINUX_ARCHIVE)
-
-$(LINUX_ARCHIVE): $(LINUX_BIN)
-	tar -cJf $(LINUX_ARCHIVE) $(LINUX_FILES)
-
-$(LINUX_BIN): $(SOURCE)
-	env GOOS=linux GOFLAGS=$(GOFLAGS) go build -o $(LINUX_BIN) .
+linux:
+	mage linux
 
 macos: $(MACOS_ARCHIVE)
 
@@ -91,21 +69,19 @@ logs:
 	adb logcat -s -T1 $(APPID):\*
 
 fp:
-	flatpak-builder --force-clean $(FPBUILD) $(FPCONFIG)
+	mage flatpak
 
 fp-shell:
-	flatpak-builder --run $(FPBUILD) $(FPCONFIG) sh
+	mage flatpakShell
 
 fp-install:
-	flatpak-builder --user --install --force-clean $(FPBUILD) $(FPCONFIG)
+	mage flatpakInstall
 
 fp-run:
-	flatpak run $(FPCONFIG)
+	mage flatpakRun
 
 fp-repo:
-	flatpak-builder --force-clean --repo=$(FPREPO) $(FPBUILD) $(FPCONFIG)
+	mage flatpakRepo
 
 clean:
-	rm -rf $(ANDROID_APK) $(WINDOWS_ARCHIVE) \
-	    $(WINDOWS_BIN) $(LINUX_ARCHIVE) $(LINUX_BIN) \
-	    $(MACOS_ARCHIVE) $(MACOS_BIN) $(FPBUILD)
+	mage clean
