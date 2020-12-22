@@ -101,13 +101,13 @@ func Windows() error {
 // Build flatpak
 func Flatpak() error {
 	mg.Deps(FlatpakInit)
-	return sh.Run("flatpak-builder", "--force-clean", FPBUILD, FPCONFIG)
+	return sh.Run("flatpak-builder", "--user", "--force-clean", FPBUILD, FPCONFIG)
 }
 
 // Get a shell within flatpak
 func FlatpakShell() error {
 	mg.Deps(FlatpakInit)
-	return sh.Run("flatpak-builder", "--run", FPBUILD, FPCONFIG, "sh")
+	return sh.Run("flatpak-builder", "--user", "--run", FPBUILD, FPCONFIG, "sh")
 }
 
 // Install flatpak
@@ -123,16 +123,20 @@ func FlatpakRun() error {
 
 // Flatpak into repo
 func FlatpakRepo() error {
-	return sh.Run("flatpak-builder", "--force-clean", "--repo="+FPREPO, FPBUILD, FPCONFIG)
+	return sh.Run("flatpak-builder", "--user", "--force-clean", "--repo="+FPREPO, FPBUILD, FPCONFIG)
 }
 
 // Enable repos if this is your first time running flatpak
 func FlatpakInit() error {
-	err := sh.Run("flatpak", "remote-add", "--user", "--if-not-exists", "flathub", "https://flathub.org/repo/flathub.flatpakrepo")
+	err := sh.RunV("flatpak", "remote-add", "--user", "--if-not-exists", "flathub", "https://flathub.org/repo/flathub.flatpakrepo")
 	if err != nil {
 		return err
 	}
 	err = sh.Run("flatpak", "install", "--user", "flathub", "org.freedesktop.Sdk/x86_64/19.08")
+	if err != nil {
+		return err
+	}
+	err = sh.Run("flatpak", "install", "--user", "flathub", "org.freedesktop.Platform/x86_64/19.08")
 	if err != nil {
 		return err
 	}
