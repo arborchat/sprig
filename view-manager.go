@@ -85,7 +85,7 @@ type viewManager struct {
 
 func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager {
 	modal := materials.NewModal()
-	drawer := materials.NewNav(app.Theme().Current().Theme, "Sprig", "Arbor chat client")
+	drawer := materials.NewNav("Sprig", "Arbor chat client")
 	vm := &viewManager{
 		App:        app,
 		views:      make(map[ViewID]View),
@@ -98,7 +98,7 @@ func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager 
 			Duration: time.Millisecond * 250,
 			State:    materials.Invisible,
 		},
-		AppBar: materials.NewAppBar(app.Theme().Current().Theme, modal),
+		AppBar: materials.NewAppBar(modal),
 	}
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.AppBar.NavigationIcon = icons.MenuIcon
@@ -119,10 +119,6 @@ func (vm *viewManager) ApplySettings(settings core.SettingsService) {
 	vm.dockDrawer = settings.DockNavDrawer()
 	vm.App.Theme().SetDarkMode(settings.DarkMode())
 
-	th := vm.App.Theme().Current()
-	vm.NavDrawer.Background = &th.Background.Light
-	vm.NavDrawer.Theme = th.Theme
-	vm.AppBar.Theme = th.Theme
 	vm.ModalNavDrawer = materials.ModalNavFrom(&vm.NavDrawer, vm.ModalLayer)
 	vm.themeView.BecomeVisible()
 
@@ -257,9 +253,10 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	view := vm.views[vm.current]
 	view.Update(gtx)
 	displayBar, _, _, _ := view.AppBarData()
+	th := vm.App.Theme().Current()
 	bar := layout.Rigid(func(gtx C) D {
 		if displayBar {
-			return vm.AppBar.Layout(gtx)
+			return vm.AppBar.Layout(gtx, th.Theme)
 		}
 		return layout.Dimensions{}
 	})
@@ -267,7 +264,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 		return layout.Flex{}.Layout(gtx,
 			layout.Rigid(func(gtx C) D {
 				gtx.Constraints.Max.X /= 3
-				return vm.NavDrawer.Layout(gtx, &vm.navAnim)
+				return vm.NavDrawer.Layout(gtx, th.Theme, &vm.navAnim)
 			}),
 			layout.Flexed(1, func(gtx C) D {
 				return view.Layout(gtx)
@@ -289,7 +286,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 			bar,
 		)
 	}
-	vm.ModalLayer.Layout(gtx)
+	vm.ModalLayer.Layout(gtx, th.Theme)
 	return dimensions
 }
 
@@ -311,7 +308,7 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			return sprigTheme.Rect{
-				Color: vm.App.Theme().Current().Background.Light,
+				Color: vm.App.Theme().Current().Background.Light.Bg,
 				Size: f32.Point{
 					X: float32(gtx.Constraints.Min.X),
 					Y: float32(gtx.Constraints.Min.Y),

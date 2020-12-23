@@ -139,8 +139,6 @@ func eventLoop(w *app.Window) error {
 			case system.DestroyEvent:
 				shutdown()
 				return event.Err
-			case system.ClipboardEvent:
-				viewManager.HandleClipboard(event.Text)
 			case *system.CommandEvent:
 				if event.Type == system.CommandBack {
 					viewManager.HandleBackNavigation(event)
@@ -151,7 +149,7 @@ func eventLoop(w *app.Window) error {
 				layout.Stack{}.Layout(gtx,
 					layout.Expanded(func(gtx C) D {
 						return sprigTheme.Rect{
-							Color: th.Background.Dark,
+							Color: th.Background.Dark.Bg,
 							Size: f32.Point{
 								X: float32(gtx.Constraints.Max.X),
 								Y: float32(gtx.Constraints.Max.Y),
@@ -168,7 +166,7 @@ func eventLoop(w *app.Window) error {
 							return layout.Stack{}.Layout(gtx,
 								layout.Expanded(func(gtx C) D {
 									return sprigTheme.Rect{
-										Color: th.Background.Default,
+										Color: th.Background.Default.Bg,
 										Size: f32.Point{
 											X: float32(gtx.Constraints.Max.X),
 											Y: float32(gtx.Constraints.Max.Y),

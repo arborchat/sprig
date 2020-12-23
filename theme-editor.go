@@ -79,102 +79,81 @@ func NewThemeEditorView(app core.App) View {
 }
 
 func (c *ThemeEditorView) ConfigurePickersFor(th *sprigTheme.Theme) {
-	c.PrimaryDefault.SetColor(th.Primary.Default)
-	c.PrimaryDark.SetColor(th.Primary.Dark)
-	c.PrimaryLight.SetColor(th.Primary.Light)
-	c.SecondaryDefault.SetColor(th.Secondary.Default)
-	c.SecondaryDark.SetColor(th.Secondary.Dark)
-	c.SecondaryLight.SetColor(th.Secondary.Light)
-	c.BackgroundDefault.SetColor(th.Background.Default)
-	c.BackgroundDark.SetColor(th.Background.Dark)
-	c.BackgroundLight.SetColor(th.Background.Light)
+	c.PrimaryDefault.SetColor(th.Primary.Default.Bg)
+	c.PrimaryDark.SetColor(th.Primary.Dark.Bg)
+	c.PrimaryLight.SetColor(th.Primary.Light.Bg)
+	c.SecondaryDefault.SetColor(th.Secondary.Default.Bg)
+	c.SecondaryDark.SetColor(th.Secondary.Dark.Bg)
+	c.SecondaryLight.SetColor(th.Secondary.Light.Bg)
+	c.BackgroundDefault.SetColor(th.Background.Default.Bg)
+	c.BackgroundDark.SetColor(th.Background.Dark.Bg)
+	c.BackgroundLight.SetColor(th.Background.Light.Bg)
 
 	c.ColorsList.Axis = layout.Vertical
 	c.listElems = []colorListElement{
 		{
 			Label: "Primary",
 			TargetColors: []*color.NRGBA{
-				&th.Primary.Default,
-				&th.Theme.Color.Primary,
+				&th.Primary.Default.Bg,
+				&th.Theme.Palette.Bg,
 			},
 			State: &c.PrimaryDefault,
 		},
 		{
 			Label: "Primary Light",
 			TargetColors: []*color.NRGBA{
-				&th.Primary.Light,
+				&th.Primary.Light.Bg,
 			},
 			State: &c.PrimaryLight,
 		},
 		{
 			Label: "Primary Dark",
 			TargetColors: []*color.NRGBA{
-				&th.Primary.Dark,
+				&th.Primary.Dark.Bg,
 			},
 			State: &c.PrimaryDark,
 		},
 		{
 			Label: "Secondary",
 			TargetColors: []*color.NRGBA{
-				&th.Secondary.Default,
+				&th.Secondary.Default.Bg,
 			},
 			State: &c.SecondaryDefault,
 		},
 		{
 			Label: "Secondary Light",
 			TargetColors: []*color.NRGBA{
-				&th.Secondary.Light,
+				&th.Secondary.Light.Bg,
 			},
 			State: &c.SecondaryLight,
 		},
 		{
 			Label: "Secondary Dark",
 			TargetColors: []*color.NRGBA{
-				&th.Secondary.Dark,
+				&th.Secondary.Dark.Bg,
 			},
 			State: &c.SecondaryDark,
 		},
 		{
 			Label: "Background",
 			TargetColors: []*color.NRGBA{
-				&th.Background.Default,
+				&th.Background.Default.Bg,
 			},
 			State: &c.BackgroundDefault,
 		},
 		{
 			Label: "Background Light",
 			TargetColors: []*color.NRGBA{
-				&th.Background.Light,
+				&th.Background.Light.Bg,
 			},
 			State: &c.BackgroundLight,
 		},
 		{
 			Label: "Background Dark",
 			TargetColors: []*color.NRGBA{
-				&th.Background.Dark,
+				&th.Background.Dark.Bg,
 			},
 			State: &c.BackgroundDark,
-		},
-		{
-			Label: "Text",
-			TargetColors: []*color.NRGBA{
-				&th.Theme.Color.Text,
-			},
-			State: &c.TextColor,
-		},
-		{
-			Label: "Hint",
-			TargetColors: []*color.NRGBA{
-				&th.Theme.Color.Hint,
-			},
-			State: &c.HintColor,
-		},
-		{
-			Label: "Inverted Text",
-			TargetColors: []*color.NRGBA{
-				&th.Theme.Color.InvText,
-			},
-			State: &c.InvertedTextColor,
 		},
 	}
 

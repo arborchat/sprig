@@ -704,12 +704,12 @@ func (c *ReplyListView) hideEditor() {
 
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
-	key.InputOp{Tag: c, Focus: c.ShouldRequestKeyboardFocus}.Add(gtx.Ops)
+	key.InputOp{Tag: c}.Add(gtx.Ops)
 	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: theme.Background.Default,
+				Color: theme.Background.Default.Bg,
 				Size:  layout.FPt(gtx.Constraints.Max),
 			}.Layout(gtx)
 			return layout.Dimensions{}
@@ -876,8 +876,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							Right: unit.Dp(scrollSlotWidthDp),
 						}.Layout(gtx, func(gtx C) D {
 							return material.IconButtonStyle{
-								Background: th.Secondary.Light,
-								Color:      th.Background.Dark,
+								Background: th.Secondary.Light.Fg,
+								Color:      th.Secondary.Light.Bg,
 								Button:     &c.CreateReplyButton,
 								Icon:       icons.ReplyIcon,
 								Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
@@ -908,7 +908,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		}
 	}
 	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
-	bar.Color = materials.AlphaMultiply(th.Color.Text, 200)
+	bar.Color = materials.WithAlpha(th.Background.Default.Fg, 200)
 	bar.Layout(gtx)
 	return dims
 }
@@ -922,7 +922,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	dims := layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: th.Primary.Light,
+				Color: th.Primary.Light.Bg,
 				Size: f32.Point{
 					X: float32(gtx.Constraints.Max.X),
 					Y: float32(gtx.Constraints.Max.Y),
@@ -956,7 +956,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 												c.CommunityChoice.Value = community.ID().String()
 											}
 											radio := material.RadioButton(th.Theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
-											radio.IconColor = th.Secondary.Default
+											radio.IconColor = th.Secondary.Default.Bg
 											return radio.Layout(gtx)
 										})
 									})
@@ -966,7 +966,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								reply := sprigTheme.Reply(th, &theme.ReplyAnimationState{
 									Normal: &c.Animations.Normal,
 								}, c.ReplyingTo, isActive)
-								reply.Highlight = th.Primary.Default
+								reply.Highlight = th.Primary.Default.Bg
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
 							})
@@ -974,10 +974,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  th,
 									Button: &c.CancelReplyButton,
 									Icon:   icons.CancelReplyIcon,
-								}.Layout(gtx)
+								}.Layout(gtx, th)
 							})
 						}),
 					)
@@ -987,10 +986,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  th,
 									Button: &c.PasteIntoReplyButton,
 									Icon:   icons.PasteIcon,
-								}.Layout(gtx)
+								}.Layout(gtx, th)
 							})
 						}),
 						layout.Flexed(1, func(gtx C) D {
@@ -998,7 +996,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 								return layout.Stack{}.Layout(gtx,
 									layout.Expanded(func(gtx C) D {
 										return sprigTheme.Rect{
-											Color: th.Background.Light,
+											Color: th.Background.Light.Bg,
 											Size: f32.Point{
 												X: float32(gtx.Constraints.Max.X),
 												Y: float32(gtx.Constraints.Min.Y),
@@ -1019,10 +1017,9 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 								return sprigTheme.IconButton{
-									Theme:  th,
 									Button: &c.SendReplyButton,
 									Icon:   icons.SendReplyIcon,
-								}.Layout(gtx)
+								}.Layout(gtx, th)
 							})
 						}),
 					)
@@ -1030,15 +1027,15 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 			)
 		}),
 	)
-	for _, ev := range spy.AllEvents() {
-		switch ev := ev.(type) {
-		case key.Event:
-			if ev.State == key.Press {
-				switch {
-				case ev.Name == "V" && (ev.Modifiers.Contain(key.ModCtrl) || ev.Modifiers.Contain(key.ModCommand)):
-					c.manager.RequestClipboardPaste()
-				case ev.Name == key.NameEscape || (ev.Name == "[" && ev.Modifiers.Contain(key.ModCtrl)):
-					c.hideEditor()
+	for _, group := range spy.AllEvents() {
+		for _, e := range group.Items {
+			switch ev := e.(type) {
+			case key.Event:
+				if ev.State == key.Press {
+					switch {
+					case ev.Name == key.NameEscape || (ev.Name == "[" && ev.Modifiers.Contain(key.ModCtrl)):
+						c.hideEditor()
+					}
 				}
 			}
 		}
