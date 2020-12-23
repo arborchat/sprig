@@ -12,7 +12,6 @@ import (
 // Color, size and inset are often the same.
 // This wrapper reduces noise by defaulting those things.
 type IconButton struct {
-	Theme  *Theme
 	Button *widget.Clickable
 	Icon   *widget.Icon
 	Size   unit.Value
@@ -21,16 +20,17 @@ type IconButton struct {
 
 const DefaultIconButtonWidthDp = 20
 
-func (btn IconButton) Layout(gtx C) D {
+func (btn IconButton) Layout(gtx C, th *Theme) D {
 	if btn.Size.V == 0 {
 		btn.Size = unit.Dp(DefaultIconButtonWidthDp)
 	}
 	if btn.Inset == (layout.Inset{}) {
 		btn.Inset = layout.UniformInset(unit.Dp(4))
 	}
+
 	return material.IconButtonStyle{
-		Background: btn.Theme.Color.Primary,
-		Color:      btn.Theme.Color.InvText,
+		Background: th.Palette.ContrastBg,
+		Color:      th.Palette.ContrastFg,
 		Icon:       btn.Icon,
 		Size:       btn.Size,
 		Inset:      btn.Inset,

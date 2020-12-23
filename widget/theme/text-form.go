@@ -28,7 +28,7 @@ func TextForm(th *Theme, state *widget.TextForm, submitText, formHint string) Te
 		PasteButton:      material.IconButton(th.Theme, &state.PasteButton, icons.PasteIcon),
 		SubmitButton:     material.Button(th.Theme, &state.SubmitButton, submitText),
 		EditorHint:       formHint,
-		EditorBackground: th.Background.Light,
+		EditorBackground: th.Background.Light.Bg,
 		Theme:            th,
 	}
 	t.PasteButton.Inset = layout.UniformInset(unit.Dp(4))

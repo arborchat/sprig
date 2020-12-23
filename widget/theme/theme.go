@@ -7,6 +7,26 @@ import (
 	"gioui.org/widget/material"
 )
 
+// PairFor wraps the provided theme color in a Color type with an automatically
+// populated Text color. The Text field value is chosen based on the luminance
+// of the provided color.
+func PairFor(bg color.NRGBA) ContrastPair {
+	col := ContrastPair{
+		Bg: bg,
+	}
+	lum := grayscaleLuminance(bg)
+	if lum < 128 {
+		col.Fg = white
+	} else {
+		col.Fg = black
+	}
+	return col
+}
+
+func grayscaleLuminance(c color.NRGBA) uint8 {
+	return uint8(float32(c.R)*.3 + float32(c.G)*.59 + float32(c.B)*.11)
+}
+
 var (
 	teal         = color.NRGBA{R: 0x44, G: 0xa8, B: 0xad, A: 255}
 	brightTeal   = color.NRGBA{R: 0x79, G: 0xda, B: 0xdf, A: 255}
@@ -39,62 +59,76 @@ func New() *Theme {
 	gioTheme := material.NewTheme(gofont.Collection())
 	var t Theme
 	t.Theme = gioTheme
-	t.Primary = Colors{
-		Default: green,
-		Light:   brightGreen,
-		Dark:    darkGreen,
+	t.Primary = Swatch{
+		Default: PairFor(green),
+		Light:   PairFor(brightGreen),
+		Dark:    PairFor(darkGreen),
 	}
-	t.Secondary = Colors{
-		Default: teal,
-		Light:   brightTeal,
-		Dark:    darkTeal,
+	t.Secondary = Swatch{
+		Default: PairFor(teal),
+		Light:   PairFor(brightTeal),
+		Dark:    PairFor(darkTeal),
 	}
-	t.Background = Colors{
-		Default: lightGray,
-		Light:   white,
-		Dark:    black,
+	t.Background = Swatch{
+		Default: PairFor(lightGray),
+		Light:   PairFor(white),
+		Dark:    PairFor(black),
 	}
-	t.Theme.Color.Primary = t.Primary.Default
-	t.Ancestors = &t.Secondary.Default
-	t.Descendants = &t.Secondary.Default
-	t.Selected = &t.Secondary.Light
-	t.Unselected = &t.Background.Light
+	t.Theme.Palette.ContrastBg = t.Primary.Default.Bg
+	t.Theme.Palette.ContrastFg = t.Primary.Default.Fg
+	t.Ancestors = &t.Secondary.Default.Bg
+	t.Descendants = &t.Secondary.Default.Bg
+	t.Selected = &t.Secondary.Light.Bg
+	t.Unselected = &t.Background.Light.Bg
 	t.Siblings = t.Unselected
 	return &t
 }
 
 func (t *Theme) ToDark() {
-	t.Background.Dark = darkGray
-	t.Background.Default = veryDarkGray
-	t.Background.Light = black
-	t.Color.Text = white
-	t.Color.InvText = black
-	t.Color.Hint = lightGray
-	t.Primary.Default = purple1
-	t.Primary.Light = lightPurple1
-	t.Primary.Dark = darkPurple1
-	t.Theme.Color.Primary = t.Primary.Default
-	t.Secondary.Default = purple2
-	t.Secondary.Light = lightPurple2
-	t.Secondary.Dark = darkPurple2
+	t.Background.Dark = PairFor(darkGray)
+	t.Background.Default = PairFor(veryDarkGray)
+	t.Background.Light = PairFor(black)
+	t.Primary.Default = PairFor(purple1)
+	t.Primary.Light = PairFor(lightPurple1)
+	t.Primary.Dark = PairFor(darkPurple1)
+	t.Secondary.Default = PairFor(purple2)
+	t.Secondary.Light = PairFor(lightPurple2)
+	t.Secondary.Dark = PairFor(darkPurple2)
 
-	t.Background.Default = dmBackground
-	t.Background.Light = dmLightBackground
-	t.Background.Dark = dmDarkBackground
+	t.Background.Default = PairFor(dmBackground)
+	t.Background.Light = PairFor(dmLightBackground)
+	t.Background.Dark = PairFor(dmDarkBackground)
 
-	t.Theme.Color.Text = dmText
-	t.Theme.Color.InvText = white
+	// apply to theme
+	t.Theme.Palette.Fg, t.Theme.Palette.Bg = t.Theme.Palette.Bg, t.Theme.Palette.Fg
+	t.Theme.Palette = ApplyAsContrast(t.Theme.Palette, t.Primary.Default)
+}
+
+type ContrastPair struct {
+	Fg, Bg color.NRGBA
+}
+
+func ApplyAsContrast(p material.Palette, pair ContrastPair) material.Palette {
+	p.ContrastBg = pair.Bg
+	p.ContrastFg = pair.Fg
+	return p
+}
+
+func ApplyAsNormal(p material.Palette, pair ContrastPair) material.Palette {
+	p.Bg = pair.Bg
+	p.Fg = pair.Fg
+	return p
+}
+
+type Swatch struct {
+	Light, Dark, Default ContrastPair
 }
 
 type Theme struct {
 	*material.Theme
-	Primary    Colors
-	Secondary  Colors
-	Background Colors
+	Primary    Swatch
+	Secondary  Swatch
+	Background Swatch
 
 	Ancestors, Descendants, Selected, Siblings, Unselected *color.NRGBA
-}
-
-type Colors struct {
-	Default, Light, Dark color.NRGBA
 }

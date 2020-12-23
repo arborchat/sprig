@@ -43,7 +43,7 @@ func (r ReplyStatus) HighlightColor(th *Theme) color.NRGBA {
 	case Sibling:
 		return *th.Siblings
 	case ConversationRoot:
-		return th.Primary.Dark
+		return th.Primary.Dark.Bg
 	default:
 		return *th.Unselected
 	}
@@ -54,7 +54,7 @@ func (r ReplyStatus) BorderColor(th *Theme) color.NRGBA {
 	case Selected:
 		return *th.Selected
 	default:
-		return th.Background.Light
+		return th.Background.Light.Bg
 	}
 }
 
@@ -111,8 +111,8 @@ type ReplyStyle struct {
 func Reply(th *Theme, status *ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
 	rs := ReplyStyle{
 		Theme:               th,
-		Background:          th.Background.Light,
-		TextColor:           th.Theme.Color.Text,
+		Background:          th.Background.Light.Bg,
+		TextColor:           th.Background.Light.Fg,
 		highlightWidth:      unit.Dp(10),
 		ReplyData:           nodes,
 		ReplyAnimationState: status,
@@ -311,7 +311,7 @@ func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 				return D{}
 			}
 			name := material.Body2(a.Theme.Theme, "●")
-			name.Color = a.Theme.Primary.Light
+			name.Color = a.Theme.Primary.Light.Bg
 			name.Font.Weight = text.Bold
 			return name.Layout(gtx)
 		}),
