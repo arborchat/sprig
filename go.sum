@@ -5,8 +5,8 @@ gioui.org v0.0.0-20200726090339-83673ecb203f/go.mod h1:jiUwifN9cRl/zmco43aAqh0aV
 gioui.org v0.0.0-20201206220230-a87a520ae825/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org v0.0.0-20201206220452-acc3f704e478/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org v0.0.0-20201219144351-00c4a53036ad/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20201220090421-18d4dbf60c4f h1:WEgnUK033XZ6MeIQ1dCGh9tG7s6isLv2aXSWP4TdbPA=
-gioui.org v0.0.0-20201220090421-18d4dbf60c4f/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
+gioui.org v0.0.0-20201230173821-7b1783056fc6 h1:SiGROQSBJ+Ea8wIyHyossY0qwrsG+MnJ7TRtvn8Ffls=
+gioui.org v0.0.0-20201230173821-7b1783056fc6/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org/cmd v0.0.0-20200828113410-1584f3a64a09/go.mod h1:dlmJnCEkOpRaChYxRmJZ5S4jk6y7DCfWnec39xGbUYk=
 gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f h1:SOAVl5CBF+7MrIJ7UhMrflIQPucDRlrKp2dsr46y2Lc=
 gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f/go.mod h1:sV4dgOzB0wbwYQVdvHezVizVHM+Xp7VMFN9++VJe51M=
