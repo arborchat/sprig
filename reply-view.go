@@ -876,8 +876,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 							Right: unit.Dp(scrollSlotWidthDp),
 						}.Layout(gtx, func(gtx C) D {
 							return material.IconButtonStyle{
-								Background: th.Secondary.Light.Fg,
-								Color:      th.Secondary.Light.Bg,
+								Background: th.Secondary.Light.Bg,
+								Color:      th.Secondary.Light.Fg,
 								Button:     &c.CreateReplyButton,
 								Icon:       icons.ReplyIcon,
 								Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),

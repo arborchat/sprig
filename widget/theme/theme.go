@@ -15,7 +15,7 @@ func PairFor(bg color.NRGBA) ContrastPair {
 		Bg: bg,
 	}
 	lum := grayscaleLuminance(bg)
-	if lum < 128 {
+	if lum < 150 {
 		col.Fg = white
 	} else {
 		col.Fg = black
