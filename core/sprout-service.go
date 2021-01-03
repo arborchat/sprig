@@ -19,6 +19,7 @@ type SproutService interface {
 
 type sproutService struct {
 	ArborService
+	BannerService
 	workerLock sync.Mutex
 	workerDone chan struct{}
 	workers    map[string]*sprout.Worker
@@ -26,11 +27,12 @@ type sproutService struct {
 
 var _ SproutService = &sproutService{}
 
-func newSproutService(arbor ArborService) (SproutService, error) {
+func newSproutService(arbor ArborService, banner BannerService) (SproutService, error) {
 	s := &sproutService{
-		ArborService: arbor,
-		workers:      make(map[string]*sprout.Worker),
-		workerDone:   make(chan struct{}),
+		ArborService:  arbor,
+		BannerService: banner,
+		workers:       make(map[string]*sprout.Worker),
+		workerDone:    make(chan struct{}),
 	}
 	return s, nil
 }
@@ -71,6 +73,11 @@ func (s *sproutService) launchWorker(addr string) {
 	firstAttempt := true
 	logger := log.New(log.Writer(), "worker "+addr, log.LstdFlags|log.Lshortfile)
 	for {
+		connectionBanner := &LoadingBanner{
+			Priority: Info,
+			Text:     "Connecting to " + addr + "...",
+		}
+		s.BannerService.Add(connectionBanner)
 		if !firstAttempt {
 			logger.Printf("Restarting worker for address %s", addr)
 			time.Sleep(time.Second)
@@ -91,8 +98,17 @@ func (s *sproutService) launchWorker(addr string) {
 		s.workerLock.Lock()
 		s.workers[addr] = worker
 		s.workerLock.Unlock()
+		connectionBanner.Cancel()
 
-		go worker.BootstrapLocalStore(1024)
+		synchronizingBanner := &LoadingBanner{
+			Priority: Info,
+			Text:     "Syncing with " + addr + "...",
+		}
+		s.BannerService.Add(synchronizingBanner)
+		go func() {
+			worker.BootstrapLocalStore(1024)
+			synchronizingBanner.Cancel()
+		}()
 
 		worker.Run()
 		select {

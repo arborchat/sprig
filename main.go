@@ -131,13 +131,6 @@ func eventLoop(w *app.Window) error {
 	} else {
 		viewManager.RequestViewSwitch(ReplyViewID)
 	}
-	banner := &core.LoadingBanner{Text: "testing"}
-	go func() {
-		time.Sleep(5 * time.Second)
-		banner.Cancel()
-		w.Invalidate()
-	}()
-	app.Banner().Add(banner)
 
 	var ops op.Ops
 	for {

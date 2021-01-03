@@ -54,13 +54,14 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	if a.SettingsService, err = newSettingsService(stateDir); err != nil {
 		return nil, err
 	}
+	a.BannerService = NewBannerService()
 	if a.ArborService, err = newArborService(a.SettingsService); err != nil {
 		return nil, err
 	}
 	if a.NotificationService, err = newNotificationService(a.SettingsService, a.ArborService); err != nil {
 		return nil, err
 	}
-	if a.SproutService, err = newSproutService(a.ArborService); err != nil {
+	if a.SproutService, err = newSproutService(a.ArborService, a.BannerService); err != nil {
 		return nil, err
 	}
 	if a.ThemeService, err = newThemeService(); err != nil {
@@ -69,7 +70,6 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	if a.StatusService, err = newStatusService(); err != nil {
 		return nil, err
 	}
-	a.BannerService = NewBannerService()
 	a.HapticService = newHapticService(w)
 
 	// Connect services together
