@@ -5,10 +5,12 @@ packages:
     - zip
     - unzip
     - default-jdk-headless
+    - pkg-config
     - libwayland-dev
     - libx11-dev
     - libx11-xcb-dev
     - libxkbcommon-x11-dev
+    - libxcursor-dev
     - libgles2-mesa-dev
     - libegl1-mesa-dev
     - libffi-dev
