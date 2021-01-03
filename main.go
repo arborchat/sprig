@@ -17,8 +17,6 @@ import (
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
-
-	"github.com/pkg/profile"
 )
 
 type (
@@ -39,7 +37,6 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
-	defer profile.Start().Stop()
 	dataDir, err := app.DataDir()
 	if err != nil {
 		log.Printf("failed finding application data dir: %v", err)
