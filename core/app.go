@@ -109,7 +109,7 @@ func (a *app) Status() StatusService {
 	return a.StatusService
 }
 
-// Haptic returns the app's sprout service implementation.
+// Haptic returns the app's haptic service implementation.
 func (a *app) Haptic() HapticService {
 	return a.HapticService
 }
