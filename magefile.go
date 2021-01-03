@@ -28,8 +28,17 @@ var Aliases = map[string]interface{}{
 	"run": FlatpakRun,
 }
 
-func goFlags() string {
-	return "-ldflags=-X=main.Version=" + embeddedVersion()
+func goFlags(platform string) string {
+	return "-ldflags=-X=main.Version=" + embeddedVersion() + " " + platformFlags(platform)
+}
+
+func platformFlags(platform string) string {
+	switch platform {
+	case "windows":
+		return "-ldflags=-H=windowsgui"
+	default:
+		return ""
+	}
 }
 
 func embeddedVersion() string {
@@ -47,7 +56,7 @@ func All() {
 
 // Build for specific platforms with a given binary name.
 func BuildFor(platform, binary string) error {
-	_, err := sh.Exec(map[string]string{"GOOS": platform, "GOFLAGS": goFlags()},
+	_, err := sh.Exec(map[string]string{"GOOS": platform, "GOFLAGS": goFlags(platform)},
 		os.Stdout, os.Stderr, "go", "build", "-o", binary, ".")
 	if err != nil {
 		return err
@@ -68,7 +77,13 @@ func Linux() error {
 
 // Build Windows
 func WindowsBin() error {
-	return BuildFor("windows", WINDOWS_BIN)
+	platform := "windows"
+	_, err := sh.Exec(map[string]string{"GOFLAGS": goFlags(platform)},
+		os.Stdout, os.Stderr, "go", "run", "gioui.org/cmd/gogio", "-x", "-target", "windows", "-o", WINDOWS_BIN, ".")
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // Build Windows binary and zip it up
