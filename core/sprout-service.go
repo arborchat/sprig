@@ -73,41 +73,47 @@ func (s *sproutService) launchWorker(addr string) {
 	firstAttempt := true
 	logger := log.New(log.Writer(), "worker "+addr, log.LstdFlags|log.Lshortfile)
 	for {
-		connectionBanner := &LoadingBanner{
-			Priority: Info,
-			Text:     "Connecting to " + addr + "...",
-		}
-		s.BannerService.Add(connectionBanner)
-		if !firstAttempt {
-			logger.Printf("Restarting worker for address %s", addr)
-			time.Sleep(time.Second)
-		}
-		firstAttempt = false
+		worker, done := func() (*sprout.Worker, chan struct{}) {
+			connectionBanner := &LoadingBanner{
+				Priority: Info,
+				Text:     "Connecting to " + addr + "...",
+			}
+			defer connectionBanner.Cancel()
+			s.BannerService.Add(connectionBanner)
+			if !firstAttempt {
+				logger.Printf("Restarting worker for address %s", addr)
+				time.Sleep(time.Second)
+			}
+			firstAttempt = false
 
-		s.workerLock.Lock()
-		done := s.workerDone
-		s.workerLock.Unlock()
+			s.workerLock.Lock()
+			done := s.workerDone
+			s.workerLock.Unlock()
 
-		worker, err := NewWorker(addr, done, s.ArborService.Store())
-		if err != nil {
-			log.Printf("Failed starting worker: %v", err)
+			worker, err := NewWorker(addr, done, s.ArborService.Store())
+			if err != nil {
+				log.Printf("Failed starting worker: %v", err)
+				return nil, nil
+			}
+			worker.Logger = log.New(logger.Writer(), fmt.Sprintf("worker-%v ", addr), log.Flags())
+
+			s.workerLock.Lock()
+			s.workers[addr] = worker
+			s.workerLock.Unlock()
+			return worker, done
+		}()
+		if worker == nil {
 			continue
 		}
-		worker.Logger = log.New(logger.Writer(), fmt.Sprintf("worker-%v ", addr), log.Flags())
 
-		s.workerLock.Lock()
-		s.workers[addr] = worker
-		s.workerLock.Unlock()
-		connectionBanner.Cancel()
-
-		synchronizingBanner := &LoadingBanner{
-			Priority: Info,
-			Text:     "Syncing with " + addr + "...",
-		}
-		s.BannerService.Add(synchronizingBanner)
 		go func() {
+			synchronizingBanner := &LoadingBanner{
+				Priority: Info,
+				Text:     "Syncing with " + addr + "...",
+			}
+			s.BannerService.Add(synchronizingBanner)
+			defer synchronizingBanner.Cancel()
 			worker.BootstrapLocalStore(1024)
-			synchronizingBanner.Cancel()
 		}()
 
 		worker.Run()
