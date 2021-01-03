@@ -54,7 +54,7 @@ func (b *bannerService) Top() Banner {
 		if len(b.banners) < 1 {
 			return nil
 		}
-		first = b.banners[1]
+		first = b.banners[0]
 	}
 	return first
 }
