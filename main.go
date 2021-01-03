@@ -17,6 +17,8 @@ import (
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
+
+	"github.com/pkg/profile"
 )
 
 type (
@@ -37,12 +39,14 @@ func main() {
 }
 
 func eventLoop(w *app.Window) error {
+	defer profile.Start().Stop()
 	dataDir, err := app.DataDir()
 	if err != nil {
 		log.Printf("failed finding application data dir: %v", err)
 	}
 	dataDir = filepath.Join(dataDir, "sprig")
 	profile := flag.Bool("profile", false, "log profiling data")
+	invalidate := flag.Bool("invalidate", false, "invalidate every single frame, only useful for profiling")
 	flag.StringVar(&dataDir, "data-dir", dataDir, "application state directory")
 	flag.Parse()
 
@@ -127,6 +131,13 @@ func eventLoop(w *app.Window) error {
 	} else {
 		viewManager.RequestViewSwitch(ReplyViewID)
 	}
+	banner := &core.LoadingBanner{Text: "testing"}
+	go func() {
+		time.Sleep(5 * time.Second)
+		banner.Cancel()
+		w.Invalidate()
+	}()
+	app.Banner().Add(banner)
 
 	var ops op.Ops
 	for {
@@ -145,6 +156,9 @@ func eventLoop(w *app.Window) error {
 				}
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, event)
+				if *invalidate {
+					op.InvalidateOp{}.Add(gtx.Ops)
+				}
 				th := app.Theme().Current()
 				layout.Stack{}.Layout(gtx,
 					layout.Expanded(func(gtx C) D {

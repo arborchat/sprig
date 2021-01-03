@@ -16,6 +16,7 @@ type App interface {
 	Theme() ThemeService
 	Status() StatusService
 	Haptic() HapticService
+	Banner() BannerService
 }
 
 // app bundles services together.
@@ -27,6 +28,7 @@ type app struct {
 	ThemeService
 	StatusService
 	HapticService
+	BannerService
 }
 
 var _ App = &app{}
@@ -67,6 +69,7 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	if a.StatusService, err = newStatusService(); err != nil {
 		return nil, err
 	}
+	a.BannerService = NewBannerService()
 	a.HapticService = newHapticService(w)
 
 	// Connect services together
@@ -112,4 +115,9 @@ func (a *app) Status() StatusService {
 // Haptic returns the app's haptic service implementation.
 func (a *app) Haptic() HapticService {
 	return a.HapticService
+}
+
+// Banner returns the app's banner service implementation.
+func (a *app) Banner() BannerService {
+	return a.BannerService
 }

@@ -254,6 +254,18 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	view.Update(gtx)
 	displayBar, _, _, _ := view.AppBarData()
 	th := vm.App.Theme().Current()
+	banner := func(gtx C) D {
+		switch bannerConfig := vm.App.Banner().Top().(type) {
+		case *core.LoadingBanner:
+			return layout.Flex{Spacing: layout.SpaceAround}.Layout(gtx,
+				layout.Rigid(material.Body1(th.Theme, bannerConfig.Text).Layout),
+				layout.Rigid(material.Loader(th.Theme).Layout),
+			)
+		default:
+			return D{}
+		}
+	}
+
 	bar := layout.Rigid(func(gtx C) D {
 		if displayBar {
 			return vm.AppBar.Layout(gtx, th.Theme)
@@ -267,7 +279,10 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 				return vm.NavDrawer.Layout(gtx, th.Theme, &vm.navAnim)
 			}),
 			layout.Flexed(1, func(gtx C) D {
-				return view.Layout(gtx)
+				return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+					layout.Rigid(banner),
+					layout.Flexed(1.0, view.Layout),
+				)
 			}),
 		)
 	})
