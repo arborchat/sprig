@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"image"
 	"runtime"
 	"time"
 
@@ -10,6 +11,8 @@ import (
 	"gioui.org/io/profile"
 	"gioui.org/io/system"
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/materials"
@@ -257,9 +260,25 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 	banner := func(gtx C) D {
 		switch bannerConfig := vm.App.Banner().Top().(type) {
 		case *core.LoadingBanner:
-			return layout.Flex{Spacing: layout.SpaceAround}.Layout(gtx,
-				layout.Rigid(material.Body1(th.Theme, bannerConfig.Text).Layout),
-				layout.Rigid(material.Loader(th.Theme).Layout),
+			secondary := th.Secondary.Default
+			th := *(th.Theme)
+			th.ContrastFg = th.Fg
+			th.ContrastBg = th.Bg
+			th.Palette = sprigTheme.ApplyAsNormal(th.Palette, secondary)
+			return layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					paint.FillShape(gtx.Ops, th.Bg, clip.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Op())
+					return D{Size: gtx.Constraints.Min}
+				}),
+				layout.Stacked(func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						gtx.Constraints.Min.X = gtx.Constraints.Max.X
+						return layout.Flex{Spacing: layout.SpaceAround}.Layout(gtx,
+							layout.Rigid(material.Body1(&th, bannerConfig.Text).Layout),
+							layout.Rigid(material.Loader(&th).Layout),
+						)
+					})
+				}),
 			)
 		default:
 			return D{}
