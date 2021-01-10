@@ -15,8 +15,10 @@ import (
 	"gioui.org/op"
 	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	forest "git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/gioprofiler"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
+	"github.com/pkg/profile"
 )
 
 type (
@@ -42,10 +44,34 @@ func eventLoop(w *app.Window) error {
 		log.Printf("failed finding application data dir: %v", err)
 	}
 	dataDir = filepath.Join(dataDir, "sprig")
-	profile := flag.Bool("profile", false, "log profiling data")
+	profileType := flag.String("profile", "none", "create the provided kind of profile. Use one of [none, cpu, mem, block, goroutine, mutex, trace, gio]")
 	invalidate := flag.Bool("invalidate", false, "invalidate every single frame, only useful for profiling")
 	flag.StringVar(&dataDir, "data-dir", dataDir, "application state directory")
 	flag.Parse()
+
+	var profOption func(p *profile.Profile)
+	var recorder *gioprofiler.CSVTimingRecorder
+	switch *profileType {
+	case "none":
+	case "cpu":
+		profOption = profile.CPUProfile
+	case "mem":
+		profOption = profile.MemProfile
+	case "block":
+		profOption = profile.BlockProfile
+	case "goroutine":
+		profOption = profile.GoroutineProfile
+	case "mutex":
+		profOption = profile.MutexProfile
+	case "trace":
+		profOption = profile.TraceProfile
+	case "gio":
+		recorder, _ = gioprofiler.NewRecorder(nil)
+		defer recorder.Stop()
+	}
+	if profOption != nil {
+		defer profile.Start(profOption).Stop()
+	}
 
 	app, err := core.NewApp(w, dataDir)
 	if err != nil {
@@ -111,7 +137,7 @@ func eventLoop(w *app.Window) error {
 		log.Printf("shutting down")
 	}
 
-	viewManager := NewViewManager(w, app, *profile)
+	viewManager := NewViewManager(w, app)
 	viewManager.ApplySettings(app.Settings())
 	viewManager.RegisterView(ReplyViewID, NewReplyListView(app))
 	viewManager.RegisterView(ConnectFormID, NewConnectFormView(app))
@@ -146,6 +172,7 @@ func eventLoop(w *app.Window) error {
 				}
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, event)
+				recorder.Profile(gtx)
 				if *invalidate {
 					op.InvalidateOp{}.Add(gtx.Ops)
 				}

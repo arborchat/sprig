@@ -86,14 +86,13 @@ type viewManager struct {
 	themeView View
 }
 
-func NewViewManager(window *app.Window, app core.App, profile bool) ViewManager {
+func NewViewManager(window *app.Window, app core.App) ViewManager {
 	modal := materials.NewModal()
 	drawer := materials.NewNav("Sprig", "Arbor chat client")
 	vm := &viewManager{
 		App:        app,
 		views:      make(map[ViewID]View),
 		window:     window,
-		profiling:  profile,
 		themeView:  NewThemeEditorView(app),
 		ModalLayer: modal,
 		NavDrawer:  drawer,
