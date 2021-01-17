@@ -705,10 +705,6 @@ func (c *ReplyListView) hideEditor() {
 
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
-	key.InputOp{Tag: c}.Add(gtx.Ops)
-	if c.ShouldRequestKeyboardFocus {
-		key.FocusOp{Focus: true}.Add(gtx.Ops)
-	}
 	c.ShouldRequestKeyboardFocus = false
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
@@ -726,6 +722,9 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 				layout.Rigid(func(gtx C) D {
 					if c.shouldDisplayEditor() {
 						return c.layoutEditor(gtx)
+					} else {
+						key.InputOp{Tag: c}.Add(gtx.Ops)
+						key.FocusOp{Focus: true}.Add(gtx.Ops)
 					}
 					return layout.Dimensions{}
 				}),
