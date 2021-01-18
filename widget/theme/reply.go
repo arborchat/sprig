@@ -121,11 +121,11 @@ func Reply(th *Theme, status *ReplyAnimationState, nodes ds.ReplyData, showActiv
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
+	radiiDp := unit.Dp(5)
+	radii := float32(gtx.Px(radiiDp))
 	r.ReplyAnimationState.Style(gtx, &r)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			radiiDp := unit.Dp(5)
-			radii := float32(gtx.Px(radiiDp))
 			innerSize := gtx.Constraints.Min
 			borderWidth := unit.Dp(2)
 			/*
@@ -153,14 +153,39 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 				layout.Expanded(func(gtx C) D {
 					max := layout.FPt(gtx.Constraints.Min)
 					max.X = float32(gtx.Px(r.highlightWidth))
-					radii := float32(gtx.Px(unit.Dp(5)))
 					return Rect{Color: r.Highlight, Size: max, Radii: radii}.Layout(gtx)
 				}),
 				layout.Stacked(func(gtx C) D {
-					inset := layout.UniformInset(unit.Dp(4))
+					inset := layout.Inset{}
 					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
+					isConversationRoot := r.ReplyData.Reply.Depth == 1
 					return inset.Layout(gtx, func(gtx C) D {
-						return r.layoutContents(gtx)
+						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return layout.UniformInset(unit.Dp(4)).Layout(gtx, r.layoutContents)
+							}),
+							layout.Rigid(func(gtx C) D {
+								if isConversationRoot {
+									badgeColors := r.Theme.Primary.Dark
+									gtx.Constraints.Min.X = gtx.Constraints.Max.X
+									return layout.SE.Layout(gtx, func(gtx C) D {
+										return layout.Stack{}.Layout(gtx,
+											layout.Expanded(func(gtx C) D {
+												return Rect{Color: badgeColors.Bg, Size: layout.FPt(gtx.Constraints.Min), Radii: radii}.Layout(gtx)
+											}),
+											layout.Stacked(func(gtx C) D {
+												th := *r.Theme.Theme
+												th.Palette = ApplyAsNormal(th.Palette, badgeColors)
+												return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+													return material.Body2(&th, "Conversation root").Layout(gtx)
+												})
+											}),
+										)
+									})
+								}
+								return D{}
+							}),
+						)
 					})
 				}),
 			)
@@ -183,62 +208,63 @@ func max(is ...int) int {
 	return max
 }
 
-func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
+func (r ReplyStyle) layoutMetadata(gtx layout.Context) layout.Dimensions {
 	inset := layout.Inset{Right: unit.Dp(4)}
+	nameMacro := op.Record(gtx.Ops)
+	nameDim := inset.Layout(gtx, AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive).Layout)
+	nameWidget := nameMacro.Stop()
+
+	communityMacro := op.Record(gtx.Ops)
+	communityDim := inset.Layout(gtx, CommunityName(r.Theme.Theme, r.ReplyData.Community).Layout)
+	communityWidget := communityMacro.Stop()
+
+	dateMacro := op.Record(gtx.Ops)
+	dateDim := r.layoutDate(gtx)
+	dateWidget := dateMacro.Stop()
+
+	gtx.Constraints.Min.Y = max(nameDim.Size.Y, communityDim.Size.Y, dateDim.Size.Y)
+	gtx.Constraints.Min.X = gtx.Constraints.Max.X
+
+	shouldDisplayDate := gtx.Constraints.Max.X-nameDim.Size.X > dateDim.Size.X
+	shouldDisplayCommunity := shouldDisplayDate && gtx.Constraints.Max.X-(nameDim.Size.X+dateDim.Size.X) > communityDim.Size.X
+
+	flexChildren := []layout.FlexChild{
+		layout.Rigid(func(gtx C) D {
+			return layout.S.Layout(gtx, func(gtx C) D {
+				nameWidget.Add(gtx.Ops)
+				return nameDim
+			})
+		}),
+	}
+	if shouldDisplayCommunity {
+		flexChildren = append(flexChildren,
+			layout.Rigid(func(gtx C) D {
+				return layout.S.Layout(gtx, func(gtx C) D {
+					communityWidget.Add(gtx.Ops)
+					return communityDim
+				})
+			}),
+		)
+	}
+	if shouldDisplayDate {
+		flexChildren = append(flexChildren,
+			layout.Rigid(func(gtx C) D {
+				return layout.S.Layout(gtx, func(gtx C) D {
+					dateWidget.Add(gtx.Ops)
+					return dateDim
+				})
+			}),
+		)
+	}
+
+	return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, flexChildren...)
+}
+
+func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 	if !r.CollapseMetadata {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx,
-					func(gtx layout.Context) layout.Dimensions {
-						nameMacro := op.Record(gtx.Ops)
-						nameDim := inset.Layout(gtx, AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive).Layout)
-						nameWidget := nameMacro.Stop()
-
-						communityMacro := op.Record(gtx.Ops)
-						communityDim := inset.Layout(gtx, CommunityName(r.Theme.Theme, r.ReplyData.Community).Layout)
-						communityWidget := communityMacro.Stop()
-
-						dateMacro := op.Record(gtx.Ops)
-						dateDim := r.layoutDate(gtx)
-						dateWidget := dateMacro.Stop()
-
-						gtx.Constraints.Min.Y = max(nameDim.Size.Y, communityDim.Size.Y, dateDim.Size.Y)
-						gtx.Constraints.Min.X = gtx.Constraints.Max.X
-
-						shouldDisplayDate := gtx.Constraints.Max.X-nameDim.Size.X > dateDim.Size.X
-						shouldDisplayCommunity := shouldDisplayDate && gtx.Constraints.Max.X-(nameDim.Size.X+dateDim.Size.X) > communityDim.Size.X
-
-						flexChildren := []layout.FlexChild{
-							layout.Rigid(func(gtx C) D {
-								return layout.S.Layout(gtx, func(gtx C) D {
-									nameWidget.Add(gtx.Ops)
-									return nameDim
-								})
-							}),
-						}
-						if shouldDisplayCommunity {
-							flexChildren = append(flexChildren,
-								layout.Rigid(func(gtx C) D {
-									return layout.S.Layout(gtx, func(gtx C) D {
-										communityWidget.Add(gtx.Ops)
-										return communityDim
-									})
-								}),
-							)
-						}
-						if shouldDisplayDate {
-							flexChildren = append(flexChildren,
-								layout.Rigid(func(gtx C) D {
-									return layout.S.Layout(gtx, func(gtx C) D {
-										dateWidget.Add(gtx.Ops)
-										return dateDim
-									})
-								}),
-							)
-						}
-
-						return layout.Flex{Spacing: layout.SpaceBetween}.Layout(gtx, flexChildren...)
-					})
+				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx, r.layoutMetadata)
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return r.layoutContent(gtx)
@@ -269,19 +295,7 @@ func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
 	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
 	content.MaxLines = r.MaxLines
 	content.Color = r.TextColor
-	if r.Reply.Depth != 1 {
-		return content.Layout(gtx)
-	}
-	return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-		layout.Rigid(func(gtx C) D {
-			return content.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx C) D {
-			gtx.Constraints.Min.X = gtx.Constraints.Max.X
-			return layout.E.Layout(gtx, material.Body2(r.Theme.Theme, "Conversation root").Layout)
-		}),
-	)
-
+	return content.Layout(gtx)
 }
 
 type AuthorNameStyle struct {
