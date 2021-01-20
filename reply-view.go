@@ -23,9 +23,9 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/twig"
 
-	"git.sr.ht/~whereswaldon/events"
 	materials "gioui.org/x/component"
-	"git.sr.ht/~whereswaldon/scroll"
+	events "gioui.org/x/eventx"
+	"gioui.org/x/scroll"
 
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/core"

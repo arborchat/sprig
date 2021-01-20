@@ -15,8 +15,6 @@ gioui.org/x v0.0.0-20210117185607-25b1f7920092 h1:j/3kWvzBpJDnEtFtBkx5YkbwLMrdAM
 gioui.org/x v0.0.0-20210117185607-25b1f7920092/go.mod h1:+CDNGkslHDIe1EK2Q4E0G98qRllCaQrL6qtjBhBjSAo=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1 h1:quRwMtoF0S/VUHQBoL8fkqrKq/uYYB7pEGAGAFzLoXA=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
-git.sr.ht/~whereswaldon/events v0.0.0-20201207220747-f063931e77b6 h1:PJTCdAUNnPSoyKo2VRJjFHO3nlujCSC4p2l4aU8JurQ=
-git.sr.ht/~whereswaldon/events v0.0.0-20201207220747-f063931e77b6/go.mod h1:fvKJza1lOZ8TUoE/gCweNrzb15+H0Cr6oayqrGLxn3k=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f h1:WUwYv4X2Ai2np/6AuTyPVlsC0EEVeP3u3BruVs/ylRY=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
@@ -26,8 +24,6 @@ git.sr.ht/~whereswaldon/haptic v0.0.0-20201207220958-78675dee81dd h1:xTijdESZL/k
 git.sr.ht/~whereswaldon/haptic v0.0.0-20201207220958-78675dee81dd/go.mod h1:lFvegCF1P7IXfv5FpnnvKFdoAQWTgJZhx8aWOBgE0yg=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f h1:2FGooeaKxC8XksxGniJEIIJN1bcKWJmKkfDp+VJ/2j4=
 git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f/go.mod h1:c237AiA2cwcg+n865LzGlKY4z6H3UbCJHWOumUj7fGk=
-git.sr.ht/~whereswaldon/scroll v0.0.0-20201208022259-cc815a044b0b h1:KzG0qB0Vxr6X3kgvYV2HTSjZFbcIx6YiZvbxD+hZIAU=
-git.sr.ht/~whereswaldon/scroll v0.0.0-20201208022259-cc815a044b0b/go.mod h1:/AM8KrZLPyehiTttCs4hYx+9NtV2EaQe4rBGyblqHGo=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20201215220754-cd1a35679f04 h1:xL5fPQ5KXYGlglqc17yEztb3RNhl0r/MeiHsOIcXKCw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20201215220754-cd1a35679f04/go.mod h1:sUCiWygW9rhwmXHvtCv10f4oe5I1uJzW/4fnQNmqE9o=
 git.wow.st/gmp/jni v0.0.0-20200626194017-b74a17279b1f/go.mod h1:+axXBRUTIDlCeE73IKeD/os7LoEnTKdkp8/gQOFjqyo=
@@ -65,7 +61,6 @@ github.com/yuin/goldmark v1.2.1/go.mod h1:3hX8gzYuyVAZsxl0MRgGTJEmQBFcNTphYh9dec
 golang.org/x/exp v0.0.0-20190306152737-a1d7652674e8/go.mod h1:CJ0aWSM057203Lf6IL+f9T1iT9GByDxfZKAQTCR3kQA=
 golang.org/x/exp v0.0.0-20190731235908-ec7cb31e5a56/go.mod h1:JhuoJpWY28nO4Vef9tZUw9qufEGTyX1+7lmHxV5q5G4=
 golang.org/x/exp v0.0.0-20191002040644-a1355ae1e2c3/go.mod h1:NOZ3BPKG0ec/BKJQgnvsSFpcKLM5xXVWnvZS97DWHgE=
-golang.org/x/exp v0.0.0-20201203231725-fa01524bc59d/go.mod h1:1phAWC201xIgDyaFpmDeZkgf70Q4Pd/CNqfRtVPtxNw=
 golang.org/x/exp v0.0.0-20201229011636-eab1b5eb1a03 h1:XlAInxBYX5nBofPaY51uv/x9xmRgZGr/lDOsePd2AcE=
 golang.org/x/exp v0.0.0-20201229011636-eab1b5eb1a03/go.mod h1:I6l2HNBLBZEcrOoCpyKLdY2lHoRZ8lI4x60KMCQDft4=
 golang.org/x/image v0.0.0-20190227222117-0694c2d4d067/go.mod h1:kZ7UVZpmo3dzQBMxlp+ypCbDeSB+sBbTgSJuh5dn5js=
