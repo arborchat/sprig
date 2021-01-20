@@ -2,7 +2,7 @@ package main
 
 import (
 	"gioui.org/layout"
-	"git.sr.ht/~whereswaldon/materials"
+	materials "gioui.org/x/component"
 )
 
 type View interface {

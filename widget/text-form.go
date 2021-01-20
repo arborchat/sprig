@@ -3,7 +3,7 @@ package widget
 import (
 	"gioui.org/layout"
 	"gioui.org/widget"
-	"git.sr.ht/~whereswaldon/materials"
+	materials "gioui.org/x/component"
 )
 
 // TextForm holds the theme-independent state of a simple form that

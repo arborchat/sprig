@@ -4,15 +4,14 @@ import (
 	"encoding/hex"
 	"image/color"
 
-	"gioui.org/f32"
 	"gioui.org/layout"
 	"gioui.org/op"
 	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/forest-go"
-	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 )
@@ -127,19 +126,6 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			innerSize := gtx.Constraints.Min
-			borderWidth := unit.Dp(2)
-			/*
-				all of this border width math is an ugly hack to work around
-				a gio bug. It must be removed once this gio patch (or a similar one)
-				is accepted:
-				https://lists.sr.ht/~eliasnaur/gio-patches/%3C161092973087.15776.15517502470290640081-0%40git.sr.ht%3E#%3C161092973087.15776.15517502470290640081-1@git.sr.ht%3E
-			*/
-			borderWidthPx := gtx.Px(borderWidth)
-			innerSize.X -= borderWidthPx
-			innerSize.Y -= borderWidthPx
-			halfBorderPx := float32(borderWidthPx / 2)
-			defer op.Push(gtx.Ops).Pop()
-			op.Offset(f32.Pt(halfBorderPx, halfBorderPx)).Add(gtx.Ops)
 			return widget.Border{
 				Color:        r.Border,
 				Width:        unit.Dp(2),

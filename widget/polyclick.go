@@ -73,7 +73,7 @@ func (p *Polyclick) LongPressed() bool {
 
 func (p *Polyclick) Layout(gtx layout.Context) layout.Dimensions {
 	p.update(gtx)
-	defer op.Push(gtx.Ops).Pop()
+	defer op.Save(gtx.Ops).Load()
 	pointer.PassOp{Pass: p.Pass}.Add(gtx.Ops)
 	pointer.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Add(gtx.Ops)
 	p.Click.Add(gtx.Ops)

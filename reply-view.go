@@ -24,7 +24,7 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/twig"
 
 	"git.sr.ht/~whereswaldon/events"
-	"git.sr.ht/~whereswaldon/materials"
+	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/scroll"
 
 	"git.sr.ht/~whereswaldon/sprig/anim"

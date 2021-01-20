@@ -10,12 +10,12 @@ import (
 	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"git.sr.ht/~whereswaldon/materials"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 
-	"git.sr.ht/~whereswaldon/colorpicker"
+	"gioui.org/x/colorpicker"
+	materials "gioui.org/x/component"
 )
 
 type ThemeEditorView struct {

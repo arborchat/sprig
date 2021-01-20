@@ -4,7 +4,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"git.sr.ht/~whereswaldon/materials"
+	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"

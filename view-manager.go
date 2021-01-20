@@ -15,7 +15,7 @@ import (
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
-	"git.sr.ht/~whereswaldon/materials"
+	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
