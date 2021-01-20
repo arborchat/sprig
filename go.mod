@@ -7,10 +7,10 @@ require (
 	gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f
 	gioui.org/x v0.0.0-20210117185607-25b1f7920092
 	gioui.org/x/haptic v0.0.0-20210117185607-25b1f7920092
+	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f
 	git.sr.ht/~whereswaldon/gioprofiler v0.0.0-20210110225620-2dcf6a8e70e1
-	git.sr.ht/~whereswaldon/niotify v0.0.4-0.20200831115722-2354c7f8372f
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20201215220754-cd1a35679f04
 	github.com/magefile/mage v1.10.0
 	github.com/pkg/profile v1.5.0

@@ -8,7 +8,7 @@ import (
 
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/store"
-	"git.sr.ht/~whereswaldon/niotify"
+	niotify "gioui.org/x/notify"
 )
 
 // NotificationService provides methods to send notifications and to
