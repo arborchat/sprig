@@ -8,8 +8,8 @@ gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f h1:SOAVl5CBF+7MrIJ7UhMrflIQPucD
 gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f/go.mod h1:sV4dgOzB0wbwYQVdvHezVizVHM+Xp7VMFN9++VJe51M=
 gioui.org/x v0.0.0-20210117185607-25b1f7920092 h1:j/3kWvzBpJDnEtFtBkx5YkbwLMrdAMgONXpHmjqD8eQ=
 gioui.org/x v0.0.0-20210117185607-25b1f7920092/go.mod h1:+CDNGkslHDIe1EK2Q4E0G98qRllCaQrL6qtjBhBjSAo=
-gioui.org/x/haptic v0.0.0-20210117185607-25b1f7920092 h1:iXQZ2/qfj8T46Vts96R7OGyr6IUh0BjjqAYnZVa+e5w=
-gioui.org/x/haptic v0.0.0-20210117185607-25b1f7920092/go.mod h1:8zNy+2M/H/zMZtZVh3ZSk7EuPqob+PNtVFzWstzT7ok=
+gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b h1:3lHNKrTHXJCXhtmCVdTInlNuay3jSQ0SVi9JNQTj5yM=
+gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b/go.mod h1:8zNy+2M/H/zMZtZVh3ZSk7EuPqob+PNtVFzWstzT7ok=
 gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092 h1:XTPuGt90z7zE3eeGLfQh3nEjGVvt6Gl3/Xc5Mu5w4W4=
 gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092/go.mod h1:dkKYIeTwSxJG3MbNiA8nQ9CYu5wzWDIIeZ7eGRChECo=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1 h1:quRwMtoF0S/VUHQBoL8fkqrKq/uYYB7pEGAGAFzLoXA=

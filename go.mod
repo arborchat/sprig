@@ -6,7 +6,7 @@ require (
 	gioui.org v0.0.0-20210120200514-9bede80a3de7
 	gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f
 	gioui.org/x v0.0.0-20210117185607-25b1f7920092
-	gioui.org/x/haptic v0.0.0-20210117185607-25b1f7920092
+	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f
