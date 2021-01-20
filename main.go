@@ -14,9 +14,9 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/x/profiling"
 	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	forest "git.sr.ht/~whereswaldon/forest-go"
-	"git.sr.ht/~whereswaldon/gioprofiler"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 	"github.com/pkg/profile"
@@ -51,7 +51,7 @@ func eventLoop(w *app.Window) error {
 	flag.Parse()
 
 	var profOption func(p *profile.Profile)
-	var recorder *gioprofiler.CSVTimingRecorder
+	var recorder *profiling.CSVTimingRecorder
 	switch *profileType {
 	case "none":
 	case "cpu":
@@ -67,7 +67,7 @@ func eventLoop(w *app.Window) error {
 	case "trace":
 		profOption = profile.TraceProfile
 	case "gio":
-		recorder, _ = gioprofiler.NewRecorder(nil)
+		recorder, _ = profiling.NewRecorder(nil)
 		defer recorder.Stop()
 	}
 	if profOption != nil {
