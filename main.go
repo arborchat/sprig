@@ -10,6 +10,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
+	"gioui.org/io/clipboard"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -170,6 +171,8 @@ func eventLoop(w *app.Window) error {
 				if event.Type == system.CommandBack {
 					viewManager.HandleBackNavigation(event)
 				}
+			case clipboard.Event:
+				viewManager.HandleClipboard(event.Text)
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, event)
 				recorder.Profile(gtx)
