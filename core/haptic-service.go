@@ -4,7 +4,7 @@ import (
 	"log"
 
 	gioapp "gioui.org/app"
-	"git.sr.ht/~whereswaldon/haptic"
+	"gioui.org/x/haptic"
 )
 
 // HapticService provides access to haptic feedback devices features.
