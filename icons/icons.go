@@ -74,3 +74,8 @@ var IdentityIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.ActionPermIdentity)
 	return icon
 }()
+
+var SubscriptionIcon *widget.Icon = func() *widget.Icon {
+	icon, _ := widget.NewIcon(icons.CommunicationImportContacts)
+	return icon
+}()
