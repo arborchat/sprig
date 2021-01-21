@@ -2,8 +2,8 @@ dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 gioui.org v0.0.0-20201206220230-a87a520ae825/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org v0.0.0-20210116085804-99bfa6a33cdf/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20210120200514-9bede80a3de7 h1:+JP6HnVabNtgt45bfFARbWh3g0hnXooGTETfALUF5D4=
-gioui.org v0.0.0-20210120200514-9bede80a3de7/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
+gioui.org v0.0.0-20210121104031-d0d6c6c38e55 h1:SuuQ/b+9/++yCN26YABpr3oTl+iQ8nFTX9pVUfWGvso=
+gioui.org v0.0.0-20210121104031-d0d6c6c38e55/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
 gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f h1:SOAVl5CBF+7MrIJ7UhMrflIQPucDRlrKp2dsr46y2Lc=
 gioui.org/cmd v0.0.0-20201220090421-18d4dbf60c4f/go.mod h1:sV4dgOzB0wbwYQVdvHezVizVHM+Xp7VMFN9++VJe51M=
 gioui.org/x v0.0.0-20210117185607-25b1f7920092 h1:j/3kWvzBpJDnEtFtBkx5YkbwLMrdAMgONXpHmjqD8eQ=
