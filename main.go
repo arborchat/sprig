@@ -71,6 +71,7 @@ func eventLoop(w *app.Window) error {
 	vm.ApplySettings(app.Settings())
 	vm.RegisterView(ReplyViewID, NewReplyListView(app))
 	vm.RegisterView(ConnectFormID, NewConnectFormView(app))
+	vm.RegisterView(SubscriptionViewID, NewSubscriptionView(app))
 	vm.RegisterView(SettingsID, NewCommunityMenuView(app))
 	vm.RegisterView(IdentityFormID, NewIdentityFormView(app))
 	vm.RegisterView(ConsentViewID, NewConsentView(app))
@@ -157,6 +158,7 @@ const (
 	SettingsID
 	ReplyViewID
 	ConsentViewID
+	SubscriptionViewID
 )
 
 // getDataDir returns application specific file directory to use for storage.
