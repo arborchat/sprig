@@ -38,9 +38,6 @@ func (c *ConsentView) AppBarData() (bool, string, []materials.AppBarAction, []ma
 	return false, "", nil, nil
 }
 
-func (c *ConsentView) HandleClipboard(contents string) {
-}
-
 func (c *ConsentView) Update(gtx layout.Context) {
 	if c.AgreeButton.Clicked() {
 		c.Settings().SetAcknowledgedNoticeVersion(NoticeVersion)

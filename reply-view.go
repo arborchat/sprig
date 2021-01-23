@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"gioui.org/f32"
+	"gioui.org/io/clipboard"
 	"gioui.org/io/key"
 	"gioui.org/layout"
 	"gioui.org/unit"
@@ -234,9 +235,6 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 		}
 }
 
-func (c *ReplyListView) HandleClipboard(contents string) {
-}
-
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
 	th := c.Theme().Current().Theme
 	return []materials.AppBarAction{
@@ -374,12 +372,14 @@ func (c *ReplyListView) toggleFilter() {
 	}
 }
 
-func (c *ReplyListView) copyFocused() {
+func (c *ReplyListView) copyFocused(gtx layout.Context) {
 	reply, _, err := c.Arbor().Store().Get(c.Focused)
 	if err != nil {
 		log.Printf("failed looking up selected message: %v", err)
 	} else {
-		c.manager.UpdateClipboard(string(reply.(*forest.Reply).Content.Blob))
+		clipboard.WriteOp{
+			Text: string(reply.(*forest.Reply).Content.Blob),
+		}.Add(gtx.Ops)
 	}
 }
 
@@ -570,7 +570,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 					c.startReply()
 				case "C":
 					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
-						c.copyFocused()
+						c.copyFocused(gtx)
 					} else {
 						c.startConversation()
 					}
@@ -600,10 +600,16 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		c.toggleFilter()
 	}
 	if c.Focused != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
-		c.copyFocused()
+		c.copyFocused(gtx)
 	}
 	if c.PasteIntoReplyButton.Clicked() {
-		c.manager.RequestClipboardPaste()
+		clipboard.ReadOp{Tag: &c.ReplyingTo}.Add(gtx.Ops)
+	}
+	for _, e := range gtx.Events(&c.ReplyingTo) {
+		switch e := e.(type) {
+		case clipboard.Event:
+			c.ReplyEditor.Editor.Insert(e.Text)
+		}
 	}
 	if c.Focused != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
 		c.startReply()

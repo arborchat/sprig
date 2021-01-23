@@ -26,12 +26,6 @@ type ViewManager interface {
 	RequestViewSwitch(ViewID)
 	// associate a view with an ID
 	RegisterView(id ViewID, view View)
-	// trigger an asynchronous paste operation
-	RequestClipboardPaste()
-	// handle a paste operation from the platform by dispatching it to a view
-	HandleClipboard(contents string)
-	// set the system clipboard to the value
-	UpdateClipboard(string)
 	// request a screen invalidation from outside of a render context
 	RequestInvalidate()
 	// handle logical "back" navigation operations
@@ -176,18 +170,6 @@ func (vm *viewManager) DismissOverflow(gtx layout.Context) {
 
 func (vm *viewManager) SelectedOverflowTag() interface{} {
 	return vm.selectedOverflowTag
-}
-
-func (vm *viewManager) RequestClipboardPaste() {
-	vm.window.ReadClipboard()
-}
-
-func (vm *viewManager) UpdateClipboard(contents string) {
-	vm.window.WriteClipboard(contents)
-}
-
-func (vm *viewManager) HandleClipboard(contents string) {
-	vm.views[vm.current].HandleClipboard(contents)
 }
 
 func (vm *viewManager) HandleBackNavigation(event *system.CommandEvent) {

@@ -108,9 +108,6 @@ func (c *SettingsView) NavItem() *materials.NavItem {
 	}
 }
 
-func (c *SettingsView) HandleClipboard(contents string) {
-}
-
 func (c *SettingsView) Update(gtx layout.Context) {
 	settingsChanged := false
 	for i := range c.CommunityBoxes {

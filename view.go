@@ -11,6 +11,5 @@ type View interface {
 	NavItem() *materials.NavItem
 	BecomeVisible()
 	Update(gtx layout.Context)
-	HandleClipboard(contents string)
 	Layout(gtx layout.Context) layout.Dimensions
 }

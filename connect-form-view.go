@@ -39,9 +39,6 @@ func (c *ConnectFormView) AppBarData() (bool, string, []materials.AppBarAction, 
 	return false, "", nil, nil
 }
 
-func (c *ConnectFormView) HandleClipboard(contents string) {
-}
-
 func (c *ConnectFormView) Update(gtx layout.Context) {
 	if c.Form.Submitted() {
 		c.Settings().SetAddress(c.Form.TextField.Text())
