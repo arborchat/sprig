@@ -40,7 +40,6 @@ func (c *ConnectFormView) AppBarData() (bool, string, []materials.AppBarAction, 
 }
 
 func (c *ConnectFormView) HandleClipboard(contents string) {
-	c.Form.Paste(contents)
 }
 
 func (c *ConnectFormView) Update(gtx layout.Context) {
@@ -49,9 +48,6 @@ func (c *ConnectFormView) Update(gtx layout.Context) {
 		go c.Settings().Persist()
 		c.Sprout().ConnectTo(c.Settings().Address())
 		c.manager.RequestViewSwitch(IdentityFormID)
-	}
-	if c.Form.PasteRequested() {
-		c.manager.RequestClipboardPaste()
 	}
 }
 

@@ -109,7 +109,6 @@ func (c *SettingsView) NavItem() *materials.NavItem {
 }
 
 func (c *SettingsView) HandleClipboard(contents string) {
-	c.ConnectionForm.Paste(contents)
 }
 
 func (c *SettingsView) Update(gtx layout.Context) {
@@ -133,9 +132,6 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		c.Settings().SetAddress(c.ConnectionForm.TextField.Text())
 		settingsChanged = true
 		c.Sprout().ConnectTo(c.Settings().Address())
-	}
-	if c.ConnectionForm.PasteRequested() {
-		c.manager.RequestClipboardPaste()
 	}
 	if c.NotificationsSwitch.Changed() {
 		c.Settings().SetNotificationsGloballyAllowed(c.NotificationsSwitch.Value)

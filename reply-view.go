@@ -235,7 +235,6 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 }
 
 func (c *ReplyListView) HandleClipboard(contents string) {
-	c.ReplyEditor.Insert(contents)
 }
 
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
@@ -574,11 +573,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 						c.copyFocused()
 					} else {
 						c.startConversation()
-					}
-				case "V":
-					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
-						// TODO: move this handling code to the editor somehow, since that's where the paste needs to happen
-						c.manager.RequestClipboardPaste()
 					}
 				case " ", "F":
 					c.toggleFilter()
