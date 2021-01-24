@@ -704,7 +704,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 						return c.layoutEditor(gtx)
 					} else {
 						key.InputOp{Tag: c}.Add(gtx.Ops)
-						key.FocusOp{Focus: true}.Add(gtx.Ops)
+						key.FocusOp{Tag: c}.Add(gtx.Ops)
 					}
 					return layout.Dimensions{}
 				}),
