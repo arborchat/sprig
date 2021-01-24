@@ -68,6 +68,9 @@ type ReplyAnimationState struct {
 // Style applies the appropriate visual tweaks the the reply status for the
 // current animation frame.
 func (r *ReplyAnimationState) Style(gtx C, reply *ReplyStyle) {
+	if r == nil {
+		return
+	}
 	progress := r.Progress(gtx)
 	if progress >= 1 {
 		r.Begin = r.End

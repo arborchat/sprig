@@ -1,27 +1,106 @@
 package widget
 
 import (
+	"gioui.org/io/clipboard"
 	"gioui.org/layout"
 	"gioui.org/widget"
-	"git.sr.ht/~whereswaldon/forest-go"
+
+	"git.sr.ht/~whereswaldon/sprig/ds"
+	"git.sr.ht/~whereswaldon/sprig/platform"
 )
 
-type ComposerMode uint
+// ComposerEvent represents a change in the Composer's state
+type ComposerEvent uint
 
 const (
-	CreatingConversation ComposerMode = iota
-	CreatingReply
+	ComposerSubmitted ComposerEvent = iota
+	ComposerCancelled
 )
 
+// Composer holds the state for a widget that creates new arbor nodes.
 type Composer struct {
-	SendButton, CancelButton, CopyButton, PasteButton widget.Clickable
+	CommunityList layout.List
+	Community     widget.Enum
+
+	SendButton, CancelButton, PasteButton widget.Clickable
 	widget.Editor
 
-	Mode ComposerMode
+	ReplyingTo ds.ReplyData
 
-	Communities layout.List
-	Community   widget.Enum
+	events    []ComposerEvent
+	composing bool
+}
 
-	ReplyingTo       *forest.Reply
-	ReplyingToAuthor *forest.Identity
+// update handles all state processing.
+func (c *Composer) update(gtx layout.Context) {
+	for _, e := range c.Editor.Events() {
+		if _, ok := e.(widget.SubmitEvent); ok && !platform.Mobile {
+			c.events = append(c.events, ComposerSubmitted)
+		}
+	}
+	if c.PasteButton.Clicked() {
+		clipboard.ReadOp{Tag: &c.composing}.Add(gtx.Ops)
+	}
+	for _, e := range gtx.Events(&c.composing) {
+		switch e := e.(type) {
+		case clipboard.Event:
+			c.Editor.Insert(e.Text)
+		}
+	}
+	if c.CancelButton.Clicked() {
+		c.events = append(c.events, ComposerCancelled)
+	}
+	if c.SendButton.Clicked() {
+		c.events = append(c.events, ComposerSubmitted)
+	}
+}
+
+// Layout updates the state of the composer
+func (c *Composer) Layout(gtx layout.Context) layout.Dimensions {
+	c.update(gtx)
+	return layout.Dimensions{}
+}
+
+// StartReply configures the composer to write a reply to the provided
+// ReplyData.
+func (c *Composer) StartReply(to ds.ReplyData) {
+	c.Reset()
+	c.composing = true
+	c.ReplyingTo = to
+	c.Editor.Focus()
+}
+
+// StartConversation configures the composer to write a new conversation.
+func (c *Composer) StartConversation() {
+	c.Reset()
+	c.composing = true
+	c.Editor.Focus()
+}
+
+// Reset clears the internal state of the composer.
+func (c *Composer) Reset() {
+	c.ReplyingTo.Reply = nil
+	c.ReplyingTo.Author = nil
+	c.ReplyingTo.Community = nil
+	c.Editor.SetText("")
+	c.composing = false
+}
+
+// ComposingConversation returns whether the composer is currently creating
+// a conversation (rather than a new reply within an existing conversation)
+func (c *Composer) ComposingConversation() bool {
+	return c.ReplyingTo.Reply == nil && c.Composing()
+}
+
+// Composing indicates whether the composer is composing a message of any
+// kind.
+func (c Composer) Composing() bool {
+	return c.composing
+}
+
+// Events returns state change events for the composer since the last call
+// to events.
+func (c *Composer) Events() (out []ComposerEvent) {
+	out, c.events = c.events, c.events[:0]
+	return
 }

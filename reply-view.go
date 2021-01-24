@@ -11,7 +11,6 @@ import (
 	"strings"
 	"time"
 
-	"gioui.org/f32"
 	"gioui.org/io/clipboard"
 	"gioui.org/io/key"
 	"gioui.org/layout"
@@ -65,18 +64,12 @@ type ReplyListView struct {
 	// contents of the replylist changed
 	StateRefreshNeeded bool
 
-	CreatingConversation                bool
-	ReplyingTo                          ds.ReplyData
-	ReplyEditor                         materials.TextField
+	sprigWidget.Composer
+
 	FilterButton                        widget.Clickable
-	CancelReplyButton                   widget.Clickable
 	CreateReplyButton                   widget.Clickable
-	SendReplyButton                     widget.Clickable
-	PasteIntoReplyButton                widget.Clickable
 	CreateConversationButton            widget.Clickable
 	JumpToBottomButton, JumpToTopButton widget.Clickable
-	CommunityChoice                     widget.Enum
-	CommunityList                       layout.List
 
 	LoadMoreHistoryButton widget.Clickable
 	// how many nodes of history does the view want
@@ -387,27 +380,28 @@ func (c *ReplyListView) startReply() {
 	reply, _, err := c.Arbor().Store().Get(c.Focused)
 	if err != nil {
 		log.Printf("failed looking up selected message: %v", err)
-	} else {
-		c.ReplyingTo.Reply = reply.(*forest.Reply)
-		author, _, err := c.Arbor().Store().GetIdentity(&c.ReplyingTo.Reply.Author)
-		if err != nil {
-			log.Printf("failed looking up select message author: %v", err)
-		} else {
-			c.ReplyingTo.Author = author.(*forest.Identity)
-		}
+		return
 	}
-	c.ReplyEditor.Focus()
+	var data ds.ReplyData
+	data.Reply = reply.(*forest.Reply)
+	author, _, err := c.Arbor().Store().GetIdentity(&data.Reply.Author)
+	if err != nil {
+		log.Printf("failed looking up select message author: %v", err)
+	} else {
+		data.Author = author.(*forest.Identity)
+	}
+	c.Composer.StartReply(data)
 }
 
 func (c *ReplyListView) sendReply() {
-	if c.ReplyEditor.Text() == "" {
+	replyText := c.Composer.Text()
+	if replyText == "" {
 		return
 	}
 	var newReplies []*forest.Reply
 	var author *forest.Identity
 	var parent forest.Node
 
-	replyText := c.ReplyEditor.Text()
 	replyText = strings.TrimSpace(replyText)
 
 	nodeBuilder, err := c.Settings().Builder()
@@ -415,9 +409,9 @@ func (c *ReplyListView) sendReply() {
 		log.Printf("failed acquiring node builder: %v", err)
 	}
 	author = nodeBuilder.User
-	if c.CreatingConversation {
-		if c.CommunityChoice.Value != "" {
-			chosenString := c.CommunityChoice.Value
+	if c.Composer.ComposingConversation() {
+		if c.Community.Value != "" {
+			chosenString := c.Community.Value
 			c.Arbor().Communities().WithCommunities(func(communities []*forest.Community) {
 				for _, community := range communities {
 					if community.ID().String() == chosenString {
@@ -526,8 +520,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 }
 
 func (c *ReplyListView) startConversation() {
-	c.CreatingConversation = true
-	c.ReplyEditor.Focus()
+	c.Composer.StartConversation()
 }
 
 func (c *ReplyListView) Update(gtx layout.Context) {
@@ -580,9 +573,13 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			}
 		}
 	}
-	for _, event := range c.ReplyEditor.Events() {
-		if _, ok := event.(widget.SubmitEvent); ok && submitShouldSend {
+
+	for _, e := range c.Composer.Events() {
+		switch e {
+		case sprigWidget.ComposerSubmitted:
 			c.sendReply()
+		case sprigWidget.ComposerCancelled:
+			c.resetReplyState()
 		}
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
@@ -602,26 +599,12 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.Focused != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
 		c.copyFocused(gtx)
 	}
-	if c.PasteIntoReplyButton.Clicked() {
-		clipboard.ReadOp{Tag: &c.ReplyingTo}.Add(gtx.Ops)
-	}
-	for _, e := range gtx.Events(&c.ReplyingTo) {
-		switch e := e.(type) {
-		case clipboard.Event:
-			c.ReplyEditor.Editor.Insert(e.Text)
-		}
-	}
+
 	if c.Focused != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
 		c.startReply()
 	}
 	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
 		c.startConversation()
-	}
-	if c.CancelReplyButton.Clicked() {
-		c.resetReplyState()
-	}
-	if c.SendReplyButton.Clicked() {
-		c.sendReply()
 	}
 	if did, progress := c.Scrollable.Scrolled(); did {
 		c.reveal(int(float32(c.replyCount) * progress))
@@ -660,9 +643,7 @@ func (c *ReplyListView) loadMoreHistory() {
 }
 
 func (c *ReplyListView) resetReplyState() {
-	c.ReplyingTo.Reply = nil
-	c.CreatingConversation = false
-	c.ReplyEditor.SetText("")
+	c.Composer.Reset()
 }
 
 func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
@@ -694,12 +675,11 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
 }
 
 func (c *ReplyListView) shouldDisplayEditor() bool {
-	return c.ReplyingTo.Reply != nil || c.CreatingConversation
+	return c.Composer.Composing()
 }
 
 func (c *ReplyListView) hideEditor() {
-	c.ReplyingTo.Reply = nil
-	c.CreatingConversation = false
+	c.Composer.Reset()
 	c.requestKeyboardFocus()
 }
 
@@ -922,114 +902,11 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 		spy *events.Spy
 	)
 	spy, gtx = events.Enspy(gtx)
-	dims := layout.Stack{}.Layout(gtx,
-		layout.Expanded(func(gtx C) D {
-			sprigTheme.Rect{
-				Color: th.Primary.Light.Bg,
-				Size: f32.Point{
-					X: float32(gtx.Constraints.Max.X),
-					Y: float32(gtx.Constraints.Max.Y),
-				},
-			}.Layout(gtx)
-			return layout.Dimensions{}
-		}),
-		layout.Stacked(func(gtx C) D {
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								gtx.Constraints.Max.X = gtx.Px(unit.Dp(30))
-								gtx.Constraints.Min.X = gtx.Constraints.Max.X
-								if c.CreatingConversation {
-									return material.Body1(th.Theme, "In:").Layout(gtx)
-								}
-								return material.Body1(th.Theme, "Re:").Layout(gtx)
+	var dims layout.Dimensions
+	c.Arbor().Communities().WithCommunities(func(comms []*forest.Community) {
+		dims = sprigTheme.Composer(th, &c.Composer, comms).Layout(gtx)
+	})
 
-							})
-						}),
-						layout.Flexed(1, func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								if c.CreatingConversation {
-									var dims layout.Dimensions
-									c.Arbor().Communities().WithCommunities(func(comms []*forest.Community) {
-										dims = c.CommunityList.Layout(gtx, len(comms), func(gtx layout.Context, index int) layout.Dimensions {
-											community := comms[index]
-											if c.CommunityChoice.Value == "" && index == 0 {
-												c.CommunityChoice.Value = community.ID().String()
-											}
-											radio := material.RadioButton(th.Theme, &c.CommunityChoice, community.ID().String(), string(community.Name.Blob))
-											radio.IconColor = th.Secondary.Default.Bg
-											return radio.Layout(gtx)
-										})
-									})
-									return dims
-								}
-								isActive := c.Status().IsActive(&c.ReplyingTo.Reply.Author)
-								reply := sprigTheme.Reply(th, &theme.ReplyAnimationState{
-									Normal: &c.Animations.Normal,
-								}, c.ReplyingTo, isActive)
-								reply.Highlight = th.Primary.Default.Bg
-								reply.MaxLines = 5
-								return reply.Layout(gtx)
-							})
-						}),
-						layout.Rigid(func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return sprigTheme.IconButton{
-									Button: &c.CancelReplyButton,
-									Icon:   icons.CancelReplyIcon,
-								}.Layout(gtx, th)
-							})
-						}),
-					)
-				}),
-				layout.Rigid(func(gtx C) D {
-					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return sprigTheme.IconButton{
-									Button: &c.PasteIntoReplyButton,
-									Icon:   icons.PasteIcon,
-								}.Layout(gtx, th)
-							})
-						}),
-						layout.Flexed(1, func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return layout.Stack{}.Layout(gtx,
-									layout.Expanded(func(gtx C) D {
-										return sprigTheme.Rect{
-											Color: th.Background.Light.Bg,
-											Size: f32.Point{
-												X: float32(gtx.Constraints.Max.X),
-												Y: float32(gtx.Constraints.Min.Y),
-											},
-											Radii: float32(gtx.Px(unit.Dp(5))),
-										}.Layout(gtx)
-
-									}),
-									layout.Stacked(func(gtx C) D {
-										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-											c.ReplyEditor.Submit = true
-											return c.ReplyEditor.Layout(gtx, th.Theme, "Compose your reply")
-										})
-									}),
-								)
-							})
-						}),
-						layout.Rigid(func(gtx C) D {
-							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								return sprigTheme.IconButton{
-									Button: &c.SendReplyButton,
-									Icon:   icons.SendReplyIcon,
-								}.Layout(gtx, th)
-							})
-						}),
-					)
-				}),
-			)
-		}),
-	)
 	for _, group := range spy.AllEvents() {
 		for _, e := range group.Items {
 			switch ev := e.(type) {
