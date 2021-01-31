@@ -1,17 +1,29 @@
 package main
 
 import (
+	"log"
+	"time"
+
 	"gioui.org/layout"
 	"gioui.org/unit"
+	"gioui.org/widget"
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
+	forest "git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
+	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
 type SubscriptionGroup struct {
 	Connection   string
-	Subscribable map[string]bool
+	Subscribable map[string]*SubscriptionData
+}
+
+type SubscriptionData struct {
+	Subscribed widget.Bool
+	*forest.Community
 }
 
 type SubscriptionView struct {
@@ -62,6 +74,20 @@ outer:
 			break outer
 		}
 	}
+	var changes []SubscriptionData
+	for _, group := range c.Connections {
+		for _, subdata := range group.Subscribable {
+			if subdata.Subscribed.Changed() {
+				changes = append(changes, *subdata)
+			}
+		}
+	}
+	if len(changes) > 0 {
+		go c.implementChanges(changes)
+	}
+}
+
+func (c *SubscriptionView) implementChanges(changes []SubscriptionData) {
 }
 
 func (c *SubscriptionView) BecomeVisible() {
@@ -81,9 +107,28 @@ func (c *SubscriptionView) refresh(connections []string) {
 			worker := c.Sprout().WorkerFor(conn)
 			worker.Session.RLock()
 			defer worker.Session.RUnlock()
-			communities := map[string]bool{}
+			communities := map[string]*SubscriptionData{}
+			response, err := worker.SendList(fields.NodeTypeCommunity, 1024, time.NewTicker(time.Second*5).C)
+			if err != nil {
+				log.Printf("Failed listing communities on worker %s: %v", conn, err)
+			} else {
+				for _, n := range response.Nodes {
+					n, isCommunity := n.(*forest.Community)
+					if !isCommunity {
+						continue
+					}
+					subdata := SubscriptionData{
+						Community: n,
+					}
+					subdata.Subscribed.Value = false
+					communities[n.ID().String()] = &subdata
+
+				}
+			}
 			for id := range worker.Session.Communities {
-				communities[id.String()] = true
+				data := communities[id.String()]
+				data.Subscribed.Value = true
+				communities[id.String()] = data
 			}
 			c.Updates <- SubscriptionGroup{
 				Connection:   conn,
@@ -101,13 +146,29 @@ func (c *SubscriptionView) Layout(gtx layout.Context) layout.Dimensions {
 
 	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
 		return c.ConnectionList.Layout(gtx, len(c.ConnectionNames), func(gtx C, index int) D {
+			name := c.ConnectionNames[index]
+			connection := c.Connections[name]
 			var children []layout.FlexChild
 			children = append(children, layout.Rigid(func(gtx C) D {
-				return material.H3(theme, c.ConnectionNames[index]).Layout(gtx)
+				return material.H5(theme, name).Layout(gtx)
 			}))
-			for community := range c.Connections[c.ConnectionNames[index]].Subscribable {
+			for community, subdata := range connection.Subscribable {
 				children = append(children, layout.Rigid(func(gtx C) D {
-					return material.Body1(theme, community).Layout(gtx)
+					return layout.Flex{}.Layout(gtx,
+						layout.Rigid(func(gtx C) D {
+							return material.Switch(theme, &subdata.Subscribed).Layout(gtx)
+						}),
+						layout.Flexed(1, func(gtx C) D {
+							return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+								layout.Rigid(func(gtx C) D {
+									return sprigTheme.CommunityName(theme, connection.Subscribable[community].Community).Layout(gtx)
+								}),
+								layout.Rigid(func(gtx C) D {
+									return material.Body2(theme, community).Layout(gtx)
+								}),
+							)
+						}),
+					)
 				}))
 			}
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx, children...)
