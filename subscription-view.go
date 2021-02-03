@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"sort"
+	"strings"
 	"time"
 
 	"gioui.org/layout"
@@ -16,14 +18,10 @@ import (
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
-type SubscriptionGroup struct {
-	Connection   string
-	Subscribable map[string]*SubscriptionData
-}
-
-type SubscriptionData struct {
-	Subscribed widget.Bool
+type Sub struct {
 	*forest.Community
+	ActiveHostingRelays []string
+	Subbed              widget.Bool
 }
 
 type SubscriptionView struct {
@@ -31,20 +29,18 @@ type SubscriptionView struct {
 
 	core.App
 
-	ConnectionNames []string
-	Connections     map[string]SubscriptionGroup
-	ConnectionList  layout.List
+	Subs           []Sub
+	ConnectionList layout.List
 
-	Updates chan SubscriptionGroup
+	Updates chan []Sub
 }
 
 var _ View = &SubscriptionView{}
 
 func NewSubscriptionView(app core.App) View {
 	c := &SubscriptionView{
-		App:         app,
-		Updates:     make(chan SubscriptionGroup, 1),
-		Connections: make(map[string]SubscriptionGroup),
+		App:     app,
+		Updates: make(chan []Sub, 1),
 	}
 	c.ConnectionList.Axis = layout.Vertical
 	return c
@@ -68,18 +64,15 @@ func (c *SubscriptionView) Update(gtx layout.Context) {
 outer:
 	for {
 		select {
-		case update := <-c.Updates:
-			c.Connections[update.Connection] = update
+		case c.Subs = <-c.Updates:
 		default:
 			break outer
 		}
 	}
-	var changes []SubscriptionData
-	for _, group := range c.Connections {
-		for _, subdata := range group.Subscribable {
-			if subdata.Subscribed.Changed() {
-				changes = append(changes, *subdata)
-			}
+	var changes []Sub
+	for _, sub := range c.Subs {
+		if sub.Subbed.Changed() {
+			changes = append(changes, sub)
 		}
 	}
 	if len(changes) > 0 {
@@ -87,18 +80,11 @@ outer:
 	}
 }
 
-func (c *SubscriptionView) implementChanges(changes []SubscriptionData) {
+func (c *SubscriptionView) implementChanges(changes []Sub) {
 }
 
 func (c *SubscriptionView) BecomeVisible() {
-	connections := c.Sprout().Connections()
-	for _, conn := range connections {
-		if _, ok := c.Connections[conn]; !ok {
-			c.Connections[conn] = SubscriptionGroup{}
-		}
-	}
-	c.ConnectionNames = connections
-	go c.refresh(connections)
+	go c.refresh(c.Sprout().Connections())
 }
 
 func (c *SubscriptionView) refresh(connections []string) {
@@ -107,7 +93,7 @@ func (c *SubscriptionView) refresh(connections []string) {
 			worker := c.Sprout().WorkerFor(conn)
 			worker.Session.RLock()
 			defer worker.Session.RUnlock()
-			communities := map[string]*SubscriptionData{}
+			communities := map[string]Sub{}
 			response, err := worker.SendList(fields.NodeTypeCommunity, 1024, time.NewTicker(time.Second*5).C)
 			if err != nil {
 				log.Printf("Failed listing communities on worker %s: %v", conn, err)
@@ -117,23 +103,30 @@ func (c *SubscriptionView) refresh(connections []string) {
 					if !isCommunity {
 						continue
 					}
-					subdata := SubscriptionData{
-						Community: n,
+					id := n.ID().String()
+					existing, ok := communities[id]
+					if !ok {
+						existing = Sub{
+							Community: n,
+						}
 					}
-					subdata.Subscribed.Value = false
-					communities[n.ID().String()] = &subdata
+					existing.ActiveHostingRelays = append(existing.ActiveHostingRelays, conn)
+					communities[id] = existing
 
 				}
 			}
+			var out []Sub
 			for id := range worker.Session.Communities {
 				data := communities[id.String()]
-				data.Subscribed.Value = true
-				communities[id.String()] = data
+				data.Subbed.Value = true
+				out = append(out, data)
 			}
-			c.Updates <- SubscriptionGroup{
-				Connection:   conn,
-				Subscribable: communities,
-			}
+			sort.Slice(out, func(i, j int) bool {
+				iID := out[i].Community.ID().String()
+				jID := out[j].Community.ID().String()
+				return strings.Compare(iID, jID) < 0
+			})
+			c.Updates <- out
 			c.manager.RequestInvalidate()
 		}()
 	}
@@ -144,31 +137,31 @@ func (c *SubscriptionView) Layout(gtx layout.Context) layout.Dimensions {
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
 
+	inset := layout.UniformInset(unit.Dp(4))
+
 	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
-		return c.ConnectionList.Layout(gtx, len(c.ConnectionNames), func(gtx C, index int) D {
-			name := c.ConnectionNames[index]
-			connection := c.Connections[name]
+		return c.ConnectionList.Layout(gtx, len(c.Subs), func(gtx C, index int) D {
+			sub := &c.Subs[index]
 			var children []layout.FlexChild
 			children = append(children, layout.Rigid(func(gtx C) D {
-				return material.H5(theme, name).Layout(gtx)
+				return layout.Flex{}.Layout(gtx,
+					layout.Rigid(func(gtx C) D {
+						return inset.Layout(gtx, func(gtx C) D {
+							return material.Switch(theme, &sub.Subbed).Layout(gtx)
+						})
+					}),
+					layout.Rigid(func(gtx C) D {
+						return inset.Layout(gtx, func(gtx C) D {
+							return sprigTheme.CommunityName(theme, sub.Community).Layout(gtx)
+						})
+					}),
+				)
 			}))
-			for community, subdata := range connection.Subscribable {
+			for _, relay := range sub.ActiveHostingRelays {
 				children = append(children, layout.Rigid(func(gtx C) D {
-					return layout.Flex{}.Layout(gtx,
-						layout.Rigid(func(gtx C) D {
-							return material.Switch(theme, &subdata.Subscribed).Layout(gtx)
-						}),
-						layout.Flexed(1, func(gtx C) D {
-							return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
-								layout.Rigid(func(gtx C) D {
-									return sprigTheme.CommunityName(theme, connection.Subscribable[community].Community).Layout(gtx)
-								}),
-								layout.Rigid(func(gtx C) D {
-									return material.Body2(theme, community).Layout(gtx)
-								}),
-							)
-						}),
-					)
+					return inset.Layout(gtx, func(gtx C) D {
+						return material.Body2(theme, relay).Layout(gtx)
+					})
 				}))
 			}
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx, children...)
