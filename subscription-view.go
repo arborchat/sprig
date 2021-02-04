@@ -18,6 +18,8 @@ import (
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
+// Sub describes the state of a subscription to a community across many
+// connected relays.
 type Sub struct {
 	*forest.Community
 	ActiveHostingRelays []string
@@ -57,9 +59,6 @@ func (c *SubscriptionView) NavItem() *materials.NavItem {
 	}
 }
 
-func (c *SubscriptionView) HandleClipboard(contents string) {
-}
-
 func (c *SubscriptionView) Update(gtx layout.Context) {
 outer:
 	for {
@@ -70,9 +69,10 @@ outer:
 		}
 	}
 	var changes []Sub
-	for _, sub := range c.Subs {
+	for i := range c.Subs {
+		sub := &c.Subs[i]
 		if sub.Subbed.Changed() {
-			changes = append(changes, sub)
+			changes = append(changes, *sub)
 		}
 	}
 	if len(changes) > 0 {
@@ -81,14 +81,36 @@ outer:
 }
 
 func (c *SubscriptionView) implementChanges(changes []Sub) {
+	for _, sub := range changes {
+		for _, addr := range sub.ActiveHostingRelays {
+			timeout := time.NewTicker(time.Second * 5)
+			worker := c.Sprout().WorkerFor(addr)
+			var subFunc func(*forest.Community, <-chan time.Time) error
+			var sessionFunc func(*fields.QualifiedHash)
+			if !sub.Subbed.Value {
+				subFunc = worker.SendUnsubscribe
+				sessionFunc = worker.Unsubscribe
+			} else {
+				subFunc = worker.SendSubscribe
+				sessionFunc = worker.Subscribe
+			}
+			if err := subFunc(sub.Community, timeout.C); err != nil {
+				log.Printf("Failed changing sub for %s to %v on relay %s", sub.ID(), sub.Subbed.Value, addr)
+			} else {
+				sessionFunc(sub.Community.ID())
+				log.Printf("Changed subscription for %s to %v on relay %s", sub.ID(), sub.Subbed.Value, addr)
+			}
+		}
+	}
+	c.refresh()
 }
 
 func (c *SubscriptionView) BecomeVisible() {
-	go c.refresh(c.Sprout().Connections())
+	go c.refresh()
 }
 
-func (c *SubscriptionView) refresh(connections []string) {
-	for _, conn := range connections {
+func (c *SubscriptionView) refresh() {
+	for _, conn := range c.Sprout().Connections() {
 		func() {
 			worker := c.Sprout().WorkerFor(conn)
 			worker.Session.RLock()
@@ -119,7 +141,10 @@ func (c *SubscriptionView) refresh(connections []string) {
 			for id := range worker.Session.Communities {
 				data := communities[id.String()]
 				data.Subbed.Value = true
-				out = append(out, data)
+				communities[id.String()] = data
+			}
+			for _, sub := range communities {
+				out = append(out, sub)
 			}
 			sort.Slice(out, func(i, j int) bool {
 				iID := out[i].Community.ID().String()
