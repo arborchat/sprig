@@ -1,12 +1,15 @@
 package main
 
 import (
+	"image"
 	"log"
 	"sort"
 	"strings"
 	"time"
 
 	"gioui.org/layout"
+	"gioui.org/op/clip"
+	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -33,6 +36,7 @@ type SubscriptionView struct {
 
 	Subs           []Sub
 	ConnectionList layout.List
+	Refresh        widget.Clickable
 
 	Updates chan []Sub
 }
@@ -49,7 +53,12 @@ func NewSubscriptionView(app core.App) View {
 }
 
 func (c *SubscriptionView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
-	return true, "Subscriptions", []materials.AppBarAction{}, []materials.OverflowAction{}
+	return true, "Subscriptions", []materials.AppBarAction{
+		materials.SimpleIconAction(c.Theme().Current().Theme, &c.Refresh, icons.RefreshIcon, materials.OverflowAction{
+			Name: "Refresh",
+			Tag:  &c.Refresh,
+		}),
+	}, []materials.OverflowAction{}
 }
 
 func (c *SubscriptionView) NavItem() *materials.NavItem {
@@ -77,6 +86,9 @@ outer:
 	}
 	if len(changes) > 0 {
 		go c.implementChanges(changes)
+	}
+	if c.Refresh.Clicked() {
+		go c.refresh()
 	}
 }
 
@@ -157,40 +169,67 @@ func (c *SubscriptionView) refresh() {
 	}
 }
 
+type SubscriptionCardStyle struct {
+	*material.Theme
+	*Sub
+	layout.Inset
+}
+
+func SubscriptionCard(th *material.Theme, state *Sub) SubscriptionCardStyle {
+	return SubscriptionCardStyle{
+		Sub:   state,
+		Inset: layout.UniformInset(unit.Dp(4)),
+		Theme: th,
+	}
+}
+
+func (s SubscriptionCardStyle) Layout(gtx C) D {
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(func(gtx C) D {
+			rr := float32(gtx.Px(unit.Dp(4)))
+			outline := clip.UniformRRect(layout.FRect(image.Rectangle{Max: gtx.Constraints.Min}), rr).Op(gtx.Ops)
+			paint.FillShape(gtx.Ops, s.Theme.Bg, outline)
+			return D{}
+		}),
+		layout.Stacked(func(gtx C) D {
+			gtx.Constraints.Min.X = gtx.Constraints.Max.X
+			return s.Inset.Layout(gtx, func(gtx C) D {
+				return layout.Flex{
+					Spacing: layout.SpaceBetween,
+				}.Layout(gtx,
+					layout.Rigid(func(gtx C) D {
+						return s.Inset.Layout(gtx, func(gtx C) D {
+							return material.Switch(s.Theme, &s.Subbed).Layout(gtx)
+						})
+					}),
+					layout.Rigid(func(gtx C) D {
+						return s.Inset.Layout(gtx, func(gtx C) D {
+							return sprigTheme.CommunityName(s.Theme, s.Community).Layout(gtx)
+						})
+					}),
+					layout.Rigid(func(gtx C) D {
+						return s.Inset.Layout(gtx, func(gtx C) D {
+							return material.Body2(s.Theme, strings.Join(s.ActiveHostingRelays, "\n")).Layout(gtx)
+						})
+					}),
+				)
+			})
+		}),
+	)
+}
+
 func (c *SubscriptionView) Layout(gtx layout.Context) layout.Dimensions {
 	c.Update(gtx)
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
 
-	inset := layout.UniformInset(unit.Dp(4))
-
-	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
-		return c.ConnectionList.Layout(gtx, len(c.Subs), func(gtx C, index int) D {
-			sub := &c.Subs[index]
-			var children []layout.FlexChild
-			children = append(children, layout.Rigid(func(gtx C) D {
-				return layout.Flex{}.Layout(gtx,
-					layout.Rigid(func(gtx C) D {
-						return inset.Layout(gtx, func(gtx C) D {
-							return material.Switch(theme, &sub.Subbed).Layout(gtx)
-						})
-					}),
-					layout.Rigid(func(gtx C) D {
-						return inset.Layout(gtx, func(gtx C) D {
-							return sprigTheme.CommunityName(theme, sub.Community).Layout(gtx)
-						})
-					}),
-				)
-			}))
-			for _, relay := range sub.ActiveHostingRelays {
-				children = append(children, layout.Rigid(func(gtx C) D {
-					return inset.Layout(gtx, func(gtx C) D {
-						return material.Body2(theme, relay).Layout(gtx)
-					})
-				}))
-			}
-			return layout.Flex{Axis: layout.Vertical}.Layout(gtx, children...)
-		})
+	return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+		return c.ConnectionList.Layout(gtx, len(c.Subs),
+			func(gtx C, index int) D {
+				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+					return SubscriptionCard(theme, &c.Subs[index]).Layout(gtx)
+				})
+			})
 	})
 }
 
