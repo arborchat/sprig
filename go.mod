@@ -10,7 +10,7 @@ require (
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f
-	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20201215220754-cd1a35679f04
+	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210218224258-1185b55c56b9
 	github.com/magefile/mage v1.10.0
 	github.com/pkg/profile v1.5.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad

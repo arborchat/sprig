@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -20,6 +21,9 @@ type SettingsService interface {
 	SetNotificationsGloballyAllowed(bool)
 	AcknowledgedNoticeVersion() int
 	SetAcknowledgedNoticeVersion(version int)
+	AddSubscription(id string)
+	RemoveSubscription(id string)
+	Subscriptions() []string
 	Address() string
 	SetAddress(string)
 	BottomAppBar() bool
@@ -60,9 +64,12 @@ type Settings struct {
 	// whether the user wants the navigation drawer to dock to the side of
 	// the UI instead of appearing on top
 	DockNavDrawer bool
+
+	Subscriptions []string
 }
 
 type settingsService struct {
+	subscriptionLock sync.Mutex
 	Settings
 	dataDir string
 	// state used for authoring messages
@@ -92,6 +99,41 @@ func (s *settingsService) Load() error {
 		return fmt.Errorf("couldn't parse json settings: %w", err)
 	}
 	return nil
+}
+
+func (s *settingsService) AddSubscription(id string) {
+	s.subscriptionLock.Lock()
+	defer s.subscriptionLock.Unlock()
+	found := false
+	for _, comm := range s.Settings.Subscriptions {
+		if comm == id {
+			found = true
+			break
+		}
+	}
+	if !found {
+		s.Settings.Subscriptions = append(s.Settings.Subscriptions, id)
+	}
+}
+
+func (s *settingsService) RemoveSubscription(id string) {
+	s.subscriptionLock.Lock()
+	defer s.subscriptionLock.Unlock()
+	length := len(s.Settings.Subscriptions)
+	for i, comm := range s.Settings.Subscriptions {
+		if comm == id {
+			s.Settings.Subscriptions = append(s.Settings.Subscriptions[:i], s.Settings.Subscriptions[i+1:length]...)
+			return
+		}
+	}
+}
+
+func (s *settingsService) Subscriptions() []string {
+	s.subscriptionLock.Lock()
+	defer s.subscriptionLock.Unlock()
+	var out []string
+	out = append(out, s.Settings.Subscriptions...)
+	return out
 }
 
 func (s *settingsService) DockNavDrawer() bool {

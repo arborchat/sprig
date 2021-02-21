@@ -9,6 +9,7 @@ import (
 
 	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	"git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprout-go"
 )
@@ -118,7 +119,7 @@ func (s *sproutService) launchWorker(addr string) {
 			}
 			s.BannerService.Add(synchronizingBanner)
 			defer synchronizingBanner.Cancel()
-			worker.BootstrapLocalStore(1024)
+			BootstrapSubscribed(worker)
 		}()
 
 		worker.Run()
@@ -162,6 +163,45 @@ func (s *sproutService) MarkSelfOffline() {
 			}
 		}
 	}
+}
+
+func makeTicker(duration time.Duration) <-chan time.Time {
+	return time.NewTicker(duration).C
+}
+
+func BootstrapSubscribed(worker *sprout.Worker) error {
+	leaves := 1024
+	communities, err := worker.SendList(fields.NodeTypeCommunity, leaves, makeTicker(worker.DefaultTimeout))
+	if err != nil {
+		worker.Printf("Failed listing peer communities: %v", err)
+		return err
+	}
+	for _, node := range communities.Nodes {
+		community, isCommunity := node.(*forest.Community)
+		if !isCommunity {
+			worker.Printf("Got response in community list that isn't a community: %s", node.ID().String())
+			continue
+		}
+		if err := worker.EnsureAuthorAvailable(community, worker.DefaultTimeout); err != nil {
+			worker.Printf("Couldn't fetch author information for node %s: %v", community.ID().String(), err)
+			continue
+		}
+		if err := worker.SubscribableStore.AddAs(community, worker.subscriptionID); err != nil {
+			worker.Printf("Couldn't add community %s to store: %v", community.ID().String(), err)
+			continue
+		}
+		if err := worker.SendSubscribe(community, makeTicker(worker.DefaultTimeout)); err != nil {
+			worker.Printf("Couldn't subscribe to community %s", community.ID().String())
+			continue
+		}
+		worker.Subscribe(community.ID())
+		worker.Printf("Subscribed to %s", community.ID().String())
+		if err := worker.SynchronizeFullTree(community, leaves, worker.DefaultTimeout); err != nil {
+			worker.Printf("Couldn't fetch message tree rooted at community %s: %v", community.ID().String(), err)
+			continue
+		}
+	}
+	return nil
 }
 
 // NewWorker creates a sprout worker connected to the provided address using
