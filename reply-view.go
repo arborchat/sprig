@@ -808,68 +808,77 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			// Only acquire a state after ensuring the node should be rendered. This allows
 			// us to count used states in order to determine how many nodes were rendered.
 			var state = c.States.Next()
-			return layout.Stack{}.Layout(gtx,
-				layout.Stacked(func(gtx C) D {
-					var (
-						extraWidth   = gtx.Px(unit.Dp(5*insetUnit + sprigTheme.DefaultIconButtonWidthDp + scrollSlotWidthDp))
-						messageWidth = gtx.Constraints.Max.X - extraWidth
-					)
-					dims := layout.Stack{}.Layout(gtx,
-						layout.Stacked(func(gtx C) D {
-							gtx.Constraints.Min.X = gtx.Constraints.Max.X
-							return layout.Inset{
-								Top: func() unit.Value {
-									if collapseMetadata {
-										return unit.Dp(0)
-									}
-									return unit.Dp(3)
-								}(),
-								Bottom: unit.Dp(3),
-								Left:   interpolateInset(anim, c.Animations.Progress(gtx)),
-							}.Layout(gtx, func(gtx C) D {
-								gtx.Constraints.Max.X = messageWidth
-								return sprigTheme.
-									Reply(th, anim, reply, isActive).
-									HideMetadata(collapseMetadata).
-									Layout(gtx)
+			return layout.Center.Layout(gtx, func(gtx C) D {
+				var (
+					cs         = &gtx.Constraints
+					contentMax = gtx.Px(unit.Dp(800))
+				)
+				if cs.Max.X > contentMax {
+					cs.Max.X = contentMax
+				}
+				return layout.Stack{}.Layout(gtx,
+					layout.Stacked(func(gtx C) D {
+						var (
+							extraWidth   = gtx.Px(unit.Dp(5*insetUnit + sprigTheme.DefaultIconButtonWidthDp + scrollSlotWidthDp))
+							messageWidth = gtx.Constraints.Max.X - extraWidth
+						)
+						dims := layout.Stack{}.Layout(gtx,
+							layout.Stacked(func(gtx C) D {
+								gtx.Constraints.Min.X = gtx.Constraints.Max.X
+								return layout.Inset{
+									Top: func() unit.Value {
+										if collapseMetadata {
+											return unit.Dp(0)
+										}
+										return unit.Dp(3)
+									}(),
+									Bottom: unit.Dp(3),
+									Left:   interpolateInset(anim, c.Animations.Progress(gtx)),
+								}.Layout(gtx, func(gtx C) D {
+									gtx.Constraints.Max.X = messageWidth
+									return sprigTheme.
+										Reply(th, anim, reply, isActive).
+										HideMetadata(collapseMetadata).
+										Layout(gtx)
 
-							})
-						}),
-						layout.Expanded(func(gtx C) D {
-							return state.
-								WithHash(reply.ID()).
-								WithContent(string(reply.Content.Blob)).
-								Layout(gtx)
-						}),
-					)
-					return D{
-						Size: image.Point{
-							X: gtx.Constraints.Max.X,
-							Y: dims.Size.Y,
-						},
-						Baseline: dims.Baseline,
-					}
-				}),
-				layout.Expanded(func(gtx C) D {
-					return layout.E.Layout(gtx, func(gtx C) D {
-						if status != sprigTheme.Selected {
-							return D{}
+								})
+							}),
+							layout.Expanded(func(gtx C) D {
+								return state.
+									WithHash(reply.ID()).
+									WithContent(string(reply.Content.Blob)).
+									Layout(gtx)
+							}),
+						)
+						return D{
+							Size: image.Point{
+								X: gtx.Constraints.Max.X,
+								Y: dims.Size.Y,
+							},
+							Baseline: dims.Baseline,
 						}
-						return layout.Inset{
-							Right: unit.Dp(scrollSlotWidthDp),
-						}.Layout(gtx, func(gtx C) D {
-							return material.IconButtonStyle{
-								Background: th.Secondary.Light.Bg,
-								Color:      th.Secondary.Light.Fg,
-								Button:     &c.CreateReplyButton,
-								Icon:       icons.ReplyIcon,
-								Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
-								Inset:      layout.UniformInset(unit.Dp(9)),
-							}.Layout(gtx)
+					}),
+					layout.Expanded(func(gtx C) D {
+						return layout.E.Layout(gtx, func(gtx C) D {
+							if status != sprigTheme.Selected {
+								return D{}
+							}
+							return layout.Inset{
+								Right: unit.Dp(scrollSlotWidthDp),
+							}.Layout(gtx, func(gtx C) D {
+								return material.IconButtonStyle{
+									Background: th.Secondary.Light.Bg,
+									Color:      th.Secondary.Light.Fg,
+									Button:     &c.CreateReplyButton,
+									Icon:       icons.ReplyIcon,
+									Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
+									Inset:      layout.UniformInset(unit.Dp(9)),
+								}.Layout(gtx)
+							})
 						})
-					})
-				}),
-			)
+					}),
+				)
+			})
 		})
 	})
 
