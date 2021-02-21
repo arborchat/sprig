@@ -102,9 +102,11 @@ func (c *SubscriptionView) implementChanges(changes []Sub) {
 			if !sub.Subbed.Value {
 				subFunc = worker.SendUnsubscribe
 				sessionFunc = worker.Unsubscribe
+				c.Settings().RemoveSubscription(sub.Community.ID().String())
 			} else {
 				subFunc = worker.SendSubscribe
 				sessionFunc = worker.Subscribe
+				c.Settings().AddSubscription(sub.Community.ID().String())
 			}
 			if err := subFunc(sub.Community, timeout.C); err != nil {
 				log.Printf("Failed changing sub for %s to %v on relay %s", sub.ID(), sub.Subbed.Value, addr)
@@ -112,6 +114,7 @@ func (c *SubscriptionView) implementChanges(changes []Sub) {
 				sessionFunc(sub.Community.ID())
 				log.Printf("Changed subscription for %s to %v on relay %s", sub.ID(), sub.Subbed.Value, addr)
 			}
+			go c.Settings().Persist()
 		}
 	}
 	c.refresh()
