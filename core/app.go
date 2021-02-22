@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	gioapp "gioui.org/app"
-	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	"git.sr.ht/~whereswaldon/forest-go"
 )
 
@@ -69,7 +67,7 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	if a.NotificationService, err = newNotificationService(a.SettingsService, a.ArborService); err != nil {
 		return nil, err
 	}
-	if a.SproutService, err = newSproutService(a.ArborService, a.BannerService); err != nil {
+	if a.SproutService, err = newSproutService(a.ArborService, a.BannerService, a.SettingsService); err != nil {
 		return nil, err
 	}
 	if a.ThemeService, err = newThemeService(); err != nil {
@@ -138,35 +136,7 @@ func (a *app) Banner() BannerService {
 func (a *app) Shutdown() {
 	log.Printf("cleaning up")
 	defer log.Printf("shutting down")
-	for _, conn := range a.Sprout().Connections() {
-		if worker := a.Sprout().WorkerFor(conn); worker != nil {
-			var (
-				nodes []forest.Node
-			)
-			a.Arbor().Communities().WithCommunities(func(coms []*forest.Community) {
-				if a.Settings().ActiveArborIdentityID() != nil {
-					builder, err := a.Settings().Builder()
-					if err == nil {
-						log.Printf("killing active-status heartbeat")
-						for _, c := range coms {
-							n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
-							if err != nil {
-								log.Printf("creating inactive node: %v", err)
-								continue
-							}
-							log.Printf("sending offline node to community %s", c.ID())
-							nodes = append(nodes, n)
-						}
-					} else {
-						log.Printf("aquiring builder: %v", err)
-					}
-				}
-			})
-			if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
-				log.Printf("sending shutdown messages: %v", err)
-			}
-		}
-	}
+	a.Sprout().MarkSelfOffline()
 }
 
 // Window returns the window handle.

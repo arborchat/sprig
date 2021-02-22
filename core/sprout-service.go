@@ -7,6 +7,8 @@ import (
 	"sync"
 	"time"
 
+	status "git.sr.ht/~athorp96/forest-ex/active-status"
+	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprout-go"
 )
@@ -15,11 +17,13 @@ type SproutService interface {
 	ConnectTo(address string) error
 	Connections() []string
 	WorkerFor(address string) *sprout.Worker
+	MarkSelfOffline()
 }
 
 type sproutService struct {
 	ArborService
 	BannerService
+	SettingsService
 	workerLock sync.Mutex
 	workerDone chan struct{}
 	workers    map[string]*sprout.Worker
@@ -27,12 +31,13 @@ type sproutService struct {
 
 var _ SproutService = &sproutService{}
 
-func newSproutService(arbor ArborService, banner BannerService) (SproutService, error) {
+func newSproutService(arbor ArborService, banner BannerService, settings SettingsService) (SproutService, error) {
 	s := &sproutService{
-		ArborService:  arbor,
-		BannerService: banner,
-		workers:       make(map[string]*sprout.Worker),
-		workerDone:    make(chan struct{}),
+		ArborService:    arbor,
+		BannerService:   banner,
+		SettingsService: settings,
+		workers:         make(map[string]*sprout.Worker),
+		workerDone:      make(chan struct{}),
 	}
 	return s, nil
 }
@@ -121,6 +126,40 @@ func (s *sproutService) launchWorker(addr string) {
 		case <-done:
 			return
 		default:
+		}
+	}
+}
+
+// MarkSelfOffline announces that the local user is offline in all known
+// communities.
+func (s *sproutService) MarkSelfOffline() {
+	for _, conn := range s.Connections() {
+		if worker := s.WorkerFor(conn); worker != nil {
+			var (
+				nodes []forest.Node
+			)
+			s.ArborService.Communities().WithCommunities(func(coms []*forest.Community) {
+				if s.SettingsService.ActiveArborIdentityID() != nil {
+					builder, err := s.SettingsService.Builder()
+					if err == nil {
+						log.Printf("killing active-status heartbeat")
+						for _, c := range coms {
+							n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
+							if err != nil {
+								log.Printf("creating inactive node: %v", err)
+								continue
+							}
+							log.Printf("sending offline node to community %s", c.ID())
+							nodes = append(nodes, n)
+						}
+					} else {
+						log.Printf("aquiring builder: %v", err)
+					}
+				}
+			})
+			if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
+				log.Printf("sending shutdown messages: %v", err)
+			}
 		}
 	}
 }
