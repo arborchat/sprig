@@ -87,6 +87,10 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	a.Notifications().Register(a.Arbor().Store())
 	a.Status().Register(a.Arbor().Store())
 
+	a.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
+		a.Window().Invalidate()
+	})
+
 	return a, nil
 }
 

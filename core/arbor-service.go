@@ -5,6 +5,7 @@ import (
 	"os"
 	"time"
 
+	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	"git.sr.ht/~athorp96/forest-ex/expiration"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
@@ -16,6 +17,7 @@ import (
 type ArborService interface {
 	Store() store.ExtendedStore
 	Communities() *ds.CommunityList
+	StartHeartbeat()
 }
 
 type arborService struct {
@@ -78,4 +80,18 @@ func (a *arborService) Store() store.ExtendedStore {
 
 func (a *arborService) Communities() *ds.CommunityList {
 	return a.cl
+}
+
+func (a *arborService) StartHeartbeat() {
+	a.Communities().WithCommunities(func(c []*forest.Community) {
+		if a.SettingsService.ActiveArborIdentityID() != nil {
+			builder, err := a.SettingsService.Builder()
+			if err == nil {
+				log.Printf("Begining active-status heartbeat")
+				go status.StartActivityHeartBeat(a.Store(), c, builder, time.Minute*5)
+			} else {
+				log.Printf("Could not acquire builder: %v", err)
+			}
+		}
+	})
 }

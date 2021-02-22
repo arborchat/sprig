@@ -65,7 +65,7 @@ func eventLoop(w *app.Window) error {
 		log.Fatalf("Failed initializing application: %v", err)
 	}
 
-	go heartbeat(app)
+	go app.Arbor().StartHeartbeat()
 
 	// handle ctrl+c to shutdown
 	sigs := make(chan os.Signal, 1)
@@ -261,24 +261,4 @@ func (p ProfileOpt) NewProfiler() Profiler {
 		}
 	}
 	return Profiler{}
-}
-
-// heartbeat starts the active status heartbeat.
-func heartbeat(app core.App) {
-	app.Arbor().Communities().WithCommunities(func(c []*forest.Community) {
-		if app.Settings().ActiveArborIdentityID() != nil {
-			builder, err := app.Settings().Builder()
-			if err == nil {
-				log.Printf("Begining active-status heartbeat")
-				go status.StartActivityHeartBeat(app.Arbor().Store(), c, builder, time.Minute*5)
-			} else {
-				log.Printf("Could not acquire builder: %v", err)
-			}
-		}
-	})
-	if windower, ok := app.(interface{ Window() *gioapp.Window }); ok {
-		app.Arbor().Store().SubscribeToNewMessages(func(n forest.Node) {
-			windower.Window().Invalidate()
-		})
-	}
 }
