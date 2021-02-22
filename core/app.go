@@ -2,9 +2,13 @@ package core
 
 import (
 	"fmt"
+	"log"
 	"os"
+	"time"
 
 	gioapp "gioui.org/app"
+	status "git.sr.ht/~athorp96/forest-ex/active-status"
+	"git.sr.ht/~whereswaldon/forest-go"
 )
 
 // App bundles core application services into a single convenience type.
@@ -17,6 +21,7 @@ type App interface {
 	Status() StatusService
 	Haptic() HapticService
 	Banner() BannerService
+	Shutdown()
 }
 
 // app bundles services together.
@@ -29,6 +34,7 @@ type app struct {
 	StatusService
 	HapticService
 	BannerService
+	window *gioapp.Window
 }
 
 var _ App = &app{}
@@ -41,7 +47,9 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 			err = fmt.Errorf("failed constructing app: %w", err)
 		}
 	}()
-	a := &app{}
+	a := &app{
+		window: w,
+	}
 
 	// ensure our state directory exists
 	if err := os.MkdirAll(stateDir, 0770); err != nil {
@@ -120,4 +128,44 @@ func (a *app) Haptic() HapticService {
 // Banner returns the app's banner service implementation.
 func (a *app) Banner() BannerService {
 	return a.BannerService
+}
+
+// Shutdown performs cleanup, and blocks for the duration.
+func (a *app) Shutdown() {
+	log.Printf("cleaning up")
+	defer log.Printf("shutting down")
+	for _, conn := range a.Sprout().Connections() {
+		if worker := a.Sprout().WorkerFor(conn); worker != nil {
+			var (
+				nodes []forest.Node
+			)
+			a.Arbor().Communities().WithCommunities(func(coms []*forest.Community) {
+				if a.Settings().ActiveArborIdentityID() != nil {
+					builder, err := a.Settings().Builder()
+					if err == nil {
+						log.Printf("killing active-status heartbeat")
+						for _, c := range coms {
+							n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
+							if err != nil {
+								log.Printf("creating inactive node: %v", err)
+								continue
+							}
+							log.Printf("sending offline node to community %s", c.ID())
+							nodes = append(nodes, n)
+						}
+					} else {
+						log.Printf("aquiring builder: %v", err)
+					}
+				}
+			})
+			if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
+				log.Printf("sending shutdown messages: %v", err)
+			}
+		}
+	}
+}
+
+// Window returns the window handle.
+func (a app) Window() *gioapp.Window {
+	return a.window
 }
