@@ -24,6 +24,10 @@ import (
 type ViewManager interface {
 	// request that the primary view be switched to the view with the given ID
 	RequestViewSwitch(ViewID)
+	// set the primary view to be the view with the given ID. This does not
+	// preserve the history of the previous view, so back navigation will not
+	// work.
+	SetView(ViewID)
 	// associate a view with an ID
 	RegisterView(id ViewID, view View)
 	// request a screen invalidation from outside of a render context
@@ -143,8 +147,7 @@ func (vm *viewManager) RegisterView(id ViewID, view View) {
 	view.SetManager(vm)
 }
 
-func (vm *viewManager) RequestViewSwitch(id ViewID) {
-	vm.Push(vm.current)
+func (vm *viewManager) SetView(id ViewID) {
 	vm.current = id
 	//vm.ModalNavDrawer.SetNavDestination(id)
 	view := vm.views[vm.current]
@@ -153,6 +156,11 @@ func (vm *viewManager) RequestViewSwitch(id ViewID) {
 		vm.AppBar.SetActions(actions, overflow)
 	}
 	view.BecomeVisible()
+}
+
+func (vm *viewManager) RequestViewSwitch(id ViewID) {
+	vm.Push(vm.current)
+	vm.SetView(id)
 }
 
 func (vm *viewManager) RequestContextualBar(gtx layout.Context, title string, actions []materials.AppBarAction, overflow []materials.OverflowAction) {

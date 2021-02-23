@@ -77,13 +77,15 @@ func eventLoop(w *app.Window) error {
 	vm.RegisterView(ConsentViewID, NewConsentView(app))
 
 	if app.Settings().AcknowledgedNoticeVersion() < NoticeVersion {
-		vm.RequestViewSwitch(ConsentViewID)
+		vm.SetView(ConsentViewID)
 	} else if app.Settings().Address() == "" {
-		vm.RequestViewSwitch(ConnectFormID)
+		vm.SetView(ConnectFormID)
 	} else if app.Settings().ActiveArborIdentityID() == nil {
-		vm.RequestViewSwitch(IdentityFormID)
+		vm.SetView(IdentityFormID)
+	} else if len(app.Settings().Subscriptions()) < 1 {
+		vm.SetView(SubscriptionViewID)
 	} else {
-		vm.RequestViewSwitch(ReplyViewID)
+		vm.SetView(ReplyViewID)
 	}
 
 	var ops op.Ops
