@@ -2,6 +2,9 @@
 
 Sprig is an [Arbor](https://arbor.chat) chat client focused on mobile devices. 
 
+
+![sprig screenshot](https://git.sr.ht/~whereswaldon/sprig/blob/main/img/screenshot.png)
+
 ### Try it
 
 To give it a shot on desktop, install [go 1.13+](https://golang.org/dl).
