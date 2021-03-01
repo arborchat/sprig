@@ -1,6 +1,6 @@
 ## sprig
 
-Sprig is an [Arbor](https://arbor.chat) chat client focused on mobile devices. 
+Sprig is the [Arbor](https://arbor.chat) reference chat client. 
 
 
 ![sprig screenshot](https://git.sr.ht/~whereswaldon/sprig/blob/main/img/screenshot.png)
