@@ -119,7 +119,7 @@ func (s *sproutService) launchWorker(addr string) {
 			}
 			s.BannerService.Add(synchronizingBanner)
 			defer synchronizingBanner.Cancel()
-			BootstrapSubscribed(worker)
+			BootstrapSubscribed(worker, s.SettingsService.Subscriptions())
 		}()
 
 		worker.Run()
@@ -169,12 +169,16 @@ func makeTicker(duration time.Duration) <-chan time.Time {
 	return time.NewTicker(duration).C
 }
 
-func BootstrapSubscribed(worker *sprout.Worker) error {
+func BootstrapSubscribed(worker *sprout.Worker, subscribed []string) error {
 	leaves := 1024
 	communities, err := worker.SendList(fields.NodeTypeCommunity, leaves, makeTicker(worker.DefaultTimeout))
 	if err != nil {
 		worker.Printf("Failed listing peer communities: %v", err)
 		return err
+	}
+	subbed := map[string]bool{}
+	for _, s := range subscribed {
+		subbed[s] = true
 	}
 	for _, node := range communities.Nodes {
 		community, isCommunity := node.(*forest.Community)
@@ -182,12 +186,11 @@ func BootstrapSubscribed(worker *sprout.Worker) error {
 			worker.Printf("Got response in community list that isn't a community: %s", node.ID().String())
 			continue
 		}
-		if err := worker.EnsureAuthorAvailable(community, worker.DefaultTimeout); err != nil {
-			worker.Printf("Couldn't fetch author information for node %s: %v", community.ID().String(), err)
+		if !subbed[community.ID().String()] {
 			continue
 		}
-		if err := worker.SubscribableStore.AddAs(community, worker.subscriptionID); err != nil {
-			worker.Printf("Couldn't add community %s to store: %v", community.ID().String(), err)
+		if err := worker.IngestNode(community); err != nil {
+			worker.Printf("Couldn't ingest community %s: %v", community.ID().String(), err)
 			continue
 		}
 		if err := worker.SendSubscribe(community, makeTicker(worker.DefaultTimeout)); err != nil {
