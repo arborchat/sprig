@@ -901,7 +901,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	}
 	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
 	bar.Color = materials.WithAlpha(th.Background.Default.Fg, 200)
-	bar.Layout(gtx)
+	layout.Inset{
+		Top:    unit.Dp(2),
+		Bottom: unit.Dp(2),
+	}.Layout(gtx, bar.Layout)
+
 	return dims
 }
 
