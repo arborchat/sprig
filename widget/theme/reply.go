@@ -166,7 +166,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 												th := *r.Theme.Theme
 												th.Palette = ApplyAsNormal(th.Palette, badgeColors)
 												return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-													return material.Body2(&th, "Conversation root").Layout(gtx)
+													return material.Body2(&th, "Root").Layout(gtx)
 												})
 											}),
 										)
