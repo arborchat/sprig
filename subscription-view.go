@@ -238,6 +238,7 @@ func (c *SubStateManager) reconcileSubscriptions(changes []Sub) []Sub {
 				subFunc = worker.SendSubscribe
 				sessionFunc = worker.Subscribe
 				c.Settings().AddSubscription(sub.Community.ID().String())
+				go core.BootstrapSubscribed(worker, []string{sub.Community.ID().String()})
 			}
 			if err := subFunc(sub.Community, timeout.C); err != nil {
 				log.Printf("Failed changing sub for %s to %v on relay %s", sub.ID(), sub.Subbed.Value, addr)
