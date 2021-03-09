@@ -36,6 +36,8 @@ func NewSubSetupFormView(app core.App) View {
 	return c
 }
 
+func (c *SubSetupFormView) HandleIntent(intent Intent) {}
+
 func (c *SubSetupFormView) BecomeVisible() {
 	c.SubStateManager.Refresh()
 	go func() {

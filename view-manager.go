@@ -30,6 +30,10 @@ type ViewManager interface {
 	SetView(ViewID)
 	// associate a view with an ID
 	RegisterView(id ViewID, view View)
+	// register that a given view handles a given kind of intent
+	RegisterIntentHandler(id ViewID, intent IntentID)
+	// finds a view that can handle the intent and Pushes that view
+	ExecuteIntent(intent Intent) bool
 	// request a screen invalidation from outside of a render context
 	RequestInvalidate()
 	// handle logical "back" navigation operations
@@ -65,6 +69,8 @@ type viewManager struct {
 	*materials.ModalNavDrawer
 	*materials.AppBar
 
+	intentToView map[IntentID]ViewID
+
 	// track the tag of the overflow action selected within the last frame
 	selectedOverflowTag interface{}
 
@@ -88,12 +94,13 @@ func NewViewManager(window *app.Window, app core.App) ViewManager {
 	modal := materials.NewModal()
 	drawer := materials.NewNav("Sprig", "Arbor chat client")
 	vm := &viewManager{
-		App:        app,
-		views:      make(map[ViewID]View),
-		window:     window,
-		themeView:  NewThemeEditorView(app),
-		ModalLayer: modal,
-		NavDrawer:  drawer,
+		App:          app,
+		views:        make(map[ViewID]View),
+		window:       window,
+		themeView:    NewThemeEditorView(app),
+		ModalLayer:   modal,
+		NavDrawer:    drawer,
+		intentToView: make(map[IntentID]ViewID),
 		navAnim: materials.VisibilityAnimation{
 			Duration: time.Millisecond * 250,
 			State:    materials.Invisible,
@@ -145,6 +152,20 @@ func (vm *viewManager) RegisterView(id ViewID, view View) {
 	}
 	vm.views[id] = view
 	view.SetManager(vm)
+}
+
+func (vm *viewManager) RegisterIntentHandler(id ViewID, intentID IntentID) {
+	vm.intentToView[intentID] = id
+}
+
+func (vm *viewManager) ExecuteIntent(intent Intent) bool {
+	view, ok := vm.intentToView[intent.ID]
+	if !ok {
+		return false
+	}
+	vm.Push(view)
+	vm.views[view].HandleIntent(intent)
+	return true
 }
 
 func (vm *viewManager) SetView(id ViewID) {

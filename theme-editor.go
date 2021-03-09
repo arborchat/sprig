@@ -204,6 +204,8 @@ func (c *ThemeEditorView) BecomeVisible() {
 	c.ConfigurePickersFor(c.App.Theme().Current())
 }
 
+func (c *ThemeEditorView) HandleIntent(intent Intent) {}
+
 func (c *ThemeEditorView) NavItem() *materials.NavItem {
 	return &materials.NavItem{
 		Name: "Theme",

@@ -89,6 +89,8 @@ func (c *SubscriptionView) SetManager(mgr ViewManager) {
 	c.manager = mgr
 }
 
+func (c *SubscriptionView) HandleIntent(intent Intent) {}
+
 func (c *SubscriptionView) BecomeVisible() {
 	c.SubStateManager.Refresh()
 }

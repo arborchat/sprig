@@ -27,6 +27,8 @@ func NewConsentView(app core.App) View {
 	return c
 }
 
+func (c *ConsentView) HandleIntent(intent Intent) {}
+
 func (c *ConsentView) BecomeVisible() {
 }
 

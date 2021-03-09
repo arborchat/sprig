@@ -97,6 +97,8 @@ func NewCommunityMenuView(app core.App) View {
 	return c
 }
 
+func (c *SettingsView) HandleIntent(intent Intent) {}
+
 func (c *SettingsView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
 	return true, "Settings", []materials.AppBarAction{}, []materials.OverflowAction{}
 }

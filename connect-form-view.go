@@ -28,6 +28,8 @@ func NewConnectFormView(app core.App) View {
 	return c
 }
 
+func (c *ConnectFormView) HandleIntent(intent Intent) {}
+
 func (c *ConnectFormView) BecomeVisible() {
 }
 

@@ -29,6 +29,8 @@ func NewIdentityFormView(app core.App) View {
 	return c
 }
 
+func (c *IdentityFormView) HandleIntent(intent Intent) {}
+
 func (c *IdentityFormView) BecomeVisible() {
 }
 

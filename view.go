@@ -10,6 +10,7 @@ type View interface {
 	AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction)
 	NavItem() *materials.NavItem
 	BecomeVisible()
+	HandleIntent(Intent)
 	Update(gtx layout.Context)
 	Layout(gtx layout.Context) layout.Dimensions
 }

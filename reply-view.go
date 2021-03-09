@@ -144,6 +144,8 @@ func (c *ReplyListView) Filtered() bool {
 	return c.FilterState != Off
 }
 
+func (c *ReplyListView) HandleIntent(intent Intent) {}
+
 func (c *ReplyListView) BecomeVisible() {
 }
 
