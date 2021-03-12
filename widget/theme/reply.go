@@ -12,8 +12,8 @@ import (
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/forest-go"
-	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
+	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 )
 
 type (
@@ -21,70 +21,50 @@ type (
 	D = layout.Dimensions
 )
 
-type ReplyStatus int
-
-const (
-	None ReplyStatus = iota
-	Sibling
-	Selected
-	Ancestor
-	Descendant
-	ConversationRoot
-)
-
-func (r ReplyStatus) HighlightColor(th *Theme) color.NRGBA {
-	switch r {
-	case Selected:
-		return *th.Selected
-	case Ancestor:
-		return *th.Ancestors
-	case Descendant:
-		return *th.Descendants
-	case Sibling:
-		return *th.Siblings
-	default:
-		return *th.Unselected
-	}
-}
-
-func (r ReplyStatus) BorderColor(th *Theme) color.NRGBA {
-	switch r {
-	case Selected:
-		return *th.Selected
-	default:
-		return th.Background.Light.Bg
-	}
-}
-
-// ReplyAnimationState holds the state of an in-progress animation for a reply.
-// The anim.Normal field defines how far through the animation the node is, and
-// the Begin and End fields define the two states that the node is transitioning
-// between.
-type ReplyAnimationState struct {
-	*anim.Normal
-	Begin, End ReplyStatus
-}
-
 // Style applies the appropriate visual tweaks the the reply status for the
 // current animation frame.
-func (r *ReplyAnimationState) Style(gtx C, reply *ReplyStyle) {
+func Style(gtx C, r *sprigWidget.ReplyAnimationState, reply *ReplyStyle) {
 	if r == nil {
 		return
 	}
 	progress := r.Progress(gtx)
 	if progress >= 1 {
 		r.Begin = r.End
-		reply.Highlight = r.Begin.HighlightColor(reply.Theme)
+		reply.Highlight = HighlightColor(r.Begin, reply.Theme)
 	}
-	startColor := r.Begin.HighlightColor(reply.Theme)
-	endColor := r.End.HighlightColor(reply.Theme)
+	startColor := HighlightColor(r.Begin, reply.Theme)
+	endColor := HighlightColor(r.End, reply.Theme)
 	current := materials.Interpolate(startColor, endColor, progress)
 	reply.Highlight = current
 
-	startBorder := r.Begin.BorderColor(reply.Theme)
-	endBorder := r.End.BorderColor(reply.Theme)
+	startBorder := BorderColor(r.Begin, reply.Theme)
+	endBorder := BorderColor(r.End, reply.Theme)
 	currentBorder := materials.Interpolate(startBorder, endBorder, progress)
 	reply.Border = currentBorder
+}
+
+func HighlightColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
+	switch r {
+	case sprigWidget.Selected:
+		return *th.Selected
+	case sprigWidget.Ancestor:
+		return *th.Ancestors
+	case sprigWidget.Descendant:
+		return *th.Descendants
+	case sprigWidget.Sibling:
+		return *th.Siblings
+	default:
+		return *th.Unselected
+	}
+}
+
+func BorderColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
+	switch r {
+	case sprigWidget.Selected:
+		return *th.Selected
+	default:
+		return th.Background.Light.Bg
+	}
 }
 
 type ReplyStyle struct {
@@ -102,14 +82,14 @@ type ReplyStyle struct {
 	// without the author being displayed.
 	CollapseMetadata bool
 
-	*ReplyAnimationState
+	*sprigWidget.ReplyAnimationState
 
 	ds.ReplyData
 	// Whether or not to render the user as active
 	ShowActive bool
 }
 
-func Reply(th *Theme, status *ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
+func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
 	rs := ReplyStyle{
 		Theme:               th,
 		Background:          th.Background.Light.Bg,
@@ -125,7 +105,7 @@ func Reply(th *Theme, status *ReplyAnimationState, nodes ds.ReplyData, showActiv
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	radiiDp := unit.Dp(5)
 	radii := float32(gtx.Px(radiiDp))
-	r.ReplyAnimationState.Style(gtx, &r)
+	Style(gtx, r.ReplyAnimationState, &r)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			innerSize := gtx.Constraints.Min

@@ -1,0 +1,99 @@
+package widget
+
+import (
+	"gioui.org/layout"
+	"git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/sprig/anim"
+	"git.sr.ht/~whereswaldon/sprig/ds"
+)
+
+type MessageList struct {
+	layout.List
+	States
+	ShouldHide   func(reply ds.ReplyData) bool
+	StatusOf     func(reply ds.ReplyData) ReplyStatus
+	UserIsActive func(identity *fields.QualifiedHash) bool
+	Animation
+}
+
+// States implements a buffer of reply states such that memory
+// is reused each frame, yet grows as the view expands to hold more replies.
+type States struct {
+	Buffer  []Reply
+	Current int
+}
+
+// Begin resets the buffer to the start.
+func (s *States) Begin() {
+	s.Current = 0
+}
+
+func (s *States) Next() *Reply {
+	defer func() { s.Current++ }()
+	if s.Current > len(s.Buffer)-1 {
+		s.Buffer = append(s.Buffer, Reply{})
+	}
+	return &s.Buffer[s.Current]
+}
+
+// Animation maintains animation states per reply.
+type Animation struct {
+	anim.Normal
+	animationInit bool
+	Collection    map[*forest.Reply]*ReplyAnimationState
+}
+
+func (a *Animation) init() {
+	a.Collection = make(map[*forest.Reply]*ReplyAnimationState)
+	a.animationInit = true
+}
+
+// Lookup animation state for the given reply.
+// If state doesn't exist, it will be created with using `s` as the
+// beginning status.
+func (a *Animation) Lookup(r *forest.Reply, s ReplyStatus) *ReplyAnimationState {
+	if !a.animationInit {
+		a.init()
+	}
+	_, ok := a.Collection[r]
+	if !ok {
+		a.Collection[r] = &ReplyAnimationState{
+			Normal: &a.Normal,
+			Begin:  s,
+		}
+	}
+	return a.Collection[r]
+}
+
+// Update animation state for the given reply.
+func (a *Animation) Update(gtx layout.Context, r *forest.Reply, s ReplyStatus) *ReplyAnimationState {
+	anim := a.Lookup(r, s)
+	if a.Animating(gtx) {
+		anim.End = s
+	} else {
+		anim.Begin = s
+		anim.End = s
+	}
+	return anim
+}
+
+type ReplyStatus int
+
+const (
+	None ReplyStatus = iota
+	Sibling
+	Selected
+	Ancestor
+	Descendant
+	ConversationRoot
+)
+
+// ReplyAnimationState holds the state of an in-progress animation for a reply.
+// The anim.Normal field defines how far through the animation the node is, and
+// the Begin and End fields define the two states that the node is transitioning
+// between.
+type ReplyAnimationState struct {
+	*anim.Normal
+	Begin, End ReplyStatus
+}

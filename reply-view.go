@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"image"
 	"image/color"
 	"log"
 	"net/url"
@@ -32,7 +31,6 @@ import (
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
-	"git.sr.ht/~whereswaldon/sprig/widget/theme"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -51,11 +49,10 @@ type ReplyListView struct {
 
 	CopyReplyButton widget.Clickable
 
+	sprigWidget.MessageList
+
 	ds.AlphaReplyList
 
-	ReplyList    layout.List
-	States       *States
-	Animations   *Animation
 	Focused      *fields.QualifiedHash
 	Ancestry     []*fields.QualifiedHash
 	Descendants  []*fields.QualifiedHash
@@ -94,15 +91,20 @@ var _ View = &ReplyListView{}
 
 func NewReplyListView(app core.App) View {
 	c := &ReplyListView{
-		App: app,
-		Animations: &Animation{
-			Collection: make(map[*forest.Reply]*theme.ReplyAnimationState),
-			Normal: anim.Normal{
-				Duration: time.Millisecond * 100,
-			},
-		},
+		App:                 app,
 		HistoryRequestCount: 2048,
-		States:              &States{},
+	}
+	c.MessageList.Animation.Normal = anim.Normal{
+		Duration: time.Millisecond * 100,
+	}
+	c.MessageList.ShouldHide = func(r ds.ReplyData) bool {
+		return c.shouldFilter(r.Reply, c.statusOf(r.Reply))
+	}
+	c.MessageList.StatusOf = func(r ds.ReplyData) sprigWidget.ReplyStatus {
+		return c.statusOf(r.Reply)
+	}
+	c.MessageList.UserIsActive = func(identity *fields.QualifiedHash) bool {
+		return c.Status().IsActive(identity)
 	}
 	c.loading = true
 	go func() {
@@ -120,7 +122,7 @@ func NewReplyListView(app core.App) View {
 			}
 			return true
 		})
-		c.ReplyList.Axis = layout.Vertical
+		c.MessageList.Axis = layout.Vertical
 		// ensure that we are notified when we need to refresh the state of visible nodes
 		c.Arbor().Store().SubscribeToNewMessages(func(node forest.Node) {
 			go func() {
@@ -133,8 +135,8 @@ func NewReplyListView(app core.App) View {
 				c.manager.RequestInvalidate()
 			}()
 		})
-		c.ReplyList.ScrollToEnd = true
-		c.ReplyList.Position.BeforeEnd = false
+		c.MessageList.ScrollToEnd = true
+		c.MessageList.Position.BeforeEnd = false
 		c.loadMoreHistory()
 	}()
 	return c
@@ -299,17 +301,17 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 }
 
 func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
-	currentFirst := c.ReplyList.Position.First
+	currentFirst := c.MessageList.Position.First
 	notInFirstFive := currentFirst+5 > focusedIndex
 	if currentFirst <= focusedIndex && notInFirstFive {
 		return
 	}
-	c.ReplyList.Position.First = focusedIndex
+	c.MessageList.Position.First = focusedIndex
 	if notInFirstFive {
-		//		c.ReplyList.Position.First++
+		//		c.MessageList.Position.First++
 	}
-	c.ReplyList.Position.Offset = 0
-	c.ReplyList.Position.BeforeEnd = true
+	c.MessageList.Position.Offset = 0
+	c.MessageList.Position.BeforeEnd = true
 }
 
 func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
@@ -319,7 +321,7 @@ func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
 	c.Focused = replies[len(replies)-1].ID()
 	c.StateRefreshNeeded = true
 	c.requestKeyboardFocus()
-	c.ReplyList.Position.BeforeEnd = false
+	c.MessageList.Position.BeforeEnd = false
 }
 
 func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
@@ -329,9 +331,9 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	c.Focused = replies[0].ID()
 	c.StateRefreshNeeded = true
 	c.requestKeyboardFocus()
-	c.ReplyList.Position.BeforeEnd = true
-	c.ReplyList.Position.First = 0
-	c.ReplyList.Position.Offset = 0
+	c.MessageList.Position.BeforeEnd = true
+	c.MessageList.Position.First = 0
+	c.MessageList.Position.Offset = 0
 }
 
 // reveal the reply at the given index.
@@ -341,8 +343,8 @@ func (c *ReplyListView) reveal(index int) {
 	}
 	c.StateRefreshNeeded = true
 	c.requestKeyboardFocus()
-	c.ReplyList.Position.BeforeEnd = true
-	c.ReplyList.Position.First = index
+	c.MessageList.Position.BeforeEnd = true
+	c.MessageList.Position.First = index
 }
 
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
@@ -350,7 +352,7 @@ func (c *ReplyListView) refreshNodeStatus(gtx C) {
 		c.StateRefreshNeeded = false
 		c.Ancestry, _ = c.Arbor().Store().AncestryOf(c.Focused)
 		c.Descendants, _ = c.Arbor().Store().DescendantsOf(c.Focused)
-		c.Animations.Start(gtx.Now)
+		c.MessageList.Animation.Start(gtx.Now)
 	}
 }
 
@@ -359,10 +361,10 @@ func (c *ReplyListView) toggleFilter() {
 	case Conversation:
 		c.FilterState = Message
 	case Message:
-		c.ReplyList.Position = c.PrefilterPosition
+		c.MessageList.Position = c.PrefilterPosition
 		c.FilterState = Off
 	default:
-		c.PrefilterPosition = c.ReplyList.Position
+		c.PrefilterPosition = c.MessageList.Position
 		c.FilterState = Conversation
 	}
 }
@@ -648,32 +650,32 @@ func (c *ReplyListView) resetReplyState() {
 	c.Composer.Reset()
 }
 
-func (c *ReplyListView) statusOf(reply *forest.Reply) sprigTheme.ReplyStatus {
+func (c *ReplyListView) statusOf(reply *forest.Reply) sprigWidget.ReplyStatus {
 	if c.Focused == nil {
-		return sprigTheme.None
+		return sprigWidget.None
 	}
 	if c.Focused != nil && reply.ID().Equals(c.Focused) {
-		return sprigTheme.Selected
+		return sprigWidget.Selected
 	}
 	for _, id := range c.Ancestry {
 		if id.Equals(reply.ID()) {
-			return sprigTheme.Ancestor
+			return sprigWidget.Ancestor
 		}
 	}
 	for _, id := range c.Descendants {
 		if id.Equals(reply.ID()) {
-			return sprigTheme.Descendant
+			return sprigWidget.Descendant
 		}
 	}
 	if reply.Depth == 1 {
-		return sprigTheme.ConversationRoot
+		return sprigWidget.ConversationRoot
 	}
 	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
 		if c.Conversation.Equals(&reply.ConversationID) {
-			return sprigTheme.Sibling
+			return sprigWidget.Sibling
 		}
 	}
-	return sprigTheme.None
+	return sprigWidget.None
 }
 
 func (c *ReplyListView) shouldDisplayEditor() bool {
@@ -715,48 +717,15 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	)
 }
 
-const insetUnit = 12
-
-var (
-	defaultInset    = unit.Dp(insetUnit)
-	ancestorInset   = unit.Dp(2 * insetUnit)
-	selectedInset   = unit.Dp(2 * insetUnit)
-	descendantInset = unit.Dp(3 * insetUnit)
-)
-
-func insetForStatus(status theme.ReplyStatus) unit.Value {
-	switch status {
-	case sprigTheme.Selected:
-		return selectedInset
-	case sprigTheme.Ancestor:
-		return ancestorInset
-	case sprigTheme.Descendant:
-		return descendantInset
-	case sprigTheme.Sibling:
-		return defaultInset
-	default:
-		return defaultInset
-	}
-}
-
-func interpolateInset(anim *theme.ReplyAnimationState, progress float32) unit.Value {
-	if progress == 0 {
-		return insetForStatus(anim.Begin)
-	}
-	begin := insetForStatus(anim.Begin).V
-	end := insetForStatus(anim.End).V
-	return unit.Dp((end-begin)*progress + begin)
-}
-
 const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
-func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigTheme.ReplyStatus) bool {
+func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigWidget.ReplyStatus) bool {
 	switch c.FilterState {
 	case Conversation:
-		return status == sprigTheme.None || status == sprigTheme.ConversationRoot
+		return status == sprigWidget.None || status == sprigWidget.ConversationRoot
 	case Message:
-		return status == sprigTheme.Sibling || status == sprigTheme.None || status == sprigTheme.ConversationRoot
+		return status == sprigWidget.Sibling || status == sprigWidget.None || status == sprigWidget.ConversationRoot
 	default:
 		return false
 	}
@@ -774,114 +743,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			return material.Loader(th.Theme).Layout(gtx)
 		})
 	}
-	c.States.Begin()
 	c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
-		dims = c.ReplyList.Layout(gtx, len(replies)+1, func(gtx layout.Context, index int) layout.Dimensions {
-			if index == 0 {
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-						return material.Button(th.Theme, &c.LoadMoreHistoryButton, "Load more history").Layout(gtx)
-					})
-				})
-			}
-			// adjust for the fact that we use the first index as a button
-			index--
-			var (
-				reply            = replies[index]
-				status           = c.statusOf(reply.Reply)
-				anim             = c.Animations.Update(gtx, reply.Reply, status)
-				isActive         = c.Status().IsActive(reply.AuthorID())
-				collapseMetadata = func() bool {
-					// This conflicts with animation feature, so we're removing the feature for now.
-					// if index > 0 {
-					// 	if replies[index-1].Reply.Author.Equals(&reply.Reply.Author) && replies[index-1].ID().Equals(reply.ParentID()) {
-					// 		return true
-					// 	}
-					// }
-					return false
-				}()
-			)
-			if c.shouldFilter(reply.Reply, status) {
-				return layout.Dimensions{}
-			}
-			// Only acquire a state after ensuring the node should be rendered. This allows
-			// us to count used states in order to determine how many nodes were rendered.
-			var state = c.States.Next()
-			return layout.Center.Layout(gtx, func(gtx C) D {
-				var (
-					cs         = &gtx.Constraints
-					contentMax = gtx.Px(unit.Dp(800))
-				)
-				if cs.Max.X > contentMax {
-					cs.Max.X = contentMax
-				}
-				return layout.Stack{}.Layout(gtx,
-					layout.Stacked(func(gtx C) D {
-						var (
-							extraWidth   = gtx.Px(unit.Dp(5*insetUnit + sprigTheme.DefaultIconButtonWidthDp + scrollSlotWidthDp))
-							messageWidth = gtx.Constraints.Max.X - extraWidth
-						)
-						dims := layout.Stack{}.Layout(gtx,
-							layout.Stacked(func(gtx C) D {
-								gtx.Constraints.Min.X = gtx.Constraints.Max.X
-								return layout.Inset{
-									Top: func() unit.Value {
-										if collapseMetadata {
-											return unit.Dp(0)
-										}
-										return unit.Dp(3)
-									}(),
-									Bottom: unit.Dp(3),
-									Left:   interpolateInset(anim, c.Animations.Progress(gtx)),
-								}.Layout(gtx, func(gtx C) D {
-									gtx.Constraints.Max.X = messageWidth
-									return sprigTheme.
-										Reply(th, anim, reply, isActive).
-										HideMetadata(collapseMetadata).
-										Layout(gtx)
-
-								})
-							}),
-							layout.Expanded(func(gtx C) D {
-								return state.
-									WithHash(reply.ID()).
-									WithContent(string(reply.Content.Blob)).
-									Layout(gtx)
-							}),
-						)
-						return D{
-							Size: image.Point{
-								X: gtx.Constraints.Max.X,
-								Y: dims.Size.Y,
-							},
-							Baseline: dims.Baseline,
-						}
-					}),
-					layout.Expanded(func(gtx C) D {
-						return layout.E.Layout(gtx, func(gtx C) D {
-							if status != sprigTheme.Selected {
-								return D{}
-							}
-							return layout.Inset{
-								Right: unit.Dp(scrollSlotWidthDp),
-							}.Layout(gtx, func(gtx C) D {
-								return material.IconButtonStyle{
-									Background: th.Secondary.Light.Bg,
-									Color:      th.Secondary.Light.Fg,
-									Button:     &c.CreateReplyButton,
-									Icon:       icons.ReplyIcon,
-									Size:       unit.Dp(sprigTheme.DefaultIconButtonWidthDp),
-									Inset:      layout.UniformInset(unit.Dp(9)),
-								}.Layout(gtx)
-							})
-						})
-					}),
-				)
-			})
-		})
+		dims = sprigTheme.MessageList(th, &c.MessageList, &c.CreateReplyButton, replies).Layout(gtx)
 	})
 
 	totalNodes := func() int {
@@ -890,7 +756,7 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		}
 		return c.replyCount
 	}()
-	progress := float32(c.ReplyList.Position.First) / float32(c.replyCount)
+	progress := float32(c.MessageList.Position.First) / float32(c.replyCount)
 	visibleFraction := float32(0)
 	if c.replyCount > 0 {
 		if c.States.Current > c.maxRepliesVisible {
@@ -940,56 +806,4 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 
 func (c *ReplyListView) SetManager(mgr ViewManager) {
 	c.manager = mgr
-}
-
-// States implements a buffer of reply states such that memory
-// is reused each frame, yet grows as the view expands to hold more replies.
-type States struct {
-	Buffer  []sprigWidget.Reply
-	Current int
-}
-
-// Begin resets the buffer to the start.
-func (s *States) Begin() {
-	s.Current = 0
-}
-
-func (s *States) Next() *sprigWidget.Reply {
-	defer func() { s.Current++ }()
-	if s.Current > len(s.Buffer)-1 {
-		s.Buffer = append(s.Buffer, sprigWidget.Reply{})
-	}
-	return &s.Buffer[s.Current]
-}
-
-// Animation maintains animation states per reply.
-type Animation struct {
-	anim.Normal
-	Collection map[*forest.Reply]*theme.ReplyAnimationState
-}
-
-// Lookup animation state for the given reply.
-// If state doesn't exist, it will be created with using `s` as the
-// beginning status.
-func (a *Animation) Lookup(r *forest.Reply, s sprigTheme.ReplyStatus) *theme.ReplyAnimationState {
-	_, ok := a.Collection[r]
-	if !ok {
-		a.Collection[r] = &theme.ReplyAnimationState{
-			Normal: &a.Normal,
-			Begin:  s,
-		}
-	}
-	return a.Collection[r]
-}
-
-// Update animation state for the given reply.
-func (a *Animation) Update(gtx layout.Context, r *forest.Reply, s sprigTheme.ReplyStatus) *theme.ReplyAnimationState {
-	anim := a.Lookup(r, s)
-	if a.Animating(gtx) {
-		anim.End = s
-	} else {
-		anim.Begin = s
-		anim.End = s
-	}
-	return anim
 }
