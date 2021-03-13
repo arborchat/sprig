@@ -759,14 +759,16 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 			c.moveFocusEnd(replies)
 		}
 		ml := sprigTheme.MessageList(th, &c.MessageList, &c.CreateReplyButton, replies)
-		ml.Prefixes = []layout.Widget{
-			func(gtx C) D {
-				return layout.Center.Layout(gtx, func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-						return material.Button(th.Theme, &c.LoadMoreHistoryButton, "Load more history").Layout(gtx)
+		if !c.Filtered() {
+			ml.Prefixes = []layout.Widget{
+				func(gtx C) D {
+					return layout.Center.Layout(gtx, func(gtx C) D {
+						return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+							return material.Button(th.Theme, &c.LoadMoreHistoryButton, "Load more history").Layout(gtx)
+						})
 					})
-				})
-			},
+				},
+			}
 		}
 		dims = ml.Layout(gtx)
 	})
