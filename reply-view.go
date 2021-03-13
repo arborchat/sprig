@@ -131,7 +131,7 @@ func NewReplyListView(app core.App) View {
 		Duration: time.Millisecond * 100,
 	}
 	c.MessageList.ShouldHide = func(r ds.ReplyData) bool {
-		return c.shouldFilter(r.Reply, c.statusOf(r.Reply))
+		return c.shouldFilter(c.statusOf(r.Reply))
 	}
 	c.MessageList.StatusOf = func(r ds.ReplyData) sprigWidget.ReplyStatus {
 		return c.statusOf(r.Reply)
@@ -321,7 +321,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 				break
 			}
 			status := c.statusOf(replies[currentIndex].Reply)
-			if c.shouldFilter(replies[currentIndex].Reply, status) {
+			if c.shouldFilter(status) {
 				continue
 			}
 			c.FocusTracker.SetFocus(replies[currentIndex].Reply)
@@ -731,7 +731,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
-func (c *ReplyListView) shouldFilter(reply *forest.Reply, status sprigWidget.ReplyStatus) bool {
+func (c *ReplyListView) shouldFilter(status sprigWidget.ReplyStatus) bool {
 	switch c.FilterState {
 	case Conversation:
 		return status == sprigWidget.None || status == sprigWidget.ConversationRoot
