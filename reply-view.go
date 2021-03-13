@@ -20,6 +20,7 @@ import (
 	"git.sr.ht/~athorp96/forest-ex/expiration"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/forest-go/twig"
 
 	materials "gioui.org/x/component"
@@ -42,6 +43,44 @@ const (
 	Message
 )
 
+type FocusTracker struct {
+	Focused      forest.Node
+	Ancestry     []*fields.QualifiedHash
+	Descendants  []*fields.QualifiedHash
+	Conversation *fields.QualifiedHash
+	// Whether the Ancestry and Descendants need to be regenerated because the
+	// contents of the replylist changed
+	stateRefreshNeeded bool
+}
+
+func (f *FocusTracker) SetFocus(focused forest.Node) {
+	f.stateRefreshNeeded = true
+	f.Focused = focused
+	if reply, ok := focused.(*forest.Reply); ok {
+		f.Conversation = &reply.ConversationID
+	} else {
+		f.Conversation = nil
+	}
+}
+func (f *FocusTracker) Invalidate() {
+	f.stateRefreshNeeded = true
+}
+
+func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
+	if f.stateRefreshNeeded {
+		f.stateRefreshNeeded = false
+		if f.Focused == nil {
+			f.Ancestry = nil
+			f.Descendants = nil
+			return true
+		}
+		f.Ancestry, _ = s.AncestryOf(f.Focused.ID())
+		f.Descendants, _ = s.DescendantsOf(f.Focused.ID())
+		return true
+	}
+	return false
+}
+
 type ReplyListView struct {
 	manager ViewManager
 
@@ -53,13 +92,7 @@ type ReplyListView struct {
 
 	ds.AlphaReplyList
 
-	Focused      *fields.QualifiedHash
-	Ancestry     []*fields.QualifiedHash
-	Descendants  []*fields.QualifiedHash
-	Conversation *fields.QualifiedHash
-	// Whether the Ancestry and Descendants need to be regenerated because the
-	// contents of the replylist changed
-	StateRefreshNeeded bool
+	FocusTracker
 
 	sprigWidget.Composer
 
@@ -131,7 +164,7 @@ func NewReplyListView(app core.App) View {
 					return
 				}
 				c.AlphaReplyList.Insert(rd)
-				c.StateRefreshNeeded = true
+				c.FocusTracker.Invalidate()
 				c.manager.RequestInvalidate()
 			}()
 		})
@@ -277,7 +310,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
 	}
-	currentIndex := c.AlphaReplyList.IndexForID(c.Focused)
+	currentIndex := c.AlphaReplyList.IndexForID(c.Focused.ID())
 	if currentIndex < 0 {
 		return
 	}
@@ -291,9 +324,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 			if c.shouldFilter(replies[currentIndex].Reply, status) {
 				continue
 			}
-			c.Conversation = &replies[currentIndex].Reply.ConversationID
-			c.Focused = replies[currentIndex].Reply.ID()
-			c.StateRefreshNeeded = true
+			c.FocusTracker.SetFocus(replies[currentIndex].Reply)
 			c.ensureFocusedVisible(currentIndex)
 			break
 		}
@@ -307,9 +338,6 @@ func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
 		return
 	}
 	c.MessageList.Position.First = focusedIndex
-	if notInFirstFive {
-		//		c.MessageList.Position.First++
-	}
 	c.MessageList.Position.Offset = 0
 	c.MessageList.Position.BeforeEnd = true
 }
@@ -318,8 +346,7 @@ func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
 	}
-	c.Focused = replies[len(replies)-1].ID()
-	c.StateRefreshNeeded = true
+	c.SetFocus(replies[len(replies)-1])
 	c.requestKeyboardFocus()
 	c.MessageList.Position.BeforeEnd = false
 }
@@ -328,8 +355,7 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
 	}
-	c.Focused = replies[0].ID()
-	c.StateRefreshNeeded = true
+	c.SetFocus(replies[0])
 	c.requestKeyboardFocus()
 	c.MessageList.Position.BeforeEnd = true
 	c.MessageList.Position.First = 0
@@ -341,17 +367,14 @@ func (c *ReplyListView) reveal(index int) {
 	if c.replyCount < 1 || index > c.replyCount-1 {
 		return
 	}
-	c.StateRefreshNeeded = true
+	c.FocusTracker.Invalidate()
 	c.requestKeyboardFocus()
 	c.MessageList.Position.BeforeEnd = true
 	c.MessageList.Position.First = index
 }
 
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
-	if c.Focused != nil {
-		c.StateRefreshNeeded = false
-		c.Ancestry, _ = c.Arbor().Store().AncestryOf(c.Focused)
-		c.Descendants, _ = c.Arbor().Store().DescendantsOf(c.Focused)
+	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
 		c.MessageList.Animation.Start(gtx.Now)
 	}
 }
@@ -370,22 +393,14 @@ func (c *ReplyListView) toggleFilter() {
 }
 
 func (c *ReplyListView) copyFocused(gtx layout.Context) {
-	reply, _, err := c.Arbor().Store().Get(c.Focused)
-	if err != nil {
-		log.Printf("failed looking up selected message: %v", err)
-	} else {
-		clipboard.WriteOp{
-			Text: string(reply.(*forest.Reply).Content.Blob),
-		}.Add(gtx.Ops)
-	}
+	reply := c.Focused
+	clipboard.WriteOp{
+		Text: string(reply.(*forest.Reply).Content.Blob),
+	}.Add(gtx.Ops)
 }
 
 func (c *ReplyListView) startReply() {
-	reply, _, err := c.Arbor().Store().Get(c.Focused)
-	if err != nil {
-		log.Printf("failed looking up selected message: %v", err)
-		return
-	}
+	reply := c.Focused
 	var data ds.ReplyData
 	data.Reply = reply.(*forest.Reply)
 	author, _, err := c.Arbor().Store().GetIdentity(&data.Reply.Author)
@@ -491,10 +506,8 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		return clicks[len(clicks)-1], true
 	}
 	focus := func(handler *sprigWidget.Reply) {
-		c.StateRefreshNeeded = true
-		c.Focused = handler.Hash
 		reply, _, _ := c.Arbor().Store().Get(handler.Hash)
-		c.Conversation = &reply.(*forest.Reply).ConversationID
+		c.SetFocus(reply)
 	}
 	for i := range c.States.Buffer {
 		handler := &c.States.Buffer[i]
@@ -505,7 +518,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 				}
 			} else {
 				c.requestKeyboardFocus()
-				clickedOnFocused := handler.Hash.Equals(c.Focused)
+				clickedOnFocused := handler.Hash.Equals(c.Focused.ID())
 				if !clickedOnFocused {
 					focus(handler)
 					c.dismissReplyContextMenu(gtx)
@@ -594,9 +607,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		jumpStart()
 	}
 	c.processMessagePointerEvents(gtx)
-	if c.StateRefreshNeeded {
-		c.refreshNodeStatus(gtx)
-	}
+	c.refreshNodeStatus(gtx)
 	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
 		c.toggleFilter()
 	}
@@ -654,7 +665,7 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) sprigWidget.ReplyStatus {
 	if c.Focused == nil {
 		return sprigWidget.None
 	}
-	if c.Focused != nil && reply.ID().Equals(c.Focused) {
+	if c.Focused != nil && reply.ID().Equals(c.Focused.ID()) {
 		return sprigWidget.Selected
 	}
 	for _, id := range c.Ancestry {
