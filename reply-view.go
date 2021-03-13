@@ -758,7 +758,17 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		if c.Focused == nil && len(replies) > 0 {
 			c.moveFocusEnd(replies)
 		}
-		dims = sprigTheme.MessageList(th, &c.MessageList, &c.CreateReplyButton, replies).Layout(gtx)
+		ml := sprigTheme.MessageList(th, &c.MessageList, &c.CreateReplyButton, replies)
+		ml.Prefixes = []layout.Widget{
+			func(gtx C) D {
+				return layout.Center.Layout(gtx, func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						return material.Button(th.Theme, &c.LoadMoreHistoryButton, "Load more history").Layout(gtx)
+					})
+				})
+			},
+		}
+		dims = ml.Layout(gtx)
 	})
 
 	totalNodes := func() int {
