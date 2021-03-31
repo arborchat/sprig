@@ -15,8 +15,9 @@ gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092/go.mod h1:dkKYIeTwSxJG3MbN
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1 h1:quRwMtoF0S/VUHQBoL8fkqrKq/uYYB7pEGAGAFzLoXA=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f h1:WUwYv4X2Ai2np/6AuTyPVlsC0EEVeP3u3BruVs/ylRY=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201215213244-cd38454fdf9f/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20210331004432-972f2afc0437 h1:SoYp319jzN0YkjRkJx88fdsolX8mVO909ScytHq7+eU=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20210331004432-972f2afc0437/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb h1:jcEZhfRWnqY+XwZMk2+ldbJDnPrB8v+UiwrC3sPnv8I=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb/go.mod h1:jUOuersHq1652DgWF5rTCCH/Xoepj8z+NpU09IAeqCw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210218224258-1185b55c56b9 h1:jl81RdE64wBd3ovY6vsbXIaj/jxgxUHtVgGNemfL+fw=
