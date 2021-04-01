@@ -50,6 +50,18 @@ func (h *HiddenTracker) isAnchor(id *fields.QualifiedHash) bool {
 	return ok
 }
 
+// NumDescendants returns the number of hidden descendants for the given anchor
+// node.
+func (h *HiddenTracker) NumDescendants(id *fields.QualifiedHash) int {
+	h.RLock()
+	defer h.RUnlock()
+	return h.numDescendants(id)
+}
+
+func (h *HiddenTracker) numDescendants(id *fields.QualifiedHash) int {
+	return len(h.anchors[id.String()])
+}
+
 // ToggleAnchor switches the anchor state of the given ID.
 func (h *HiddenTracker) ToggleAnchor(id *fields.QualifiedHash, s store.ExtendedStore) error {
 	h.Lock()

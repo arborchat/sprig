@@ -141,6 +141,9 @@ func NewReplyListView(app core.App) View {
 	c.MessageList.UserIsActive = func(identity *fields.QualifiedHash) bool {
 		return c.Status().IsActive(identity)
 	}
+	c.MessageList.HiddenChildren = func(r ds.ReplyData) int {
+		return c.HiddenTracker.NumDescendants(r.Reply.ID())
+	}
 	c.loading = true
 	go func() {
 		defer func() { c.loading = false }()

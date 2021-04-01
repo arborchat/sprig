@@ -11,9 +11,10 @@ import (
 type MessageList struct {
 	layout.List
 	States
-	ShouldHide   func(reply ds.ReplyData) bool
-	StatusOf     func(reply ds.ReplyData) ReplyStatus
-	UserIsActive func(identity *fields.QualifiedHash) bool
+	ShouldHide     func(reply ds.ReplyData) bool
+	StatusOf       func(reply ds.ReplyData) ReplyStatus
+	HiddenChildren func(reply ds.ReplyData) int
+	UserIsActive   func(identity *fields.QualifiedHash) bool
 	Animation
 }
 

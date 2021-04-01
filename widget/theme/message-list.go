@@ -132,9 +132,13 @@ func (m MessageListStyle) Layout(gtx C) D {
 								Left:   interpolateInset(anim, m.State.Animation.Progress(gtx)),
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								return Reply(th, anim, reply, isActive).
-									HideMetadata(collapseMetadata).
-									Layout(gtx)
+								rs := Reply(th, anim, reply, isActive).
+									HideMetadata(collapseMetadata)
+								if anim.Begin&sprigWidget.Anchor > 0 {
+									rs = rs.Anchoring(th.Theme, m.State.HiddenChildren(reply))
+								}
+
+								return rs.Layout(gtx)
 
 							})
 						}),

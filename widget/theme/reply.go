@@ -2,6 +2,7 @@ package theme
 
 import (
 	"encoding/hex"
+	"fmt"
 	"image/color"
 
 	"gioui.org/layout"
@@ -128,6 +129,10 @@ type ReplyStyle struct {
 	ds.ReplyData
 	// Whether or not to render the user as active
 	ShowActive bool
+
+	// Special text to overlay atop the message contents. Used for displaying
+	// messages on anchor nodes with hidden children.
+	AnchorText material.LabelStyle
 }
 
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
@@ -141,6 +146,11 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		ShowActive:          showActive,
 	}
 	return rs
+}
+
+func (r ReplyStyle) Anchoring(th *material.Theme, numNodes int) ReplyStyle {
+	r.AnchorText = material.Body1(th, fmt.Sprintf("collapsed children: %d", numNodes))
+	return r
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
@@ -196,6 +206,14 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 								return D{}
 							}),
 						)
+					})
+				}),
+				layout.Expanded(func(gtx C) D {
+					if r.AnchorText == (material.LabelStyle{}) {
+						return D{}
+					}
+					return layout.Center.Layout(gtx, func(gtx C) D {
+						return r.AnchorText.Layout(gtx)
 					})
 				}),
 			)
