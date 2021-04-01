@@ -12,6 +12,7 @@ import (
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/forest-go"
+	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 )
@@ -30,38 +31,78 @@ func Style(gtx C, r *sprigWidget.ReplyAnimationState, reply *ReplyStyle) {
 	progress := r.Progress(gtx)
 	if progress >= 1 {
 		r.Begin = r.End
-		reply.Highlight = HighlightColor(r.Begin, reply.Theme)
 	}
-	startColor := HighlightColor(r.Begin, reply.Theme)
-	endColor := HighlightColor(r.End, reply.Theme)
-	current := materials.Interpolate(startColor, endColor, progress)
-	reply.Highlight = current
+	reply.Highlight = StatusColor(reply.Theme, progress, r, HighlightColor)
+	reply.Border = StatusColor(reply.Theme, progress, r, BorderColor)
+	reply.TextColor = StatusColor(reply.Theme, progress, r, ReplyTextColor)
+	reply.Background = StatusColor(reply.Theme, progress, r, BackgroundColor)
+}
 
-	startBorder := BorderColor(r.Begin, reply.Theme)
-	endBorder := BorderColor(r.End, reply.Theme)
-	currentBorder := materials.Interpolate(startBorder, endBorder, progress)
-	reply.Border = currentBorder
+type StatusColorFunc func(sprigWidget.ReplyStatus, *Theme) color.NRGBA
+
+func StatusColor(th *Theme, progress float32, state *sprigWidget.ReplyAnimationState, chooser StatusColorFunc) color.NRGBA {
+	if progress == 0 {
+		return chooser(state.Begin, th)
+	} else if progress >= 1 {
+		return chooser(state.End, th)
+	}
+	start := chooser(state.Begin, th)
+	end := chooser(state.End, th)
+	return materials.Interpolate(start, end, progress)
 }
 
 func HighlightColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
-	switch r {
-	case sprigWidget.Selected:
-		return *th.Selected
-	case sprigWidget.Ancestor:
-		return *th.Ancestors
-	case sprigWidget.Descendant:
-		return *th.Descendants
-	case sprigWidget.Sibling:
-		return *th.Siblings
+	var c color.NRGBA
+	switch {
+	case r&sprigWidget.Selected > 0:
+		c = *th.Selected
+	case r&sprigWidget.Ancestor > 0:
+		c = *th.Ancestors
+	case r&sprigWidget.Descendant > 0:
+		c = *th.Descendants
+	case r&sprigWidget.Sibling > 0:
+		c = *th.Siblings
 	default:
-		return *th.Unselected
+		c = *th.Unselected
+	}
+	return c
+}
+
+func ReplyTextColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
+	switch {
+	case r&sprigWidget.Anchor > 0:
+		c := th.Theme.Fg
+		c.A = 150
+		return c
+	case r&sprigWidget.Hidden > 0:
+		c := th.Theme.Fg
+		c.A = 0
+		return c
+	default:
+		return th.Theme.Fg
 	}
 }
 
 func BorderColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
-	switch r {
-	case sprigWidget.Selected:
-		return *th.Selected
+	var c color.NRGBA
+	switch {
+	case r&sprigWidget.Selected > 0:
+		c = *th.Selected
+	default:
+		c = th.Background.Light.Bg
+	}
+	if r&sprigWidget.Anchor > 0 {
+		c.A = 150
+	}
+	return c
+}
+
+func BackgroundColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
+	switch {
+	case r&sprigWidget.Anchor > 0:
+		c := th.Background.Light.Bg
+		c.A = 150
+		return c
 	default:
 		return th.Background.Light.Bg
 	}
@@ -180,11 +221,18 @@ func max(is ...int) int {
 func (r ReplyStyle) layoutMetadata(gtx layout.Context) layout.Dimensions {
 	inset := layout.Inset{Right: unit.Dp(4)}
 	nameMacro := op.Record(gtx.Ops)
-	nameDim := inset.Layout(gtx, AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive).Layout)
+	author := AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive)
+	author.NameStyle.Color = r.TextColor
+	author.SuffixStyle.Color = r.TextColor
+	author.ActivityIndicatorStyle.Color.A = r.TextColor.A
+	nameDim := inset.Layout(gtx, author.Layout)
 	nameWidget := nameMacro.Stop()
 
 	communityMacro := op.Record(gtx.Ops)
-	communityDim := inset.Layout(gtx, CommunityName(r.Theme.Theme, r.ReplyData.Community).Layout)
+	comm := CommunityName(r.Theme.Theme, r.ReplyData.Community)
+	comm.NameStyle.Color = r.TextColor
+	comm.SuffixStyle.Color = r.TextColor
+	communityDim := inset.Layout(gtx, comm.Layout)
 	communityWidget := communityMacro.Stop()
 
 	dateMacro := op.Record(gtx.Ops)
@@ -267,82 +315,66 @@ func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
 	return content.Layout(gtx)
 }
 
+type ForestRefStyle struct {
+	NameStyle, SuffixStyle, ActivityIndicatorStyle material.LabelStyle
+}
+
+func ForestRef(theme *material.Theme, name string, id *fields.QualifiedHash) ForestRefStyle {
+	suffix := id.Blob
+	suffix = suffix[len(suffix)-2:]
+	a := ForestRefStyle{
+		NameStyle:   material.Body2(theme, name),
+		SuffixStyle: material.Body2(theme, "#"+hex.EncodeToString(suffix)),
+	}
+	a.NameStyle.Font.Weight = text.Bold
+	a.NameStyle.MaxLines = 1
+	a.SuffixStyle.Color.A = 150
+	a.SuffixStyle.MaxLines = 1
+	return a
+}
+
+func CommunityName(theme *material.Theme, community *forest.Community) ForestRefStyle {
+	return ForestRef(theme, string(community.Name.Blob), community.ID())
+}
+
+func (f ForestRefStyle) Layout(gtx C) D {
+	return layout.Flex{}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
+			return f.NameStyle.Layout(gtx)
+		}),
+		layout.Rigid(func(gtx C) D {
+			return f.SuffixStyle.Layout(gtx)
+		}),
+	)
+}
+
 type AuthorNameStyle struct {
-	*forest.Identity
-	*Theme
 	Active bool
+	ForestRefStyle
+	ActivityIndicatorStyle material.LabelStyle
 }
 
 func AuthorName(theme *Theme, identity *forest.Identity, active bool) AuthorNameStyle {
-	return AuthorNameStyle{
-		Identity: identity,
-		Theme:    theme,
-		Active:   active,
+	a := AuthorNameStyle{
+		Active:                 active,
+		ForestRefStyle:         ForestRef(theme.Theme, string(identity.Name.Blob), identity.ID()),
+		ActivityIndicatorStyle: material.Body2(theme.Theme, "●"),
 	}
+	a.ActivityIndicatorStyle.Color = theme.Primary.Light.Bg
+	a.ActivityIndicatorStyle.Font.Weight = text.Bold
+	return a
 }
 
 func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
-	if a.Identity == nil {
-		return layout.Dimensions{}
-	}
-
 	return layout.Flex{}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
-			name := material.Body2(a.Theme.Theme, string(a.Identity.Name.Blob))
-			name.Font.Weight = text.Bold
-			name.MaxLines = 1
-			return name.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx C) D {
-			suffix := a.Identity.ID().Blob
-			suffix = suffix[len(suffix)-2:]
-			suffixLabel := material.Body2(a.Theme.Theme, "#"+hex.EncodeToString(suffix))
-			suffixLabel.Color.A = 150
-			suffixLabel.MaxLines = 1
-			return suffixLabel.Layout(gtx)
+			return a.ForestRefStyle.Layout(gtx)
 		}),
 		layout.Rigid(func(gtx C) D {
 			if !a.Active {
 				return D{}
 			}
-			name := material.Body2(a.Theme.Theme, "●")
-			name.Color = a.Theme.Primary.Light.Bg
-			name.Font.Weight = text.Bold
-			return name.Layout(gtx)
-		}),
-	)
-}
-
-type CommunityNameStyle struct {
-	*forest.Community
-	*material.Theme
-}
-
-func CommunityName(theme *material.Theme, community *forest.Community) CommunityNameStyle {
-	return CommunityNameStyle{
-		Community: community,
-		Theme:     theme,
-	}
-}
-
-func (a CommunityNameStyle) Layout(gtx layout.Context) layout.Dimensions {
-	if a.Community == nil {
-		return layout.Dimensions{}
-	}
-	return layout.Flex{}.Layout(gtx,
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			name := material.Body2(a.Theme, string(a.Community.Name.Blob))
-			name.Font.Weight = text.Bold
-			name.MaxLines = 1
-			return name.Layout(gtx)
-		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			suffix := a.Community.ID().Blob
-			suffix = suffix[len(suffix)-2:]
-			suffixLabel := material.Body2(a.Theme, "#"+hex.EncodeToString(suffix))
-			suffixLabel.Color.A = 150
-			suffixLabel.MaxLines = 1
-			return suffixLabel.Layout(gtx)
+			return a.ActivityIndicatorStyle.Layout(gtx)
 		}),
 	)
 }

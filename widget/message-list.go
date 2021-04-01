@@ -81,12 +81,17 @@ func (a *Animation) Update(gtx layout.Context, r *forest.Reply, s ReplyStatus) *
 type ReplyStatus int
 
 const (
-	None ReplyStatus = iota
+	None ReplyStatus = 1 << iota
 	Sibling
 	Selected
 	Ancestor
 	Descendant
 	ConversationRoot
+	// Anchor indicates that this node is visible, but its descendants have been
+	// hidden.
+	Anchor
+	// Hidden indicates that this node is not currently visible.
+	Hidden
 )
 
 // ReplyAnimationState holds the state of an in-progress animation for a reply.

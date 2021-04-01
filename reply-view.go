@@ -672,32 +672,45 @@ func (c *ReplyListView) resetReplyState() {
 	c.Composer.Reset()
 }
 
-func (c *ReplyListView) statusOf(reply *forest.Reply) sprigWidget.ReplyStatus {
+func (c *ReplyListView) statusOf(reply *forest.Reply) (status sprigWidget.ReplyStatus) {
+	if c.HiddenTracker.IsAnchor(reply.ID()) {
+		status |= sprigWidget.Anchor
+	}
+	if c.HiddenTracker.IsHidden(reply.ID()) {
+		status |= sprigWidget.Hidden
+	}
 	if c.Focused == nil {
-		return sprigWidget.None
+		status |= sprigWidget.None
+		return
 	}
 	if c.Focused != nil && reply.ID().Equals(c.Focused.ID()) {
-		return sprigWidget.Selected
+		status |= sprigWidget.Selected
+		return
 	}
 	for _, id := range c.Ancestry {
 		if id.Equals(reply.ID()) {
-			return sprigWidget.Ancestor
+			status |= sprigWidget.Ancestor
+			return
 		}
 	}
 	for _, id := range c.Descendants {
 		if id.Equals(reply.ID()) {
-			return sprigWidget.Descendant
+			status |= sprigWidget.Descendant
+			return
 		}
 	}
 	if reply.Depth == 1 {
-		return sprigWidget.ConversationRoot
+		status |= sprigWidget.ConversationRoot
+		return
 	}
 	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
 		if c.Conversation.Equals(&reply.ConversationID) {
-			return sprigWidget.Sibling
+			status |= sprigWidget.Sibling
+			return
 		}
 	}
-	return sprigWidget.None
+	status |= sprigWidget.None
+	return
 }
 
 func (c *ReplyListView) shouldDisplayEditor() bool {

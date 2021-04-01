@@ -39,14 +39,14 @@ var (
 )
 
 func insetForStatus(status sprigWidget.ReplyStatus) unit.Value {
-	switch status {
-	case sprigWidget.Selected:
+	switch {
+	case status&sprigWidget.Selected > 0:
 		return selectedInset
-	case sprigWidget.Ancestor:
+	case status&sprigWidget.Ancestor > 0:
 		return ancestorInset
-	case sprigWidget.Descendant:
+	case status&sprigWidget.Descendant > 0:
 		return descendantInset
-	case sprigWidget.Sibling:
+	case status&sprigWidget.Sibling > 0:
 		return defaultInset
 	default:
 		return defaultInset
