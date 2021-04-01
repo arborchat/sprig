@@ -100,6 +100,7 @@ type ReplyListView struct {
 	CreateReplyButton                   widget.Clickable
 	CreateConversationButton            widget.Clickable
 	JumpToBottomButton, JumpToTopButton widget.Clickable
+	HideDescendantsButton               widget.Clickable
 
 	LoadMoreHistoryButton widget.Clickable
 	// how many nodes of history does the view want
@@ -270,25 +271,30 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
 	th := c.Theme().Current().Theme
 	return []materials.AppBarAction{
-		materials.SimpleIconAction(
-			th,
-			&c.CopyReplyButton,
-			icons.CopyIcon,
-			materials.OverflowAction{
-				Name: "Copy reply text",
-				Tag:  &c.CopyReplyButton,
+			materials.SimpleIconAction(
+				th,
+				&c.CopyReplyButton,
+				icons.CopyIcon,
+				materials.OverflowAction{
+					Name: "Copy reply text",
+					Tag:  &c.CopyReplyButton,
+				},
+			),
+			materials.SimpleIconAction(
+				th,
+				&c.CreateReplyButton,
+				icons.ReplyIcon,
+				materials.OverflowAction{
+					Name: "Reply to selected",
+					Tag:  &c.CreateReplyButton,
+				},
+			),
+		}, []materials.OverflowAction{
+			{
+				Name: "Hide/Show descendants",
+				Tag:  &c.HideDescendantsButton,
 			},
-		),
-		materials.SimpleIconAction(
-			th,
-			&c.CreateReplyButton,
-			icons.ReplyIcon,
-			materials.OverflowAction{
-				Name: "Reply to selected",
-				Tag:  &c.CreateReplyButton,
-			},
-		),
-	}, []materials.OverflowAction{}
+		}
 }
 
 func (c *ReplyListView) triggerReplyContextMenu(gtx layout.Context) {
@@ -609,6 +615,9 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
 		jumpStart()
+	}
+	if overflowTag == &c.HideDescendantsButton || c.HideDescendantsButton.Clicked() {
+		c.toggleDescendantsHidden()
 	}
 	c.processMessagePointerEvents(gtx)
 	c.refreshNodeStatus(gtx)
