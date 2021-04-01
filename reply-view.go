@@ -44,7 +44,7 @@ const (
 )
 
 type FocusTracker struct {
-	Focused      forest.Node
+	Focused      *ds.ReplyData
 	Ancestry     []*fields.QualifiedHash
 	Descendants  []*fields.QualifiedHash
 	Conversation *fields.QualifiedHash
@@ -53,14 +53,10 @@ type FocusTracker struct {
 	stateRefreshNeeded bool
 }
 
-func (f *FocusTracker) SetFocus(focused forest.Node) {
+func (f *FocusTracker) SetFocus(focused ds.ReplyData) {
 	f.stateRefreshNeeded = true
-	f.Focused = focused
-	if reply, ok := focused.(*forest.Reply); ok {
-		f.Conversation = &reply.ConversationID
-	} else {
-		f.Conversation = nil
-	}
+	f.Focused = &focused
+	f.Conversation = &f.Focused.Reply.ConversationID
 }
 func (f *FocusTracker) Invalidate() {
 	f.stateRefreshNeeded = true
@@ -335,7 +331,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 			if c.shouldFilter(status) {
 				continue
 			}
-			c.FocusTracker.SetFocus(replies[currentIndex].Reply)
+			c.FocusTracker.SetFocus(replies[currentIndex])
 			c.ensureFocusedVisible(currentIndex)
 			break
 		}
@@ -406,21 +402,13 @@ func (c *ReplyListView) toggleFilter() {
 func (c *ReplyListView) copyFocused(gtx layout.Context) {
 	reply := c.Focused
 	clipboard.WriteOp{
-		Text: string(reply.(*forest.Reply).Content.Blob),
+		Text: string(reply.Reply.Content.Blob),
 	}.Add(gtx.Ops)
 }
 
 func (c *ReplyListView) startReply() {
-	reply := c.Focused
-	var data ds.ReplyData
-	data.Reply = reply.(*forest.Reply)
-	author, _, err := c.Arbor().Store().GetIdentity(&data.Reply.Author)
-	if err != nil {
-		log.Printf("failed looking up select message author: %v", err)
-	} else {
-		data.Author = author.(*forest.Identity)
-	}
-	c.Composer.StartReply(data)
+	data := c.Focused
+	c.Composer.StartReply(*data)
 }
 
 func (c *ReplyListView) sendReply() {
@@ -518,7 +506,9 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	}
 	focus := func(handler *sprigWidget.Reply) {
 		reply, _, _ := c.Arbor().Store().Get(handler.Hash)
-		c.SetFocus(reply)
+		var data ds.ReplyData
+		data.Populate(reply, c.Arbor().Store())
+		c.SetFocus(data)
 	}
 	for i := range c.States.Buffer {
 		handler := &c.States.Buffer[i]
