@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"image/color"
 	"log"
 	"net/url"
@@ -82,104 +81,6 @@ func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 	return false
 }
 
-type HiddenTracker struct {
-	anchors map[string][]*fields.QualifiedHash
-	hidden  IDSet
-}
-
-func (h *HiddenTracker) init() {
-	if h.anchors == nil {
-		h.anchors = make(map[string][]*fields.QualifiedHash)
-	}
-}
-
-func (h *HiddenTracker) IsHidden(id *fields.QualifiedHash) bool {
-	h.init()
-	return h.hidden.Contains(id)
-}
-
-func (h *HiddenTracker) IsAnchor(id *fields.QualifiedHash) bool {
-	h.init()
-	_, ok := h.anchors[id.String()]
-	return ok
-}
-
-func (h *HiddenTracker) ToggleAnchor(id *fields.QualifiedHash, s store.ExtendedStore) error {
-	log.Printf("checking if %s is an anchor", id)
-	if h.IsAnchor(id) {
-		h.Reveal(id)
-		return nil
-	}
-	log.Printf("%s is not an anchor", id)
-	return h.Hide(id, s)
-}
-
-func (h *HiddenTracker) Hide(id *fields.QualifiedHash, s store.ExtendedStore) error {
-	h.init()
-	descendants, err := s.DescendantsOf(id)
-	if err != nil {
-		return fmt.Errorf("failed looking up descendants of %s: %w", id.String(), err)
-	}
-	// ensure that any descendants that were previously hidden are subsumed by
-	// hiding their ancestor.
-	log.Printf("Anchor: %s", id)
-	for _, d := range descendants {
-		log.Printf("Descendant %s", d)
-		if _, ok := h.anchors[d.String()]; ok {
-			delete(h.anchors, d.String())
-		}
-	}
-	h.anchors[id.String()] = descendants
-	h.hidden.Add(descendants...)
-	return nil
-}
-
-func (h *HiddenTracker) Reveal(id *fields.QualifiedHash) {
-	h.init()
-	descendants, ok := h.anchors[id.String()]
-	if !ok {
-		return
-	}
-	h.hidden.Remove(descendants...)
-	delete(h.anchors, id.String())
-}
-
-type IDSet struct {
-	contents map[string]struct{}
-}
-
-func (h *IDSet) init() {
-	h.contents = make(map[string]struct{})
-}
-
-func (h *IDSet) Add(ids ...*fields.QualifiedHash) {
-	if h.contents == nil {
-		h.init()
-	}
-	for _, id := range ids {
-		h.contents[id.String()] = struct{}{}
-	}
-}
-
-func (h *IDSet) Contains(id *fields.QualifiedHash) bool {
-	if h.contents == nil {
-		h.init()
-	}
-	_, contains := h.contents[id.String()]
-	return contains
-}
-
-func (h *IDSet) Remove(ids ...*fields.QualifiedHash) {
-	if h.contents == nil {
-		h.init()
-	}
-	for _, id := range ids {
-		if h.Contains(id) {
-			delete(h.contents, id.String())
-		}
-	}
-}
-
 type ReplyListView struct {
 	manager ViewManager
 
@@ -207,7 +108,7 @@ type ReplyListView struct {
 	scroll.Scrollable
 
 	FilterState
-	HiddenTracker
+	ds.HiddenTracker
 	PrefilterPosition layout.Position
 
 	ShouldRequestKeyboardFocus bool
@@ -266,6 +167,7 @@ func NewReplyListView(app core.App) View {
 				c.AlphaReplyList.Insert(rd)
 				c.FocusTracker.Invalidate()
 				c.manager.RequestInvalidate()
+				c.HiddenTracker.Process(node)
 			}()
 		})
 		c.MessageList.ScrollToEnd = true
