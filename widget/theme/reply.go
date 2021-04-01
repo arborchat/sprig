@@ -213,7 +213,17 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 						return D{}
 					}
 					return layout.Center.Layout(gtx, func(gtx C) D {
-						return r.AnchorText.Layout(gtx)
+						return layout.Stack{}.Layout(gtx,
+							layout.Expanded(func(gtx C) D {
+								max := layout.FPt(gtx.Constraints.Min)
+								color := r.Background
+								color.A = 0xff
+								return Rect{Color: color, Size: max, Radii: radii}.Layout(gtx)
+							}),
+							layout.Stacked(func(gtx C) D {
+								return layout.UniformInset(unit.Dp(4)).Layout(gtx, r.AnchorText.Layout)
+							}),
+						)
 					})
 				}),
 			)
