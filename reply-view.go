@@ -756,11 +756,14 @@ const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
 func (c *ReplyListView) shouldFilter(status sprigWidget.ReplyStatus) bool {
+	if status&sprigWidget.Hidden > 0 {
+		return true
+	}
 	switch c.FilterState {
 	case Conversation:
-		return status == sprigWidget.None || status == sprigWidget.ConversationRoot
+		return status&sprigWidget.None > 0 || status&sprigWidget.ConversationRoot > 0
 	case Message:
-		return status == sprigWidget.Sibling || status == sprigWidget.None || status == sprigWidget.ConversationRoot
+		return status&sprigWidget.Sibling > 0 || status&sprigWidget.None > 0 || status&sprigWidget.ConversationRoot > 0
 	default:
 		return false
 	}
