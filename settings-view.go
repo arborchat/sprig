@@ -33,6 +33,7 @@ type SettingsView struct {
 	BottomBarSwitch         widget.Bool
 	DockNavSwitch           widget.Bool
 	DarkModeSwitch          widget.Bool
+	UseOrchardStoreSwitch   widget.Bool
 }
 
 type Section struct {
@@ -155,6 +156,10 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		c.Settings().SetDarkMode(c.DarkModeSwitch.Value)
 		settingsChanged = true
 	}
+	if c.UseOrchardStoreSwitch.Changed() {
+		c.Settings().SetUseOrchardStore(c.UseOrchardStoreSwitch.Value)
+		settingsChanged = true
+	}
 	if settingsChanged {
 		c.manager.ApplySettings(c.Settings())
 		go c.Settings().Persist()
@@ -167,6 +172,7 @@ func (c *SettingsView) BecomeVisible() {
 	c.BottomBarSwitch.Value = c.Settings().BottomAppBar()
 	c.DockNavSwitch.Value = c.Settings().DockNavDrawer()
 	c.DarkModeSwitch.Value = c.Settings().DarkMode()
+	c.UseOrchardStoreSwitch.Value = c.Settings().UseOrchardStore()
 }
 
 func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
@@ -222,6 +228,25 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 						)
 					},
 					Context: "Currently supported on Android and Linux/BSD. macOS support coming soon.",
+				}.Layout,
+			},
+		},
+		{
+			Heading: "Store",
+			Items: []layout.Widget{
+				SimpleSectionItem{
+					Theme: theme,
+					Control: func(gtx C) D {
+						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Switch(theme, &c.UseOrchardStoreSwitch).Layout)
+							}),
+							layout.Rigid(func(gtx C) D {
+								return itemInset.Layout(gtx, material.Body1(theme, "Use Orchard store").Layout)
+							}),
+						)
+					},
+					Context: "Orchard is a single-file read-oriented database for storing nodes.",
 				}.Layout,
 			},
 		},

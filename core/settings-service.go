@@ -34,10 +34,12 @@ type SettingsService interface {
 	SetDarkMode(bool)
 	ActiveArborIdentityID() *fields.QualifiedHash
 	Identity() (*forest.Identity, error)
-	GrovePath() string
+	DataPath() string
 	Persist() error
 	CreateIdentity(name string) error
 	Builder() (*forest.Builder, error)
+	UseOrchardStore() bool
+	SetUseOrchardStore(bool)
 }
 
 type Settings struct {
@@ -64,6 +66,10 @@ type Settings struct {
 	// whether the user wants the navigation drawer to dock to the side of
 	// the UI instead of appearing on top
 	DockNavDrawer bool
+
+	// whether the user wants to use the beta Orchard store for node storage.
+	// Will become default in future release.
+	OrchardStore bool
 
 	Subscriptions []string
 }
@@ -172,8 +178,8 @@ func (s *settingsService) SetAddress(addr string) {
 	s.Settings.Address = addr
 }
 
-func (s *settingsService) GrovePath() string {
-	return filepath.Join(s.dataDir, "grove")
+func (s *settingsService) DataPath() string {
+	return filepath.Join(s.dataDir, "data")
 }
 
 func (s *settingsService) BottomAppBar() bool {
@@ -190,6 +196,14 @@ func (s *settingsService) DarkMode() bool {
 
 func (s *settingsService) SetDarkMode(enabled bool) {
 	s.Settings.DarkMode = enabled
+}
+
+func (s *settingsService) UseOrchardStore() bool {
+	return s.Settings.OrchardStore
+}
+
+func (s *settingsService) SetUseOrchardStore(enabled bool) {
+	s.Settings.OrchardStore = enabled
 }
 
 func (s *settingsService) SettingsFile() string {

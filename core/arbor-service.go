@@ -1,14 +1,17 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	"git.sr.ht/~athorp96/forest-ex/expiration"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
+	"git.sr.ht/~whereswaldon/forest-go/orchard"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 )
@@ -32,33 +35,34 @@ var _ ArborService = &arborService{}
 // newArborService creates a new instance of the Arbor Service using
 // the provided Settings within the app to acquire configuration.
 func newArborService(settings SettingsService) (ArborService, error) {
-	baseStore := func() (s forest.Store) {
-		defer func() {
-			if s == nil {
-				log.Printf("falling back to in-memory storage")
-				s = store.NewMemoryStore()
-			}
-		}()
-		var (
-			err       error
-			grovePath string = settings.GrovePath()
-		)
-		if err := os.MkdirAll(grovePath, 0770); err != nil {
-			log.Printf("unable to create directory for grove: %v", err)
-			return
+	s, err := func() (forest.Store, error) {
+		path := settings.DataPath()
+		if err := os.MkdirAll(path, 0770); err != nil {
+			return nil, fmt.Errorf("preparing data directory for store: %v", err)
 		}
-		g, err := grove.New(grovePath)
+		if settings.UseOrchardStore() {
+			o, err := orchard.Open(filepath.Join(path, "orchard.db"))
+			if err != nil {
+				return nil, fmt.Errorf("opening Orchard store: %v", err)
+			}
+			return o, nil
+		}
+		g, err := grove.New(path)
 		if err != nil {
-			log.Printf("Failed creating grove: %v", err)
+			return nil, fmt.Errorf("opening Grove store: %v", err)
 		}
 		g.SetCorruptNodeHandler(func(id string) {
-			log.Printf("Grove reported corrupt node %s", id)
+			log.Printf("Grove: corrupt node %s", id)
 		})
-		return g
+		return g, nil
 	}()
+	if err != nil {
+		s = store.NewMemoryStore()
+	}
+	log.Printf("Store: %T\n", s)
 	a := &arborService{
 		SettingsService: settings,
-		grove:           store.NewArchive(baseStore),
+		grove:           store.NewArchive(s),
 		done:            make(chan struct{}),
 	}
 	cl, err := ds.NewCommunityList(a.grove)
