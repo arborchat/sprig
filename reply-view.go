@@ -288,12 +288,25 @@ func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []mate
 					Tag:  &c.CreateReplyButton,
 				},
 			),
-		}, []materials.OverflowAction{
-			{
-				Name: "Hide/Show descendants",
-				Tag:  &c.HideDescendantsButton,
-			},
-		}
+            {
+                OverflowAction: materials.OverflowAction{
+                    Name: "Hide/Show descendants",
+                    Tag: &c.HideDescendantsButton,
+                },
+                Layout: func(gtx C, bg, fg color.NRGBA) D {
+                    btn := materials.SimpleIconButton(th, &c.HideDescendantsButton, icons.ExpandIcon)
+                    btn.Background = bg
+                    btn.Color = fg
+                    focusedID := c.FocusTracker.Focused.ID()
+                    if c.HiddenTracker.IsAnchor(focusedID) {
+                        btn.Icon = icons.ExpandIcon
+                    } else {
+                        btn.Icon = icons.CollapseIcon
+                    }
+                    return btn.Layout(gtx)
+                },
+            },
+		}, []materials.OverflowAction{}
 }
 
 func (c *ReplyListView) triggerReplyContextMenu(gtx layout.Context) {

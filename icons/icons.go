@@ -89,3 +89,13 @@ var SubscriptionIcon *widget.Icon = func() *widget.Icon {
 	icon, _ := widget.NewIcon(icons.CommunicationImportContacts)
 	return icon
 }()
+
+var CollapseIcon *widget.Icon = func() *widget.Icon {
+    icon, _ := widget.NewIcon(icons.NavigationUnfoldLess)
+    return icon
+}()
+
+var ExpandIcon *widget.Icon = func() *widget.Icon {
+    icon, _ := widget.NewIcon(icons.NavigationUnfoldMore)
+    return icon
+}()
