@@ -197,7 +197,6 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 	th := c.Theme().Current().Theme
 	return true, "Messages", []materials.AppBarAction{
 			materials.SimpleIconAction(
-				th,
 				&c.CreateConversationButton,
 				icons.CreateConversationIcon,
 				materials.OverflowAction{
@@ -268,45 +267,42 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 }
 
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
-	th := c.Theme().Current().Theme
 	return []materials.AppBarAction{
-			materials.SimpleIconAction(
-				th,
-				&c.CopyReplyButton,
-				icons.CopyIcon,
-				materials.OverflowAction{
-					Name: "Copy reply text",
-					Tag:  &c.CopyReplyButton,
-				},
-			),
-			materials.SimpleIconAction(
-				th,
-				&c.CreateReplyButton,
-				icons.ReplyIcon,
-				materials.OverflowAction{
-					Name: "Reply to selected",
-					Tag:  &c.CreateReplyButton,
-				},
-			),
-            {
-                OverflowAction: materials.OverflowAction{
-                    Name: "Hide/Show descendants",
-                    Tag: &c.HideDescendantsButton,
-                },
-                Layout: func(gtx C, bg, fg color.NRGBA) D {
-                    btn := materials.SimpleIconButton(th, &c.HideDescendantsButton, icons.ExpandIcon)
-                    btn.Background = bg
-                    btn.Color = fg
-                    focusedID := c.FocusTracker.Focused.ID()
-                    if c.HiddenTracker.IsAnchor(focusedID) {
-                        btn.Icon = icons.ExpandIcon
-                    } else {
-                        btn.Icon = icons.CollapseIcon
-                    }
-                    return btn.Layout(gtx)
-                },
-            },
-		}, []materials.OverflowAction{}
+		materials.SimpleIconAction(
+			&c.CopyReplyButton,
+			icons.CopyIcon,
+			materials.OverflowAction{
+				Name: "Copy reply text",
+				Tag:  &c.CopyReplyButton,
+			},
+		),
+		materials.SimpleIconAction(
+			&c.CreateReplyButton,
+			icons.ReplyIcon,
+			materials.OverflowAction{
+				Name: "Reply to selected",
+				Tag:  &c.CreateReplyButton,
+			},
+		),
+		{
+			OverflowAction: materials.OverflowAction{
+				Name: "Hide/Show descendants",
+				Tag:  &c.HideDescendantsButton,
+			},
+			Layout: func(gtx C, bg, fg color.NRGBA) D {
+				btn := materials.SimpleIconButton(bg, fg, &c.HideDescendantsButton, icons.ExpandIcon)
+				btn.Background = bg
+				btn.Color = fg
+				focusedID := c.FocusTracker.Focused.ID()
+				if c.HiddenTracker.IsAnchor(focusedID) {
+					btn.Icon = icons.ExpandIcon
+				} else {
+					btn.Icon = icons.CollapseIcon
+				}
+				return btn.Layout(gtx)
+			},
+		},
+	}, []materials.OverflowAction{}
 }
 
 func (c *ReplyListView) triggerReplyContextMenu(gtx layout.Context) {

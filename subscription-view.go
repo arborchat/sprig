@@ -56,7 +56,7 @@ func NewSubscriptionView(app core.App) View {
 
 func (c *SubscriptionView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
 	return true, "Subscriptions", []materials.AppBarAction{
-		materials.SimpleIconAction(c.Theme().Current().Theme, &c.Refresh, icons.RefreshIcon, materials.OverflowAction{
+		materials.SimpleIconAction(&c.Refresh, icons.RefreshIcon, materials.OverflowAction{
 			Name: "Refresh",
 			Tag:  &c.Refresh,
 		}),
