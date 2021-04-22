@@ -7,6 +7,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/component"
 	materials "gioui.org/x/component"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
@@ -50,9 +51,7 @@ var itemInset = layout.Inset{
 
 func (s Section) Layout(gtx C) D {
 	items := make([]layout.FlexChild, len(s.Items)+1)
-	items[0] = layout.Rigid(func(gtx C) D {
-		return sectionItemInset.Layout(gtx, material.H6(s.Theme, s.Heading).Layout)
-	})
+	items[0] = layout.Rigid(component.SubheadingDivider(s.Theme, s.Heading).Layout)
 	for i := range s.Items {
 		items[i+1] = layout.Rigid(s.Items[i])
 	}
@@ -307,10 +306,15 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 			},
 		},
 	}
-	return c.List.Layout(gtx, len(sections), func(gtx C, index int) D {
-		return itemInset.Layout(gtx, func(gtx C) D {
-			sections[index].Theme = theme
-			return sections[index].Layout(gtx)
+	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
+		return component.Surface(theme).Layout(gtx, func(gtx C) D {
+			return c.List.Layout(gtx, len(sections), func(gtx C, index int) D {
+				gtx.Constraints.Min.X = gtx.Constraints.Max.X
+				return itemInset.Layout(gtx, func(gtx C) D {
+					sections[index].Theme = theme
+					return sections[index].Layout(gtx)
+				})
+			})
 		})
 	})
 }
