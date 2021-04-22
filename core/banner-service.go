@@ -20,20 +20,23 @@ type BannerService interface {
 }
 
 type bannerService struct {
+	App
 	newBanners chan Banner
 	banners    []Banner
 }
 
 var _ BannerService = &bannerService{}
 
-func NewBannerService() BannerService {
+func NewBannerService(app App) BannerService {
 	return &bannerService{
 		newBanners: make(chan Banner, 1),
+		App:        app,
 	}
 }
 
 func (b *bannerService) Add(banner Banner) {
 	b.newBanners <- banner
+	b.App.Window().Invalidate()
 }
 
 func (b *bannerService) Top() Banner {

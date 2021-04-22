@@ -19,6 +19,7 @@ type App interface {
 	Status() StatusService
 	Haptic() HapticService
 	Banner() BannerService
+	Window() *gioapp.Window
 	Shutdown()
 }
 
@@ -60,7 +61,7 @@ func NewApp(w *gioapp.Window, stateDir string) (application App, err error) {
 	if a.SettingsService, err = newSettingsService(stateDir); err != nil {
 		return nil, err
 	}
-	a.BannerService = NewBannerService()
+	a.BannerService = NewBannerService(a)
 	if a.ArborService, err = newArborService(a.SettingsService); err != nil {
 		return nil, err
 	}
