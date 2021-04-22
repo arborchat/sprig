@@ -124,25 +124,18 @@ func eventLoop(w *app.Window) error {
 						}.Layout(gtx)
 					}),
 					layout.Stacked(func(gtx C) D {
-						return layout.Inset{
-							Bottom: event.Insets.Bottom,
-							Left:   event.Insets.Left,
-							Right:  event.Insets.Right,
-							Top:    event.Insets.Top,
-						}.Layout(gtx, func(gtx C) D {
-							return layout.Stack{}.Layout(gtx,
-								layout.Expanded(func(gtx C) D {
-									return sprigTheme.Rect{
-										Color: th.Background.Default.Bg,
-										Size: f32.Point{
-											X: float32(gtx.Constraints.Max.X),
-											Y: float32(gtx.Constraints.Max.Y),
-										},
-									}.Layout(gtx)
-								}),
-								layout.Stacked(vm.Layout),
-							)
-						})
+						return layout.Stack{}.Layout(gtx,
+							layout.Expanded(func(gtx C) D {
+								return sprigTheme.Rect{
+									Color: th.Background.Default.Bg,
+									Size: f32.Point{
+										X: float32(gtx.Constraints.Max.X),
+										Y: float32(gtx.Constraints.Max.Y),
+									},
+								}.Layout(gtx)
+							}),
+							layout.Stacked(vm.Layout),
+						)
 					}),
 				)
 				event.Frame(gtx.Ops)
