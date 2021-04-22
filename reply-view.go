@@ -43,6 +43,8 @@ const (
 	Message
 )
 
+// FocusTracker keeps track of which message (if any) is focused and the status
+// of ancestor/descendant messages relative to that message.
 type FocusTracker struct {
 	Focused      *ds.ReplyData
 	Ancestry     []*fields.QualifiedHash
@@ -53,15 +55,23 @@ type FocusTracker struct {
 	stateRefreshNeeded bool
 }
 
+// SetFocus requests that the provided ReplyData become the focused message.
 func (f *FocusTracker) SetFocus(focused ds.ReplyData) {
 	f.stateRefreshNeeded = true
 	f.Focused = &focused
 	f.Conversation = &f.Focused.Reply.ConversationID
 }
+
+// Invalidate notifies the FocusTracker that its Ancestry and Descendants lists
+// are possibly incorrect as a result of a state change elsewhere.
 func (f *FocusTracker) Invalidate() {
 	f.stateRefreshNeeded = true
 }
 
+// RefreshNodeStatus updates the Ancestry and Descendants of the FocusTracker
+// using the provided store to look them up. If the FocusTracker has not been
+// invalidated since this method was last invoked, this method will return
+// false and do nothing.
 func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 	if f.stateRefreshNeeded {
 		f.stateRefreshNeeded = false
@@ -77,6 +87,8 @@ func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 	return false
 }
 
+// ReplyListView manages the state and layout of the reply list view in
+// Sprig's UI.
 type ReplyListView struct {
 	manager ViewManager
 
@@ -120,6 +132,7 @@ type ReplyListView struct {
 
 var _ View = &ReplyListView{}
 
+// NewReplyListView constructs a ReplyList that relies on the provided App.
 func NewReplyListView(app core.App) View {
 	c := &ReplyListView{
 		App:                 app,
@@ -177,15 +190,21 @@ func NewReplyListView(app core.App) View {
 	return c
 }
 
+// Filtered returns whether or not the ReplyList is currently filtering
+// its contents.
 func (c *ReplyListView) Filtered() bool {
 	return c.FilterState != Off
 }
 
+// HandleIntent processes requests from other views in the application.
 func (c *ReplyListView) HandleIntent(intent Intent) {}
 
+// BecomeVisible handles setup for when this view becomes the visible
+// view in the application.
 func (c *ReplyListView) BecomeVisible() {
 }
 
+// NavItem returns the top-level navigation information for this view.
 func (c *ReplyListView) NavItem() *materials.NavItem {
 	return &materials.NavItem{
 		Name: "Messages",
@@ -193,6 +212,7 @@ func (c *ReplyListView) NavItem() *materials.NavItem {
 	}
 }
 
+// AppBarData returns the app bar actions for this view.
 func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
 	th := c.Theme().Current().Theme
 	return true, "Messages", []materials.AppBarAction{
@@ -266,6 +286,8 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 		}
 }
 
+// getContextualActions returns the contextual app bar actions for this
+// view (rather than the standard, non-contexual bar actions).
 func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []materials.OverflowAction) {
 	return []materials.AppBarAction{
 		materials.SimpleIconAction(
@@ -305,23 +327,29 @@ func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []mate
 	}, []materials.OverflowAction{}
 }
 
+// triggerReplyContextMenu changes the app bar to contextual mode and
+// populates its actions with contextual options.
 func (c *ReplyListView) triggerReplyContextMenu(gtx layout.Context) {
 	actions, overflow := c.getContextualActions()
 	c.manager.RequestContextualBar(gtx, "Message Operations", actions, overflow)
 }
 
+// dismissReplyContextMenu returns the app bar to non-contextual mode.
 func (c *ReplyListView) dismissReplyContextMenu(gtx layout.Context) {
 	c.manager.DismissContextualBar(gtx)
 }
 
+// moveFocusUp shifts the focused message up by one, if possible.
 func (c *ReplyListView) moveFocusUp() {
 	c.moveFocus(-1)
 }
 
+// moveFocusDown shifts the focused message down by one, if possible.
 func (c *ReplyListView) moveFocusDown() {
 	c.moveFocus(1)
 }
 
+// moveFocus shifts the focused message by the provided amount, if possible.
 func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
@@ -347,6 +375,8 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 	})
 }
 
+// ensureFocusedVisible attempts to ensure that the message at the
+// provided index in the list being displayed is currently visible.
 func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
 	currentFirst := c.MessageList.Position.First
 	notInFirstFive := currentFirst+5 > focusedIndex
@@ -358,6 +388,8 @@ func (c *ReplyListView) ensureFocusedVisible(focusedIndex int) {
 	c.MessageList.Position.BeforeEnd = true
 }
 
+// moveFocusEnd shifts the focused message to the end of the list of
+// replies.
 func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
@@ -367,6 +399,8 @@ func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
 	c.MessageList.Position.BeforeEnd = false
 }
 
+// moveFocusStart shifts the focused message to the beginning of the
+// list of replies.
 func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
@@ -389,12 +423,15 @@ func (c *ReplyListView) reveal(index int) {
 	c.MessageList.Position.First = index
 }
 
+// refreshNodeStatus triggers a check for changes to status updates and
+// triggers animations if statuses have changed.
 func (c *ReplyListView) refreshNodeStatus(gtx C) {
 	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
 		c.MessageList.Animation.Start(gtx.Now)
 	}
 }
 
+// toggleFilter cycles between filter states.
 func (c *ReplyListView) toggleFilter() {
 	switch c.FilterState {
 	case Conversation:
@@ -408,6 +445,8 @@ func (c *ReplyListView) toggleFilter() {
 	}
 }
 
+// copyFocused writes the contents of the focused message into the
+// clipboard.
 func (c *ReplyListView) copyFocused(gtx layout.Context) {
 	reply := c.Focused
 	clipboard.WriteOp{
@@ -415,11 +454,13 @@ func (c *ReplyListView) copyFocused(gtx layout.Context) {
 	}.Add(gtx.Ops)
 }
 
+// startReply begins replying to the focused message.
 func (c *ReplyListView) startReply() {
 	data := c.Focused
 	c.Composer.StartReply(*data)
 }
 
+// sendReply sends the reply with the current contents of the editor.
 func (c *ReplyListView) sendReply() {
 	replyText := c.Composer.Text()
 	if replyText == "" {
@@ -468,6 +509,9 @@ func (c *ReplyListView) sendReply() {
 	c.resetReplyState()
 }
 
+// postReplies actually adds the replies to the store of history (and
+// causes them to be sent because the sprout working is watching the
+// store for updates).
 func (c *ReplyListView) postReplies(author *forest.Identity, replies []*forest.Reply) {
 	go func() {
 		for _, reply := range replies {
@@ -483,6 +527,8 @@ func (c *ReplyListView) postReplies(author *forest.Identity, replies []*forest.R
 	}()
 }
 
+// processMessagePointerEvents checks for specific pointer interactions
+// with messages in the list and handles them.
 func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	tryOpenLink := func(word string) {
 		if !strings.HasPrefix(word, "http") {
@@ -546,10 +592,12 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 	}
 }
 
+// startConversation triggers composition of a new conversation message.
 func (c *ReplyListView) startConversation() {
 	c.Composer.StartConversation()
 }
 
+// Update updates the state of the view in response to user input events.
 func (c *ReplyListView) Update(gtx layout.Context) {
 	c.replyCount = func() (count int) {
 		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
@@ -644,6 +692,8 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 }
 
+// toggleDescendantsHidden makes the descendants of the current message
+// hidden (or reverses it).
 func (c *ReplyListView) toggleDescendantsHidden() {
 	focusedID := c.FocusTracker.Focused.ID()
 	if err := c.HiddenTracker.ToggleAnchor(focusedID, c.Arbor().Store()); err != nil {
@@ -651,6 +701,7 @@ func (c *ReplyListView) toggleDescendantsHidden() {
 	}
 }
 
+// loadMoreHistory attempts to fetch more history from disk.
 func (c *ReplyListView) loadMoreHistory() {
 	const newNodeTarget = 1024
 	var (
@@ -679,10 +730,12 @@ func (c *ReplyListView) loadMoreHistory() {
 	c.AlphaReplyList.Insert(populated...)
 }
 
+// resetReplyState erases the current contents of the message composer.
 func (c *ReplyListView) resetReplyState() {
 	c.Composer.Reset()
 }
 
+// statusOf returns the current UI status of a reply.
 func (c *ReplyListView) statusOf(reply *forest.Reply) (status sprigWidget.ReplyStatus) {
 	if c.HiddenTracker.IsAnchor(reply.ID()) {
 		status |= sprigWidget.Anchor
@@ -724,15 +777,18 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) (status sprigWidget.ReplyS
 	return
 }
 
+// shouldDisplayEditor returns whether the composer should be visible.
 func (c *ReplyListView) shouldDisplayEditor() bool {
 	return c.Composer.Composing()
 }
 
+// hideEditor makes the editor invisible.
 func (c *ReplyListView) hideEditor() {
 	c.Composer.Reset()
 	c.requestKeyboardFocus()
 }
 
+// Layout renders the whole view into the provided context.
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
 	c.ShouldRequestKeyboardFocus = false
@@ -766,6 +822,8 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
+// shouldFilter returns whether the provided status should be filtered based
+// on the current filter state.
 func (c *ReplyListView) shouldFilter(status sprigWidget.ReplyStatus) bool {
 	if status&sprigWidget.Hidden > 0 {
 		return true
@@ -780,6 +838,7 @@ func (c *ReplyListView) shouldFilter(status sprigWidget.ReplyStatus) bool {
 	}
 }
 
+// layoutReplyList renders the list of replies into the provided graphics context.
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 	var (
@@ -838,6 +897,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	return dims
 }
 
+// layoutEditor renders the message composition editor into the provided graphics
+// context.
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	var (
 		th  = c.Theme().Current()
@@ -865,6 +926,7 @@ func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
 	return dims
 }
 
+// SetManager configures the view manager for this view.
 func (c *ReplyListView) SetManager(mgr ViewManager) {
 	c.manager = mgr
 }
