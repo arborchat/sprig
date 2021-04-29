@@ -1,18 +1,16 @@
 package main
 
 import (
-	"image"
 	"log"
 	"sort"
 	"strings"
 	"time"
 
 	"gioui.org/layout"
-	"gioui.org/op/clip"
-	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/component"
 	materials "gioui.org/x/component"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -114,38 +112,30 @@ func SubscriptionCard(th *material.Theme, state *Sub) SubscriptionCardStyle {
 }
 
 func (s SubscriptionCardStyle) Layout(gtx C) D {
-	return layout.Stack{}.Layout(gtx,
-		layout.Expanded(func(gtx C) D {
-			rr := float32(gtx.Px(unit.Dp(4)))
-			outline := clip.UniformRRect(layout.FRect(image.Rectangle{Max: gtx.Constraints.Min}), rr).Op(gtx.Ops)
-			paint.FillShape(gtx.Ops, s.Theme.Bg, outline)
-			return D{}
-		}),
-		layout.Stacked(func(gtx C) D {
-			gtx.Constraints.Min.X = gtx.Constraints.Max.X
-			return s.Inset.Layout(gtx, func(gtx C) D {
-				return layout.Flex{
-					Spacing: layout.SpaceBetween,
-				}.Layout(gtx,
-					layout.Rigid(func(gtx C) D {
-						return s.Inset.Layout(gtx, func(gtx C) D {
-							return material.Switch(s.Theme, &s.Subbed).Layout(gtx)
-						})
-					}),
-					layout.Rigid(func(gtx C) D {
-						return s.Inset.Layout(gtx, func(gtx C) D {
-							return sprigTheme.CommunityName(s.Theme, s.Community).Layout(gtx)
-						})
-					}),
-					layout.Rigid(func(gtx C) D {
-						return s.Inset.Layout(gtx, func(gtx C) D {
-							return material.Body2(s.Theme, strings.Join(s.ActiveHostingRelays, "\n")).Layout(gtx)
-						})
-					}),
-				)
-			})
-		}),
-	)
+	return component.Surface(s.Theme).Layout(gtx, func(gtx C) D {
+		gtx.Constraints.Min.X = gtx.Constraints.Max.X
+		return s.Inset.Layout(gtx, func(gtx C) D {
+			return layout.Flex{
+				Spacing: layout.SpaceBetween,
+			}.Layout(gtx,
+				layout.Rigid(func(gtx C) D {
+					return s.Inset.Layout(gtx, func(gtx C) D {
+						return material.Switch(s.Theme, &s.Subbed).Layout(gtx)
+					})
+				}),
+				layout.Rigid(func(gtx C) D {
+					return s.Inset.Layout(gtx, func(gtx C) D {
+						return sprigTheme.CommunityName(s.Theme, s.Community).Layout(gtx)
+					})
+				}),
+				layout.Rigid(func(gtx C) D {
+					return s.Inset.Layout(gtx, func(gtx C) D {
+						return material.Body2(s.Theme, strings.Join(s.ActiveHostingRelays, "\n")).Layout(gtx)
+					})
+				}),
+			)
+		})
+	})
 }
 
 // SubscriptionListStyle lays out a scrollable list of subscription cards.
