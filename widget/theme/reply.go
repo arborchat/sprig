@@ -149,7 +149,7 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 }
 
 func (r ReplyStyle) Anchoring(th *material.Theme, numNodes int) ReplyStyle {
-	r.AnchorText = material.Body1(th, fmt.Sprintf("collapsed children: %d", numNodes))
+	r.AnchorText = material.Body1(th, fmt.Sprintf("hidden replies: %d", numNodes))
 	return r
 }
 
