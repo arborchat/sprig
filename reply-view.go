@@ -621,7 +621,11 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			if event.State == key.Press {
 				switch event.Name {
 				case "D", key.NameDeleteBackward:
-					c.toggleDescendantsHidden()
+					if event.Modifiers.Contain(key.ModShift) {
+						c.toggleConversationHidden()
+					} else {
+						c.toggleDescendantsHidden()
+					}
 				case "K", key.NameUpArrow:
 					c.moveFocusUp()
 				case "J", key.NameDownArrow:
@@ -699,6 +703,27 @@ func (c *ReplyListView) toggleDescendantsHidden() {
 	if err := c.HiddenTracker.ToggleAnchor(focusedID, c.Arbor().Store()); err != nil {
 		log.Printf("Failed hiding descendants of selected: %v", err)
 	}
+}
+
+// toggleConversationHidden makes the descendants of the current message's
+// conversation hidden (or reverses it).
+func (c *ReplyListView) toggleConversationHidden() {
+	focusedID := &c.FocusTracker.Focused.ConversationID
+	if focusedID.Equals(fields.NullHash()) {
+		// if the focused message is the root of a conversation, use its own ID
+		focusedID = c.FocusTracker.Focused.ID()
+	}
+	c.WithReplies(func(replies []ds.ReplyData) {
+		for _, rd := range replies {
+			if rd.Reply.ID().Equals(focusedID) {
+				c.SetFocus(rd)
+				if err := c.HiddenTracker.ToggleAnchor(rd.Reply.ID(), c.Arbor().Store()); err != nil {
+					log.Printf("Failed hiding descendants of selected: %v", err)
+				}
+				return
+			}
+		}
+	})
 }
 
 // loadMoreHistory attempts to fetch more history from disk.
