@@ -648,7 +648,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 					} else {
 						c.startConversation()
 					}
-				case " ", "F":
+				case key.NameSpace, "F":
 					c.toggleFilter()
 				}
 			}
