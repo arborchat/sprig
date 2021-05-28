@@ -12,6 +12,8 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
+	"gioui.org/x/markdown"
+	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -133,9 +135,13 @@ type ReplyStyle struct {
 	// Special text to overlay atop the message contents. Used for displaying
 	// messages on anchor nodes with hidden children.
 	AnchorText material.LabelStyle
+
+	Content richtext.TextObjects
+	Shaper  text.Shaper
 }
 
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
+	content, _ := markdown.NewRenderer().Render(th.Theme, nodes.Reply.Content.Blob)
 	rs := ReplyStyle{
 		Theme:               th,
 		Background:          th.Background.Light.Bg,
@@ -144,6 +150,8 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		ReplyData:           nodes,
 		ReplyAnimationState: status,
 		ShowActive:          showActive,
+		Content:             content,
+		Shaper:              th.Shaper,
 	}
 	return rs
 }
@@ -336,11 +344,7 @@ func (r ReplyStyle) layoutDate(gtx layout.Context) layout.Dimensions {
 }
 
 func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
-	reply := r.ReplyData.Reply
-	content := material.Body1(r.Theme.Theme, string(reply.Content.Blob))
-	content.MaxLines = r.MaxLines
-	content.Color = r.TextColor
-	return content.Layout(gtx)
+	return r.Content.Layout(gtx, r.Shaper)
 }
 
 type ForestRefStyle struct {
