@@ -5,7 +5,7 @@ go 1.14
 require (
 	gioui.org v0.0.0-20210421151739-2296c80d288b
 	gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f
-	gioui.org/x v0.0.0-20210419013052-6db76265c4e1
+	gioui.org/x v0.0.0-20210528182420-8386b3f88a52
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
@@ -23,3 +23,5 @@ require (
 )
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
+
+replace gioui.org/x => ../../gioui/x/
