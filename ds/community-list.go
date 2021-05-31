@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -66,9 +67,16 @@ func (c *CommunityList) WithCommunities(closure func(communities []*forest.Commu
 // ReplyData holds the contents of a single reply and the major nodes that
 // it references.
 type ReplyData struct {
-	*forest.Reply
-	Community *forest.Community
-	Author    *forest.Identity
+	CommunityID    *fields.QualifiedHash
+	CommunityName  string
+	AuthorID       *fields.QualifiedHash
+	AuthorName     string
+	ParentID       *fields.QualifiedHash
+	ParentAuthor   *fields.QualifiedHash
+	ConversationID *fields.QualifiedHash
+	Depth          int
+	CreatedAt      time.Time
+	Content        string
 }
 
 // populate populates the the fields of a ReplyData object from a given node and a store.
@@ -79,25 +87,38 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	if !ok {
 		return false
 	}
-	r.Reply = asReply
-	comm, has, err := store.GetCommunity(&asReply.CommunityID)
-
-	if err != nil || !has {
-		return false
-	}
-	r.Community = comm.(*forest.Community)
-	author, has, err := store.GetIdentity(&asReply.Author)
-	if err != nil || !has {
-		return false
-	}
-	r.Author = author.(*forest.Identity)
-
 	// Verify twig data parses and node is not invisible
 	if md, err := asReply.TwigMetadata(); err != nil {
 		// Malformed metadata
 		return false
 	} else if md.Contains("invisible", 1) {
 		// Invisible message
+		return false
+	}
+
+	r.ConversationID = &asReply.ConversationID
+	r.ParentID = &asReply.Parent
+	r.AuthorID = &asReply.Author
+	r.CommunityID = &asReply.CommunityID
+	r.CreatedAt = asReply.CreatedAt()
+	r.Content = string(asReply.Content.Blob)
+	comm, has, err := store.GetCommunity(&asReply.CommunityID)
+
+	if err != nil || !has {
+		return false
+	}
+	asCommunity := comm.(*forest.Community)
+	r.CommunityName = string(asCommunity.Name.Blob)
+
+	author, has, err := store.GetIdentity(&asReply.Author)
+	if err != nil || !has {
+		return false
+	}
+	asAuthor := author.(*forest.Identity)
+	r.AuthorName = string(asAuthor.Name.Blob)
+
+	parent, has, err := store.GetReply(r.ParentID)
+	if err != nil || !has {
 		return false
 	}
 
