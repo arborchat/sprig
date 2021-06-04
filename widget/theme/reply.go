@@ -24,35 +24,6 @@ type (
 	D = layout.Dimensions
 )
 
-// Style applies the appropriate visual tweaks the the reply status for the
-// current animation frame.
-func Style(gtx C, r *sprigWidget.ReplyAnimationState, reply *ReplyStyle) {
-	if r == nil {
-		return
-	}
-	progress := r.Progress(gtx)
-	if progress >= 1 {
-		r.Begin = r.End
-	}
-	reply.Highlight = StatusColor(reply.Theme, progress, r, HighlightColor)
-	reply.Border = StatusColor(reply.Theme, progress, r, BorderColor)
-	reply.TextColor = StatusColor(reply.Theme, progress, r, ReplyTextColor)
-	reply.Background = StatusColor(reply.Theme, progress, r, BackgroundColor)
-}
-
-type StatusColorFunc func(sprigWidget.ReplyStatus, *Theme) color.NRGBA
-
-func StatusColor(th *Theme, progress float32, state *sprigWidget.ReplyAnimationState, chooser StatusColorFunc) color.NRGBA {
-	if progress == 0 {
-		return chooser(state.Begin, th)
-	} else if progress >= 1 {
-		return chooser(state.End, th)
-	}
-	start := chooser(state.Begin, th)
-	end := chooser(state.End, th)
-	return materials.Interpolate(start, end, progress)
-}
-
 func HighlightColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
 	var c color.NRGBA
 	switch {
@@ -110,16 +81,57 @@ func BackgroundColor(r sprigWidget.ReplyStatus, th *Theme) color.NRGBA {
 	}
 }
 
+// ReplyStyleConfig configures aspects of the presentation of a message.
+type ReplyStyleConfig struct {
+	Highlight      color.NRGBA
+	Background     color.NRGBA
+	TextColor      color.NRGBA
+	Border         color.NRGBA
+	highlightWidth unit.Value
+}
+
+// ReplyStyleConfigFor returns a configuration tailored to the given ReplyStatus
+// and theme.
+func ReplyStyleConfigFor(th *Theme, status sprigWidget.ReplyStatus) ReplyStyleConfig {
+	return ReplyStyleConfig{
+		Highlight:      HighlightColor(status, th),
+		Background:     BackgroundColor(status, th),
+		TextColor:      ReplyTextColor(status, th),
+		Border:         BorderColor(status, th),
+		highlightWidth: unit.Dp(10),
+	}
+}
+
+// ReplyStyleTransition represents a transition from one ReplyStyleConfig to
+// another one and provides a method for interpolating the intermediate
+// results between them.
+type ReplyStyleTransition struct {
+	Previous, Current ReplyStyleConfig
+}
+
+// InterpolateWith returns a ReplyStyleConfig blended between the previous
+// and current configurations, with 0 returning the previous configuration
+// and 1 returning the current.
+func (r ReplyStyleTransition) InterpolateWith(progress float32) ReplyStyleConfig {
+	return ReplyStyleConfig{
+		Highlight:      materials.Interpolate(r.Previous.Highlight, r.Current.Highlight, progress),
+		Background:     materials.Interpolate(r.Previous.Background, r.Current.Background, progress),
+		TextColor:      materials.Interpolate(r.Previous.TextColor, r.Current.TextColor, progress),
+		Border:         materials.Interpolate(r.Previous.Border, r.Current.Border, progress),
+		highlightWidth: r.Current.highlightWidth,
+	}
+}
+
 type ReplyStyle struct {
-	*Theme
-	Highlight  color.NRGBA
-	Background color.NRGBA
-	TextColor  color.NRGBA
-	Border     color.NRGBA
+	ReplyStyleTransition
+
+	BadgeColor color.NRGBA
+	BadgeText  material.LabelStyle
+
+	finalConfig ReplyStyleConfig
 	// MaxLines limits the maximum number of lines of content text that should
 	// be displayed. Values less than 1 indicate unlimited.
-	MaxLines       int
-	highlightWidth unit.Value
+	MaxLines int
 
 	// CollapseMetadata should be set to true if this reply can be rendered
 	// without the author being displayed.
@@ -137,21 +149,37 @@ type ReplyStyle struct {
 
 	Content richtext.TextObjects
 	Shaper  text.Shaper
+
+	AuthorNameStyle
+	CommunityNameStyle ForestRefStyle
+	DateStyle          material.LabelStyle
 }
 
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
 	content, _ := markdown.NewRenderer().Render(th.Theme, []byte(nodes.Content))
 	rs := ReplyStyle{
-		Theme:               th,
-		Background:          th.Background.Light.Bg,
-		TextColor:           th.Background.Light.Fg,
-		highlightWidth:      unit.Dp(10),
+		ReplyStyleTransition: ReplyStyleTransition{
+			Previous: ReplyStyleConfigFor(th, status.Begin),
+			Current:  ReplyStyleConfigFor(th, status.End),
+		},
 		ReplyData:           nodes,
 		ReplyAnimationState: status,
 		ShowActive:          showActive,
 		Content:             content,
 		Shaper:              th.Shaper,
+		BadgeColor:          th.Primary.Dark.Bg,
+		AuthorNameStyle:     AuthorName(th, nodes.AuthorName, nodes.AuthorID, showActive),
+		CommunityNameStyle:  CommunityName(th.Theme, nodes.CommunityName, nodes.CommunityID),
 	}
+	if nodes.Depth == 1 {
+		theme := th.Theme
+		theme.Palette = ApplyAsNormal(th.Palette, th.Primary.Dark)
+		rs.BadgeText = material.Body2(theme, "Root")
+	}
+	rs.DateStyle = material.Body2(th.Theme, nodes.CreatedAt.Local().Format("2006/01/02 15:04"))
+	rs.DateStyle.MaxLines = 1
+	rs.DateStyle.Color.A = 200
+	rs.DateStyle.TextSize = unit.Dp(12)
 	return rs
 }
 
@@ -161,30 +189,30 @@ func (r ReplyStyle) Anchoring(th *material.Theme, numNodes int) ReplyStyle {
 }
 
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
+	r.finalConfig = r.ReplyStyleTransition.InterpolateWith(r.ReplyAnimationState.Progress(gtx))
 	radiiDp := unit.Dp(5)
 	radii := float32(gtx.Px(radiiDp))
-	Style(gtx, r.ReplyAnimationState, &r)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			innerSize := gtx.Constraints.Min
 			return widget.Border{
-				Color:        r.Border,
+				Color:        r.finalConfig.Border,
 				Width:        unit.Dp(2),
 				CornerRadius: radiiDp,
 			}.Layout(gtx, func(gtx C) D {
-				return Rect{Color: r.Background, Size: layout.FPt(innerSize), Radii: radii}.Layout(gtx)
+				return Rect{Color: r.finalConfig.Background, Size: layout.FPt(innerSize), Radii: radii}.Layout(gtx)
 			})
 		}),
 		layout.Stacked(func(gtx C) D {
 			return layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
 					max := layout.FPt(gtx.Constraints.Min)
-					max.X = float32(gtx.Px(r.highlightWidth))
-					return Rect{Color: r.Highlight, Size: max, Radii: radii}.Layout(gtx)
+					max.X = float32(gtx.Px(r.finalConfig.highlightWidth))
+					return Rect{Color: r.finalConfig.Highlight, Size: max, Radii: radii}.Layout(gtx)
 				}),
 				layout.Stacked(func(gtx C) D {
 					inset := layout.Inset{}
-					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
+					inset.Left = unit.Add(gtx.Metric, r.finalConfig.highlightWidth, inset.Left)
 					isConversationRoot := r.ReplyData.Depth == 1
 					return inset.Layout(gtx, func(gtx C) D {
 						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
@@ -193,19 +221,14 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 							}),
 							layout.Rigid(func(gtx C) D {
 								if isConversationRoot {
-									badgeColors := r.Theme.Primary.Dark
 									gtx.Constraints.Min.X = gtx.Constraints.Max.X
 									return layout.SE.Layout(gtx, func(gtx C) D {
 										return layout.Stack{}.Layout(gtx,
 											layout.Expanded(func(gtx C) D {
-												return Rect{Color: badgeColors.Bg, Size: layout.FPt(gtx.Constraints.Min), Radii: radii}.Layout(gtx)
+												return Rect{Color: r.BadgeColor, Size: layout.FPt(gtx.Constraints.Min), Radii: radii}.Layout(gtx)
 											}),
 											layout.Stacked(func(gtx C) D {
-												th := *r.Theme.Theme
-												th.Palette = ApplyAsNormal(th.Palette, badgeColors)
-												return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
-													return material.Body2(&th, "Root").Layout(gtx)
-												})
+												return layout.UniformInset(unit.Dp(4)).Layout(gtx, r.BadgeText.Layout)
 											}),
 										)
 									})
@@ -223,7 +246,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 						return layout.Stack{}.Layout(gtx,
 							layout.Expanded(func(gtx C) D {
 								max := layout.FPt(gtx.Constraints.Min)
-								color := r.Background
+								color := r.finalConfig.Background
 								color.A = 0xff
 								return Rect{Color: color, Size: max, Radii: radii}.Layout(gtx)
 							}),
@@ -256,22 +279,22 @@ func max(is ...int) int {
 func (r ReplyStyle) layoutMetadata(gtx layout.Context) layout.Dimensions {
 	inset := layout.Inset{Right: unit.Dp(4)}
 	nameMacro := op.Record(gtx.Ops)
-	author := AuthorName(r.Theme, r.ReplyData.AuthorName, r.ReplyData.AuthorID, r.ShowActive)
-	author.NameStyle.Color = r.TextColor
-	author.SuffixStyle.Color = r.TextColor
-	author.ActivityIndicatorStyle.Color.A = r.TextColor.A
+	author := r.AuthorNameStyle
+	author.NameStyle.Color = r.finalConfig.TextColor
+	author.SuffixStyle.Color = r.finalConfig.TextColor
+	author.ActivityIndicatorStyle.Color.A = r.finalConfig.TextColor.A
 	nameDim := inset.Layout(gtx, author.Layout)
 	nameWidget := nameMacro.Stop()
 
 	communityMacro := op.Record(gtx.Ops)
-	comm := CommunityName(r.Theme.Theme, r.ReplyData.CommunityName, r.ReplyData.CommunityID)
-	comm.NameStyle.Color = r.TextColor
-	comm.SuffixStyle.Color = r.TextColor
+	comm := r.CommunityNameStyle
+	comm.NameStyle.Color = r.finalConfig.TextColor
+	comm.SuffixStyle.Color = r.finalConfig.TextColor
 	communityDim := inset.Layout(gtx, comm.Layout)
 	communityWidget := communityMacro.Stop()
 
 	dateMacro := op.Record(gtx.Ops)
-	dateDim := r.layoutDate(gtx)
+	dateDim := r.DateStyle.Layout(gtx)
 	dateWidget := dateMacro.Stop()
 
 	gtx.Constraints.Min.Y = max(nameDim.Size.Y, communityDim.Size.Y, dateDim.Size.Y)
@@ -327,22 +350,14 @@ func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 		layout.Flexed(1, func(gtx layout.Context) layout.Dimensions {
 			return r.layoutContent(gtx)
 		}),
-		layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-			return r.layoutDate(gtx)
-		}),
+		layout.Rigid(r.DateStyle.Layout),
 	)
 }
 
-func (r ReplyStyle) layoutDate(gtx layout.Context) layout.Dimensions {
-	date := material.Body2(r.Theme.Theme, r.ReplyData.CreatedAt.Local().Format("2006/01/02 15:04"))
-	date.MaxLines = 1
-	date.Color = r.TextColor
-	date.Color.A = 200
-	date.TextSize = unit.Dp(12)
-	return date.Layout(gtx)
-}
-
 func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
+	for _, c := range r.Content {
+		c.Color.A = r.finalConfig.TextColor.A
+	}
 	return r.Content.Layout(gtx, r.Shaper)
 }
 

@@ -69,7 +69,6 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									return dims
 								}
 								reply := Reply(th, nil, c.ReplyingTo, false)
-								reply.Highlight = th.Primary.Default.Bg
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
 							})
