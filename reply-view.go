@@ -59,7 +59,7 @@ type FocusTracker struct {
 func (f *FocusTracker) SetFocus(focused ds.ReplyData) {
 	f.stateRefreshNeeded = true
 	f.Focused = &focused
-	f.Conversation = &f.Focused.Reply.ConversationID
+	f.Conversation = f.Focused.ConversationID
 }
 
 // Invalidate notifies the FocusTracker that its Ancestry and Descendants lists
@@ -80,8 +80,8 @@ func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 			f.Descendants = nil
 			return true
 		}
-		f.Ancestry, _ = s.AncestryOf(f.Focused.ID())
-		f.Descendants, _ = s.DescendantsOf(f.Focused.ID())
+		f.Ancestry, _ = s.AncestryOf(f.Focused.ID)
+		f.Descendants, _ = s.DescendantsOf(f.Focused.ID)
 		return true
 	}
 	return false
@@ -142,29 +142,26 @@ func NewReplyListView(app core.App) View {
 		Duration: time.Millisecond * 100,
 	}
 	c.MessageList.ShouldHide = func(r ds.ReplyData) bool {
-		return c.HiddenTracker.IsHidden(r.ID()) || c.shouldFilter(c.statusOf(r.Reply))
+		return c.HiddenTracker.IsHidden(r.ID) || c.shouldFilter(c.statusOf(r))
 	}
 	c.MessageList.StatusOf = func(r ds.ReplyData) sprigWidget.ReplyStatus {
-		return c.statusOf(r.Reply)
+		return c.statusOf(r)
 	}
 	c.MessageList.UserIsActive = func(identity *fields.QualifiedHash) bool {
 		return c.Status().IsActive(identity)
 	}
 	c.MessageList.HiddenChildren = func(r ds.ReplyData) int {
-		return c.HiddenTracker.NumDescendants(r.Reply.ID())
+		return c.HiddenTracker.NumDescendants(r.ID)
 	}
 	c.loading = true
 	go func() {
 		defer func() { c.loading = false }()
 		c.AlphaReplyList.FilterWith(func(rd ds.ReplyData) bool {
-			td, err := rd.TwigMetadata()
-			if err != nil {
-				return false
-			}
+			td := rd.Metadata
 			if _, ok := td.Values[twig.Key{Name: "invisible", Version: 1}]; ok {
 				return false
 			}
-			if expired, err := expiration.IsExpired(rd.Reply); err != nil || expired {
+			if expired, err := expiration.IsExpiredTwig(rd.Metadata); err != nil || expired {
 				return false
 			}
 			return true
@@ -315,7 +312,7 @@ func (c *ReplyListView) getContextualActions() ([]materials.AppBarAction, []mate
 				btn := materials.SimpleIconButton(bg, fg, &c.HideDescendantsButton, icons.ExpandIcon)
 				btn.Background = bg
 				btn.Color = fg
-				focusedID := c.FocusTracker.Focused.ID()
+				focusedID := c.FocusTracker.Focused.ID
 				if c.HiddenTracker.IsAnchor(focusedID) {
 					btn.Icon = icons.ExpandIcon
 				} else {
@@ -354,7 +351,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 	if c.Focused == nil {
 		return
 	}
-	currentIndex := c.AlphaReplyList.IndexForID(c.Focused.ID())
+	currentIndex := c.AlphaReplyList.IndexForID(c.Focused.ID)
 	if currentIndex < 0 {
 		return
 	}
@@ -364,7 +361,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 			if currentIndex >= len(replies) || currentIndex < 0 {
 				break
 			}
-			status := c.statusOf(replies[currentIndex].Reply)
+			status := c.statusOf(replies[currentIndex])
 			if c.shouldFilter(status) {
 				continue
 			}
@@ -450,7 +447,7 @@ func (c *ReplyListView) toggleFilter() {
 func (c *ReplyListView) copyFocused(gtx layout.Context) {
 	reply := c.Focused
 	clipboard.WriteOp{
-		Text: string(reply.Reply.Content.Blob),
+		Text: reply.Content,
 	}.Add(gtx.Ops)
 }
 
@@ -466,9 +463,12 @@ func (c *ReplyListView) sendReply() {
 	if replyText == "" {
 		return
 	}
-	var newReplies []*forest.Reply
-	var author *forest.Identity
-	var parent forest.Node
+	var (
+		newReplies []*forest.Reply
+		author     *forest.Identity
+		parent     forest.Node
+		has        bool
+	)
 
 	replyText = strings.TrimSpace(replyText)
 
@@ -490,7 +490,14 @@ func (c *ReplyListView) sendReply() {
 			})
 		}
 	} else {
-		parent = c.ReplyingTo.Reply
+		parent, has, err = c.Arbor().Store().Get(c.ReplyingTo.ID)
+		if err != nil {
+			log.Println("failed finding parent node %v in store: %v", c.ReplyingTo.ID, err)
+			return
+		} else if !has {
+			log.Println("parent node %v is not in store: %v", c.ReplyingTo.ID, err)
+			return
+		}
 	}
 
 	for _, paragraph := range strings.Split(replyText, "\n\n") {
@@ -574,7 +581,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 				}
 			} else {
 				c.requestKeyboardFocus()
-				clickedOnFocused := handler.Hash.Equals(c.Focused.ID())
+				clickedOnFocused := handler.Hash.Equals(c.Focused.ID)
 				if !clickedOnFocused {
 					focus(handler)
 					c.dismissReplyContextMenu(gtx)
@@ -699,7 +706,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 // toggleDescendantsHidden makes the descendants of the current message
 // hidden (or reverses it).
 func (c *ReplyListView) toggleDescendantsHidden() {
-	focusedID := c.FocusTracker.Focused.ID()
+	focusedID := c.FocusTracker.Focused.ID
 	if err := c.HiddenTracker.ToggleAnchor(focusedID, c.Arbor().Store()); err != nil {
 		log.Printf("Failed hiding descendants of selected: %v", err)
 	}
@@ -708,16 +715,16 @@ func (c *ReplyListView) toggleDescendantsHidden() {
 // toggleConversationHidden makes the descendants of the current message's
 // conversation hidden (or reverses it).
 func (c *ReplyListView) toggleConversationHidden() {
-	focusedID := &c.FocusTracker.Focused.ConversationID
+	focusedID := c.FocusTracker.Focused.ConversationID
 	if focusedID.Equals(fields.NullHash()) {
 		// if the focused message is the root of a conversation, use its own ID
-		focusedID = c.FocusTracker.Focused.ID()
+		focusedID = c.FocusTracker.Focused.ID
 	}
 	c.WithReplies(func(replies []ds.ReplyData) {
 		for _, rd := range replies {
-			if rd.Reply.ID().Equals(focusedID) {
+			if rd.ID.Equals(focusedID) {
 				c.SetFocus(rd)
-				if err := c.HiddenTracker.ToggleAnchor(rd.Reply.ID(), c.Arbor().Store()); err != nil {
+				if err := c.HiddenTracker.ToggleAnchor(rd.ID, c.Arbor().Store()); err != nil {
 					log.Printf("Failed hiding descendants of selected: %v", err)
 				}
 				return
@@ -761,29 +768,29 @@ func (c *ReplyListView) resetReplyState() {
 }
 
 // statusOf returns the current UI status of a reply.
-func (c *ReplyListView) statusOf(reply *forest.Reply) (status sprigWidget.ReplyStatus) {
-	if c.HiddenTracker.IsAnchor(reply.ID()) {
+func (c *ReplyListView) statusOf(reply ds.ReplyData) (status sprigWidget.ReplyStatus) {
+	if c.HiddenTracker.IsAnchor(reply.ID) {
 		status |= sprigWidget.Anchor
 	}
-	if c.HiddenTracker.IsHidden(reply.ID()) {
+	if c.HiddenTracker.IsHidden(reply.ID) {
 		status |= sprigWidget.Hidden
 	}
 	if c.Focused == nil {
 		status |= sprigWidget.None
 		return
 	}
-	if c.Focused != nil && reply.ID().Equals(c.Focused.ID()) {
+	if c.Focused != nil && reply.ID.Equals(c.Focused.ID) {
 		status |= sprigWidget.Selected
 		return
 	}
 	for _, id := range c.Ancestry {
-		if id.Equals(reply.ID()) {
+		if id.Equals(reply.ID) {
 			status |= sprigWidget.Ancestor
 			return
 		}
 	}
 	for _, id := range c.Descendants {
-		if id.Equals(reply.ID()) {
+		if id.Equals(reply.ID) {
 			status |= sprigWidget.Descendant
 			return
 		}
@@ -793,7 +800,7 @@ func (c *ReplyListView) statusOf(reply *forest.Reply) (status sprigWidget.ReplyS
 		return
 	}
 	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
-		if c.Conversation.Equals(&reply.ConversationID) {
+		if c.Conversation.Equals(reply.ConversationID) {
 			status |= sprigWidget.Sibling
 			return
 		}

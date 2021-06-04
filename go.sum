@@ -11,8 +11,9 @@ gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b h1:3lHNKrTHXJCXhtmCVdTInlN
 gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b/go.mod h1:8zNy+2M/H/zMZtZVh3ZSk7EuPqob+PNtVFzWstzT7ok=
 gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092 h1:XTPuGt90z7zE3eeGLfQh3nEjGVvt6Gl3/Xc5Mu5w4W4=
 gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092/go.mod h1:dkKYIeTwSxJG3MbNiA8nQ9CYu5wzWDIIeZ7eGRChECo=
-git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1 h1:quRwMtoF0S/VUHQBoL8fkqrKq/uYYB7pEGAGAFzLoXA=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
+git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25 h1:RHPTh62y7Lg8rg2UiDR1667Z6nvXu/22bElmNbkDUs0=
+git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210408011444-effb84ecc2c5 h1:6HWH66n++XkKcsxJ3hUaXopbP+xvNNMsW5A1Shbth2I=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210408011444-effb84ecc2c5/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=

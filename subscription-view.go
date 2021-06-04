@@ -125,7 +125,7 @@ func (s SubscriptionCardStyle) Layout(gtx C) D {
 				}),
 				layout.Rigid(func(gtx C) D {
 					return s.Inset.Layout(gtx, func(gtx C) D {
-						return sprigTheme.CommunityName(s.Theme, s.Community).Layout(gtx)
+						return sprigTheme.CommunityName(s.Theme, string(s.Community.Name.Blob), s.Community.ID()).Layout(gtx)
 					})
 				}),
 				layout.Rigid(func(gtx C) D {
