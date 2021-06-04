@@ -122,13 +122,22 @@ func (r ReplyStyleTransition) InterpolateWith(progress float32) ReplyStyleConfig
 	}
 }
 
+// ReplyStyle presents a reply as a formatted chat bubble.
 type ReplyStyle struct {
+	// ReplyStyleTransition captures the two states that the ReplyStyle is
+	// transitioning between (though it may not currently be transitioning).
 	ReplyStyleTransition
 
-	BadgeColor color.NRGBA
-	BadgeText  material.LabelStyle
-
+	// finalConfig is the results of interpolating between the two states in
+	// the ReplyStyleTransition. Its value can only be determined and used at
+	// layout time.
 	finalConfig ReplyStyleConfig
+
+	// Background color for the status badge (currently only used if root node)
+	BadgeColor color.NRGBA
+	// Text config for the status badge
+	BadgeText material.LabelStyle
+
 	// MaxLines limits the maximum number of lines of content text that should
 	// be displayed. Values less than 1 indicate unlimited.
 	MaxLines int
@@ -155,6 +164,7 @@ type ReplyStyle struct {
 	DateStyle          material.LabelStyle
 }
 
+// Reply configures a ReplyStyle for the provided state.
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
 	content, _ := markdown.NewRenderer().Render(th.Theme, []byte(nodes.Content))
 	rs := ReplyStyle{
@@ -183,11 +193,14 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 	return rs
 }
 
+// Anchoring modifies the ReplyStyle to indicate that it is hiding some number
+// of other nodes.
 func (r ReplyStyle) Anchoring(th *material.Theme, numNodes int) ReplyStyle {
 	r.AnchorText = material.Body1(th, fmt.Sprintf("hidden replies: %d", numNodes))
 	return r
 }
 
+// Layout renders the ReplyStyle.
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	r.finalConfig = r.ReplyStyleTransition.InterpolateWith(r.ReplyAnimationState.Progress(gtx))
 	radiiDp := unit.Dp(5)
@@ -261,6 +274,8 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	)
 }
 
+// HideMetadata configures the node metadata line to not be displayed in
+// the reply.
 func (r ReplyStyle) HideMetadata(b bool) ReplyStyle {
 	r.CollapseMetadata = b
 	return r
@@ -361,10 +376,13 @@ func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
 	return r.Content.Layout(gtx, r.Shaper)
 }
 
+// ForestRefStyle configures the presentation of a reference to a forest
+// node that has both a name and an ID.
 type ForestRefStyle struct {
 	NameStyle, SuffixStyle, ActivityIndicatorStyle material.LabelStyle
 }
 
+// ForestRef constructs a ForestRefStyle for the node with the provided info.
 func ForestRef(theme *material.Theme, name string, id *fields.QualifiedHash) ForestRefStyle {
 	suffix := id.Blob
 	suffix = suffix[len(suffix)-2:]
@@ -379,10 +397,12 @@ func ForestRef(theme *material.Theme, name string, id *fields.QualifiedHash) For
 	return a
 }
 
+// CommunityName constructs a ForestRefStyle for the provided community.
 func CommunityName(theme *material.Theme, communityName string, communityID *fields.QualifiedHash) ForestRefStyle {
 	return ForestRef(theme, communityName, communityID)
 }
 
+// Layout renders the ForestRefStyle.
 func (f ForestRefStyle) Layout(gtx C) D {
 	return layout.Flex{}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
@@ -394,12 +414,14 @@ func (f ForestRefStyle) Layout(gtx C) D {
 	)
 }
 
+// AuthorNameStyle configures the presentation of an Author name that can be presented with an activity indicator.
 type AuthorNameStyle struct {
 	Active bool
 	ForestRefStyle
 	ActivityIndicatorStyle material.LabelStyle
 }
 
+// AuthorName constructs an AuthorNameStyle for the user with the provided info.
 func AuthorName(theme *Theme, authorName string, authorID *fields.QualifiedHash, active bool) AuthorNameStyle {
 	a := AuthorNameStyle{
 		Active:                 active,
@@ -411,6 +433,7 @@ func AuthorName(theme *Theme, authorName string, authorID *fields.QualifiedHash,
 	return a
 }
 
+// Layout renders the AuthorNameStyle.
 func (a AuthorNameStyle) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Flex{}.Layout(gtx,
 		layout.Rigid(func(gtx C) D {
