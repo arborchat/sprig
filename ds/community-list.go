@@ -67,12 +67,12 @@ func (c *CommunityList) WithCommunities(closure func(communities []*forest.Commu
 // ReplyData holds the contents of a single reply and the major nodes that
 // it references.
 type ReplyData struct {
+	ID             *fields.QualifiedHash
 	CommunityID    *fields.QualifiedHash
 	CommunityName  string
 	AuthorID       *fields.QualifiedHash
 	AuthorName     string
 	ParentID       *fields.QualifiedHash
-	ParentAuthor   *fields.QualifiedHash
 	ConversationID *fields.QualifiedHash
 	Depth          int
 	CreatedAt      time.Time
@@ -96,6 +96,7 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 		return false
 	}
 
+	r.ID = reply.ID()
 	r.ConversationID = &asReply.ConversationID
 	r.ParentID = &asReply.Parent
 	r.AuthorID = &asReply.Author
@@ -116,11 +117,6 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	}
 	asAuthor := author.(*forest.Identity)
 	r.AuthorName = string(asAuthor.Name.Blob)
-
-	parent, has, err := store.GetReply(r.ParentID)
-	if err != nil || !has {
-		return false
-	}
 
 	return true
 }

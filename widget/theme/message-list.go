@@ -86,7 +86,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 			status = m.State.StatusOf(reply)
 		}
 		var (
-			anim             = m.State.Animation.Update(gtx, reply.Reply, status)
+			anim             = m.State.Animation.Update(gtx, reply.ID, status)
 			isActive         bool
 			collapseMetadata = func() bool {
 				// This conflicts with animation feature, so we're removing the feature for now.
@@ -99,7 +99,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 			}()
 		)
 		if m.State.UserIsActive != nil {
-			isActive = m.State.UserIsActive(reply.AuthorID())
+			isActive = m.State.UserIsActive(reply.AuthorID)
 		}
 		// Only acquire a state after ensuring the node should be rendered. This allows
 		// us to count used states in order to determine how many nodes were rendered.
@@ -144,8 +144,8 @@ func (m MessageListStyle) Layout(gtx C) D {
 						}),
 						layout.Expanded(func(gtx C) D {
 							return state.
-								WithHash(reply.ID()).
-								WithContent(string(reply.Content.Blob)).
+								WithHash(reply.ID).
+								WithContent(reply.Content).
 								Layout(gtx)
 						}),
 					)
