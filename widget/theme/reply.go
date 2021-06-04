@@ -14,7 +14,6 @@ import (
 	materials "gioui.org/x/component"
 	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
-	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
@@ -141,7 +140,7 @@ type ReplyStyle struct {
 }
 
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
-	content, _ := markdown.NewRenderer().Render(th.Theme, nodes.Reply.Content.Blob)
+	content, _ := markdown.NewRenderer().Render(th.Theme, []byte(nodes.Content))
 	rs := ReplyStyle{
 		Theme:               th,
 		Background:          th.Background.Light.Bg,
@@ -186,7 +185,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 				layout.Stacked(func(gtx C) D {
 					inset := layout.Inset{}
 					inset.Left = unit.Add(gtx.Metric, r.highlightWidth, inset.Left)
-					isConversationRoot := r.ReplyData.Reply.Depth == 1
+					isConversationRoot := r.ReplyData.Depth == 1
 					return inset.Layout(gtx, func(gtx C) D {
 						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
@@ -257,7 +256,7 @@ func max(is ...int) int {
 func (r ReplyStyle) layoutMetadata(gtx layout.Context) layout.Dimensions {
 	inset := layout.Inset{Right: unit.Dp(4)}
 	nameMacro := op.Record(gtx.Ops)
-	author := AuthorName(r.Theme, r.ReplyData.Author, r.ShowActive)
+	author := AuthorName(r.Theme, r.ReplyData.AuthorName, r.ReplyData.AuthorID, r.ShowActive)
 	author.NameStyle.Color = r.TextColor
 	author.SuffixStyle.Color = r.TextColor
 	author.ActivityIndicatorStyle.Color.A = r.TextColor.A
@@ -265,7 +264,7 @@ func (r ReplyStyle) layoutMetadata(gtx layout.Context) layout.Dimensions {
 	nameWidget := nameMacro.Stop()
 
 	communityMacro := op.Record(gtx.Ops)
-	comm := CommunityName(r.Theme.Theme, r.ReplyData.Community)
+	comm := CommunityName(r.Theme.Theme, r.ReplyData.CommunityName, r.ReplyData.CommunityID)
 	comm.NameStyle.Color = r.TextColor
 	comm.SuffixStyle.Color = r.TextColor
 	communityDim := inset.Layout(gtx, comm.Layout)
@@ -335,7 +334,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 }
 
 func (r ReplyStyle) layoutDate(gtx layout.Context) layout.Dimensions {
-	date := material.Body2(r.Theme.Theme, r.ReplyData.Reply.Created.Time().Local().Format("2006/01/02 15:04"))
+	date := material.Body2(r.Theme.Theme, r.ReplyData.CreatedAt.Local().Format("2006/01/02 15:04"))
 	date.MaxLines = 1
 	date.Color = r.TextColor
 	date.Color.A = 200
@@ -365,8 +364,8 @@ func ForestRef(theme *material.Theme, name string, id *fields.QualifiedHash) For
 	return a
 }
 
-func CommunityName(theme *material.Theme, community *forest.Community) ForestRefStyle {
-	return ForestRef(theme, string(community.Name.Blob), community.ID())
+func CommunityName(theme *material.Theme, communityName string, communityID *fields.QualifiedHash) ForestRefStyle {
+	return ForestRef(theme, communityName, communityID)
 }
 
 func (f ForestRefStyle) Layout(gtx C) D {
@@ -386,10 +385,10 @@ type AuthorNameStyle struct {
 	ActivityIndicatorStyle material.LabelStyle
 }
 
-func AuthorName(theme *Theme, identity *forest.Identity, active bool) AuthorNameStyle {
+func AuthorName(theme *Theme, authorName string, authorID *fields.QualifiedHash, active bool) AuthorNameStyle {
 	a := AuthorNameStyle{
 		Active:                 active,
-		ForestRefStyle:         ForestRef(theme.Theme, string(identity.Name.Blob), identity.ID()),
+		ForestRefStyle:         ForestRef(theme.Theme, authorName, authorID),
 		ActivityIndicatorStyle: material.Body2(theme.Theme, "●"),
 	}
 	a.ActivityIndicatorStyle.Color = theme.Primary.Light.Bg

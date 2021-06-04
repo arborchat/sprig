@@ -2,7 +2,6 @@ package widget
 
 import (
 	"gioui.org/layout"
-	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -42,34 +41,34 @@ func (s *States) Next() *Reply {
 type Animation struct {
 	anim.Normal
 	animationInit bool
-	Collection    map[*forest.Reply]*ReplyAnimationState
+	Collection    map[*fields.QualifiedHash]*ReplyAnimationState
 }
 
 func (a *Animation) init() {
-	a.Collection = make(map[*forest.Reply]*ReplyAnimationState)
+	a.Collection = make(map[*fields.QualifiedHash]*ReplyAnimationState)
 	a.animationInit = true
 }
 
 // Lookup animation state for the given reply.
 // If state doesn't exist, it will be created with using `s` as the
 // beginning status.
-func (a *Animation) Lookup(r *forest.Reply, s ReplyStatus) *ReplyAnimationState {
+func (a *Animation) Lookup(replyID *fields.QualifiedHash, s ReplyStatus) *ReplyAnimationState {
 	if !a.animationInit {
 		a.init()
 	}
-	_, ok := a.Collection[r]
+	_, ok := a.Collection[replyID]
 	if !ok {
-		a.Collection[r] = &ReplyAnimationState{
+		a.Collection[replyID] = &ReplyAnimationState{
 			Normal: &a.Normal,
 			Begin:  s,
 		}
 	}
-	return a.Collection[r]
+	return a.Collection[replyID]
 }
 
 // Update animation state for the given reply.
-func (a *Animation) Update(gtx layout.Context, r *forest.Reply, s ReplyStatus) *ReplyAnimationState {
-	anim := a.Lookup(r, s)
+func (a *Animation) Update(gtx layout.Context, replyID *fields.QualifiedHash, s ReplyStatus) *ReplyAnimationState {
+	anim := a.Lookup(replyID, s)
 	if a.Animating(gtx) {
 		anim.End = s
 	} else {

@@ -31,7 +31,7 @@ func (s *sortable) Len() int {
 }
 
 func (s *sortable) ensureIndexed(i int) {
-	s.indexForID[s.data[i].Reply.ID().String()] = i
+	s.indexForID[s.data[i].ID.String()] = i
 }
 
 func (s *sortable) Swap(i, j int) {
@@ -45,7 +45,7 @@ func (s *sortable) Less(i, j int) bool {
 	s.initialize()
 	s.ensureIndexed(i)
 	s.ensureIndexed(j)
-	return s.data[i].Reply.Created < s.data[j].Reply.Created
+	return s.data[i].CreatedAt.Before(s.data[j].CreatedAt)
 }
 
 func (s *sortable) IndexForID(id *fields.QualifiedHash) int {
@@ -78,7 +78,7 @@ func (s *sortable) Insert(nodes ...ReplyData) {
 	s.initialize()
 	var newNodes []ReplyData
 	for _, node := range nodes {
-		if s.shouldAllow(node) && !s.Contains(node.ID()) {
+		if s.shouldAllow(node) && !s.Contains(node.ID) {
 			newNodes = append(newNodes, node)
 		}
 	}

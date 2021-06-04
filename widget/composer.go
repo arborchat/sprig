@@ -5,6 +5,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/widget"
 
+	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/platform"
 )
@@ -79,9 +80,7 @@ func (c *Composer) StartConversation() {
 
 // Reset clears the internal state of the composer.
 func (c *Composer) Reset() {
-	c.ReplyingTo.Reply = nil
-	c.ReplyingTo.Author = nil
-	c.ReplyingTo.Community = nil
+	c.ReplyingTo = ds.ReplyData{}
 	c.Editor.SetText("")
 	c.composing = false
 }
@@ -89,7 +88,7 @@ func (c *Composer) Reset() {
 // ComposingConversation returns whether the composer is currently creating
 // a conversation (rather than a new reply within an existing conversation)
 func (c *Composer) ComposingConversation() bool {
-	return c.ReplyingTo.Reply == nil && c.Composing()
+	return c.ReplyingTo.ID.Equals(fields.NullHash()) && c.Composing()
 }
 
 // Composing indicates whether the composer is composing a message of any
