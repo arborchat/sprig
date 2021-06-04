@@ -8,8 +8,8 @@ require (
 	gioui.org/x v0.0.0-20210528182420-8386b3f88a52
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
-	git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210602015648-db0ca16ffdb3
+	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8
 	github.com/magefile/mage v1.10.0

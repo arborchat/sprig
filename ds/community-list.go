@@ -12,6 +12,7 @@ import (
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/store"
+	"git.sr.ht/~whereswaldon/forest-go/twig"
 )
 
 // CommunityList holds a sortable list of communities that can update itself
@@ -77,6 +78,7 @@ type ReplyData struct {
 	Depth          int
 	CreatedAt      time.Time
 	Content        string
+	Metadata       *twig.Data
 }
 
 // populate populates the the fields of a ReplyData object from a given node and a store.
@@ -88,7 +90,8 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 		return false
 	}
 	// Verify twig data parses and node is not invisible
-	if md, err := asReply.TwigMetadata(); err != nil {
+	md, err := asReply.TwigMetadata()
+	if err != nil {
 		// Malformed metadata
 		return false
 	} else if md.Contains("invisible", 1) {
@@ -96,6 +99,7 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 		return false
 	}
 
+	r.Metadata = md
 	r.ID = reply.ID()
 	r.ConversationID = &asReply.ConversationID
 	r.ParentID = &asReply.Parent
