@@ -2,11 +2,14 @@ package theme
 
 import (
 	"image"
+	"log"
 
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/component"
 	"gioui.org/x/markdown"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
@@ -136,6 +139,19 @@ func (m MessageListStyle) Layout(gtx C) D {
 								content := m.State.RichTextCache.Get(reply.ID)
 								if content == nil {
 									content, _ = markdown.NewRenderer().Render(th.Theme, []byte(reply.Content))
+									m.State.RichTextCache.Set(reply.ID, content)
+								}
+								if h := content.Hovered(); h != nil {
+									url := h.GetMetadata("url")
+									macro := op.Record(gtx.Ops)
+									component.Surface(th.Theme).Layout(gtx,
+										func(gtx C) D {
+											return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(th.Theme, url).Layout)
+										})
+									op.Defer(gtx.Ops, macro.Stop())
+								}
+								if h := content.Clicked(); h != nil {
+									log.Println("clicked", h)
 								}
 								rs := Reply(th, anim, reply, content, isActive).
 									HideMetadata(collapseMetadata)

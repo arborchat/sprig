@@ -5,7 +5,7 @@ go 1.14
 require (
 	gioui.org v0.0.0-20210421151739-2296c80d288b
 	gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f
-	gioui.org/x v0.0.0-20210528182420-8386b3f88a52
+	gioui.org/x v0.0.0-20210605020051-c3156aa86f01
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210602015648-db0ca16ffdb3
