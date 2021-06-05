@@ -606,6 +606,7 @@ func (c *ReplyListView) startConversation() {
 
 // Update updates the state of the view in response to user input events.
 func (c *ReplyListView) Update(gtx layout.Context) {
+	c.RichTextCache.Frame()
 	c.replyCount = func() (count int) {
 		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 			count = len(replies)

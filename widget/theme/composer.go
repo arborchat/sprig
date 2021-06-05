@@ -5,6 +5,7 @@ import (
 	"gioui.org/layout"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
+	"gioui.org/x/markdown"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
@@ -68,7 +69,8 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
-								reply := Reply(th, nil, c.ReplyingTo, false)
+								content, _ := markdown.NewRenderer().Render(th.Theme, []byte(c.ReplyingTo.Content))
+								reply := Reply(th, nil, c.ReplyingTo, content, false)
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
 							})
