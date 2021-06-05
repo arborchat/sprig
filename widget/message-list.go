@@ -2,6 +2,7 @@ package widget
 
 import (
 	"gioui.org/layout"
+	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -9,6 +10,7 @@ import (
 
 type MessageList struct {
 	layout.List
+	RichTextCache
 	States
 	ShouldHide     func(reply ds.ReplyData) bool
 	StatusOf       func(reply ds.ReplyData) ReplyStatus
@@ -101,4 +103,53 @@ const (
 type ReplyAnimationState struct {
 	*anim.Normal
 	Begin, End ReplyStatus
+}
+
+type CacheEntry struct {
+	UsedSinceLastFrame bool
+	richtext.TextObjects
+}
+
+// RichTextCache holds rendered richtext state across frames, discarding any
+// state that is not used during a given frame.
+type RichTextCache struct {
+	items map[*fields.QualifiedHash]*CacheEntry
+}
+
+func (r *RichTextCache) init() {
+	r.items = make(map[*fields.QualifiedHash]*CacheEntry)
+}
+
+// Get returns richtext state for the given id if it exists.
+func (r *RichTextCache) Get(id *fields.QualifiedHash) richtext.TextObjects {
+	if r.items == nil {
+		r.init()
+	}
+	if to, ok := r.items[id]; ok {
+		r.items[id].UsedSinceLastFrame = true
+		return to.TextObjects
+	}
+	return nil
+}
+
+// Set inserts richtext state for an id.
+func (r *RichTextCache) Set(id *fields.QualifiedHash, text richtext.TextObjects) {
+	if r.items == nil {
+		r.init()
+	}
+	r.items[id] = &CacheEntry{
+		UsedSinceLastFrame: true,
+		TextObjects:        text,
+	}
+}
+
+// Frame purges cache entries that haven't been used since the last frame.
+func (r *RichTextCache) Frame() {
+	for k, v := range r.items {
+		if !v.UsedSinceLastFrame {
+			delete(r.items, k)
+		} else {
+			v.UsedSinceLastFrame = false
+		}
+	}
 }

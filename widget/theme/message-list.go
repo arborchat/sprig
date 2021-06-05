@@ -7,6 +7,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/markdown"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
@@ -132,7 +133,11 @@ func (m MessageListStyle) Layout(gtx C) D {
 								Left:   interpolateInset(anim, m.State.Animation.Progress(gtx)),
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								rs := Reply(th, anim, reply, isActive).
+								content := m.State.RichTextCache.Get(reply.ID)
+								if content == nil {
+									content, _ = markdown.NewRenderer().Render(th.Theme, []byte(reply.Content))
+								}
+								rs := Reply(th, anim, reply, content, isActive).
 									HideMetadata(collapseMetadata)
 								if anim.Begin&sprigWidget.Anchor > 0 {
 									rs = rs.Anchoring(th.Theme, m.State.HiddenChildren(reply))

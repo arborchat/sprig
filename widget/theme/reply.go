@@ -12,7 +12,6 @@ import (
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
-	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -165,8 +164,7 @@ type ReplyStyle struct {
 }
 
 // Reply configures a ReplyStyle for the provided state.
-func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, showActive bool) ReplyStyle {
-	content, _ := markdown.NewRenderer().Render(th.Theme, []byte(nodes.Content))
+func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, text richtext.TextObjects, showActive bool) ReplyStyle {
 	rs := ReplyStyle{
 		ReplyStyleTransition: ReplyStyleTransition{
 			Previous: ReplyStyleConfigFor(th, status.Begin),
@@ -175,7 +173,7 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		ReplyData:           nodes,
 		ReplyAnimationState: status,
 		ShowActive:          showActive,
-		Content:             content,
+		Content:             text,
 		Shaper:              th.Shaper,
 		BadgeColor:          th.Primary.Dark.Bg,
 		AuthorNameStyle:     AuthorName(th, nodes.AuthorName, nodes.AuthorID, showActive),

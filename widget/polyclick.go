@@ -14,7 +14,8 @@ import (
 // Polyclick can detect and report a variety of gesture interactions
 // within a single pointer input area.
 type Polyclick struct {
-	Pass bool
+	// The zero value will pass through pointer events by default.
+	NoPass bool
 	gesture.Click
 	clicks                     []widget.Click
 	pressed, longPressReported bool
@@ -74,7 +75,7 @@ func (p *Polyclick) LongPressed() bool {
 func (p *Polyclick) Layout(gtx layout.Context) layout.Dimensions {
 	p.update(gtx)
 	defer op.Save(gtx.Ops).Load()
-	pointer.PassOp{Pass: p.Pass}.Add(gtx.Ops)
+	pointer.PassOp{Pass: !p.NoPass}.Add(gtx.Ops)
 	pointer.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Add(gtx.Ops)
 	p.Click.Add(gtx.Ops)
 	if p.pressed {
