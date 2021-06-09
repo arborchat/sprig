@@ -4,6 +4,7 @@ import (
 	"gioui.org/io/clipboard"
 	"gioui.org/layout"
 	"gioui.org/widget"
+	"gioui.org/x/richtext"
 
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -25,6 +26,8 @@ type Composer struct {
 
 	SendButton, CancelButton, PasteButton widget.Clickable
 	widget.Editor
+
+	TextState richtext.InteractiveText
 
 	ReplyingTo ds.ReplyData
 
@@ -88,7 +91,7 @@ func (c *Composer) Reset() {
 // ComposingConversation returns whether the composer is currently creating
 // a conversation (rather than a new reply within an existing conversation)
 func (c *Composer) ComposingConversation() bool {
-	return c.ReplyingTo.ID.Equals(fields.NullHash()) && c.Composing()
+	return (c.ReplyingTo.ID == nil || c.ReplyingTo.ID.Equals(fields.NullHash())) && c.Composing()
 }
 
 // Composing indicates whether the composer is composing a message of any
