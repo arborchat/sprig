@@ -12,6 +12,7 @@ require (
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210606191722-186d1821af2b
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8
+	github.com/inkeliz/giohyperlink v0.0.0-20201127153708-cb2dff56ac99
 	github.com/magefile/mage v1.10.0
 	github.com/pkg/profile v1.5.0
 	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad

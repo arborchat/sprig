@@ -15,6 +15,7 @@ import (
 	"gioui.org/x/profiling"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
+	"github.com/inkeliz/giohyperlink"
 	"github.com/pkg/profile"
 )
 
@@ -96,6 +97,8 @@ func eventLoop(w *app.Window) error {
 			app.Shutdown()
 			return nil
 		case event := (<-w.Events()):
+			giohyperlink.ListenEvents(event)
+
 			switch event := event.(type) {
 			case system.DestroyEvent:
 				app.Shutdown()

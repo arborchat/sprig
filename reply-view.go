@@ -16,6 +16,7 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"github.com/inkeliz/giohyperlink"
 
 	"git.sr.ht/~athorp96/forest-ex/expiration"
 	forest "git.sr.ht/~whereswaldon/forest-go"
@@ -706,7 +707,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		case sprigWidget.LinkLongPress:
 			c.Haptic().Buzz()
 		case sprigWidget.LinkOpen:
-			log.Println("Opening %s", event.Data)
+			giohyperlink.Open(event.Data)
 		}
 	}
 }
