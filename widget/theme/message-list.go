@@ -2,7 +2,6 @@ package theme
 
 import (
 	"image"
-	"log"
 
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -11,6 +10,7 @@ import (
 	"gioui.org/widget/material"
 	"gioui.org/x/component"
 	"gioui.org/x/markdown"
+	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
@@ -70,8 +70,7 @@ const buttonWidthDp = 20
 const scrollSlotWidthDp = 12
 
 func (m MessageListStyle) Layout(gtx C) D {
-	m.State.States.Begin()
-	m.State.List.Axis = layout.Vertical
+	m.State.Layout(gtx)
 	th := m.Theme
 	dims := m.State.List.Layout(gtx, len(m.Replies)+len(m.Prefixes), func(gtx layout.Context, index int) layout.Dimensions {
 		if index < len(m.Prefixes) {
@@ -136,24 +135,17 @@ func (m MessageListStyle) Layout(gtx C) D {
 								Left:   interpolateInset(anim, m.State.Animation.Progress(gtx)),
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
-								content := m.State.RichTextCache.Get(reply.ID)
-								if content == nil {
-									content, _ = markdown.NewRenderer().Render(th.Theme, []byte(reply.Content))
-									m.State.RichTextCache.Set(reply.ID, content)
-								}
-								if h := content.Hovered(); h != nil {
-									url := h.GetMetadata("url")
+								state, hint := m.State.GetTextState(reply.ID)
+								content, _ := markdown.NewRenderer().Render(th.Theme, []byte(reply.Content))
+								if hint != "" {
 									macro := op.Record(gtx.Ops)
 									component.Surface(th.Theme).Layout(gtx,
 										func(gtx C) D {
-											return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(th.Theme, url).Layout)
+											return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(th.Theme, hint).Layout)
 										})
 									op.Defer(gtx.Ops, macro.Stop())
 								}
-								if h := content.Clicked(); h != nil {
-									log.Println("clicked", h)
-								}
-								rs := Reply(th, anim, reply, content, isActive).
+								rs := Reply(th, anim, reply, richtext.Text(state, content...), isActive).
 									HideMetadata(collapseMetadata)
 								if anim.Begin&sprigWidget.Anchor > 0 {
 									rs = rs.Anchoring(th.Theme, m.State.HiddenChildren(reply))

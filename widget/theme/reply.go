@@ -155,7 +155,7 @@ type ReplyStyle struct {
 	// messages on anchor nodes with hidden children.
 	AnchorText material.LabelStyle
 
-	Content richtext.TextObjects
+	Content richtext.TextStyle
 	Shaper  text.Shaper
 
 	AuthorNameStyle
@@ -164,7 +164,7 @@ type ReplyStyle struct {
 }
 
 // Reply configures a ReplyStyle for the provided state.
-func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, text richtext.TextObjects, showActive bool) ReplyStyle {
+func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, text richtext.TextStyle, showActive bool) ReplyStyle {
 	rs := ReplyStyle{
 		ReplyStyleTransition: ReplyStyleTransition{
 			Previous: ReplyStyleConfigFor(th, status.Begin),
@@ -368,7 +368,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 }
 
 func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
-	for _, c := range r.Content {
+	for _, c := range r.Content.Styles {
 		c.Color.A = r.finalConfig.TextColor.A
 	}
 	return r.Content.Layout(gtx, r.Shaper)

@@ -606,7 +606,6 @@ func (c *ReplyListView) startConversation() {
 
 // Update updates the state of the view in response to user input events.
 func (c *ReplyListView) Update(gtx layout.Context) {
-	c.RichTextCache.Frame()
 	c.replyCount = func() (count int) {
 		c.AlphaReplyList.WithReplies(func(replies []ds.ReplyData) {
 			count = len(replies)
@@ -701,6 +700,14 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 	if c.LoadMoreHistoryButton.Clicked() || overflowTag == &c.LoadMoreHistoryButton {
 		go c.loadMoreHistory()
+	}
+	for _, event := range c.MessageList.Events() {
+		switch event.Type {
+		case sprigWidget.LinkLongPress:
+			c.Haptic().Buzz()
+		case sprigWidget.LinkOpen:
+			log.Println("Opening %s", event.Data)
+		}
 	}
 }
 

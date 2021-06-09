@@ -2,21 +2,78 @@ package widget
 
 import (
 	"gioui.org/layout"
+	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/ds"
 )
 
+// MessageListEventType is a kind of message list event.
+type MessageListEventType uint8
+
+const (
+	LinkOpen MessageListEventType = iota
+	LinkLongPress
+)
+
+// MessageListEvent describes a user interaction with the message list.
+type MessageListEvent struct {
+	Type MessageListEventType
+	// Data contains event-specific content:
+	// - LinkOpened: the hyperlink being opened
+	// - LinkLongPressed: the hyperlink that was longpressed
+	Data string
+}
+
 type MessageList struct {
 	layout.List
-	RichTextCache
+	textCache RichTextCache
 	States
 	ShouldHide     func(reply ds.ReplyData) bool
 	StatusOf       func(reply ds.ReplyData) ReplyStatus
 	HiddenChildren func(reply ds.ReplyData) int
 	UserIsActive   func(identity *fields.QualifiedHash) bool
 	Animation
+	events []MessageListEvent
+}
+
+// GetTextState returns state storage for a node with the given ID, as well as hint text that should
+// be shown when rendering the given node (if any).
+func (m *MessageList) GetTextState(id *fields.QualifiedHash) (*richtext.InteractiveText, string) {
+	state := m.textCache.Get(id)
+	hint := ""
+	for span, events := state.Events(); span != nil; span, events = state.Events() {
+		for _, event := range events {
+			url := span.Get(markdown.MetadataURL)
+			switch event.Type {
+			case richtext.Click:
+				m.events = append(m.events, MessageListEvent{Type: LinkOpen, Data: url})
+			case richtext.LongPress:
+				m.events = append(m.events, MessageListEvent{Type: LinkLongPress, Data: url})
+				fallthrough
+			case richtext.Hover:
+				hint = url
+			}
+		}
+	}
+	return state, hint
+}
+
+// Layout updates the state of the message list each frame.
+func (m *MessageList) Layout(gtx layout.Context) layout.Dimensions {
+	m.textCache.Frame()
+	m.States.Begin()
+	m.List.Axis = layout.Vertical
+	return layout.Dimensions{}
+}
+
+// Events returns user interactions with the message list that have occurred
+// since the last call to Events().
+func (m *MessageList) Events() []MessageListEvent {
+	out := m.events
+	m.events = m.events[:0]
+	return out
 }
 
 // States implements a buffer of reply states such that memory
@@ -107,7 +164,7 @@ type ReplyAnimationState struct {
 
 type CacheEntry struct {
 	UsedSinceLastFrame bool
-	richtext.TextObjects
+	richtext.InteractiveText
 }
 
 // RichTextCache holds rendered richtext state across frames, discarding any
@@ -120,27 +177,20 @@ func (r *RichTextCache) init() {
 	r.items = make(map[*fields.QualifiedHash]*CacheEntry)
 }
 
-// Get returns richtext state for the given id if it exists.
-func (r *RichTextCache) Get(id *fields.QualifiedHash) richtext.TextObjects {
+// Get returns richtext state for the given id if it exists, and allocates a new
+// state in the cache if it doesn't.
+func (r *RichTextCache) Get(id *fields.QualifiedHash) *richtext.InteractiveText {
 	if r.items == nil {
 		r.init()
 	}
 	if to, ok := r.items[id]; ok {
 		r.items[id].UsedSinceLastFrame = true
-		return to.TextObjects
-	}
-	return nil
-}
-
-// Set inserts richtext state for an id.
-func (r *RichTextCache) Set(id *fields.QualifiedHash, text richtext.TextObjects) {
-	if r.items == nil {
-		r.init()
+		return &to.InteractiveText
 	}
 	r.items[id] = &CacheEntry{
 		UsedSinceLastFrame: true,
-		TextObjects:        text,
 	}
+	return &r.items[id].InteractiveText
 }
 
 // Frame purges cache entries that haven't been used since the last frame.
