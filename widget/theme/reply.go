@@ -173,10 +173,6 @@ type ReplyStyle struct {
 // Reply configures a ReplyStyle for the provided state.
 func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyData, text richtext.TextStyle, showActive bool) ReplyStyle {
 	rs := ReplyStyle{
-		ReplyStyleTransition: ReplyStyleTransition{
-			Previous: ReplyStyleConfigFor(th, status.Begin),
-			Current:  ReplyStyleConfigFor(th, status.End),
-		},
 		ReplyData:           nodes,
 		ReplyAnimationState: status,
 		ShowActive:          showActive,
@@ -187,6 +183,18 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		CommunityNameStyle:  CommunityName(th.Theme, nodes.CommunityName, nodes.CommunityID),
 		Padding:             layout.UniformInset(unit.Dp(8)),
 		MetadataPadding:     layout.Inset{Bottom: unit.Dp(4)},
+	}
+	if status != nil {
+		rs.ReplyStyleTransition = ReplyStyleTransition{
+			Previous: ReplyStyleConfigFor(th, status.Begin),
+			Current:  ReplyStyleConfigFor(th, status.End),
+		}
+	} else {
+		status := sprigWidget.None
+		rs.ReplyStyleTransition = ReplyStyleTransition{
+			Previous: ReplyStyleConfigFor(th, status),
+			Current:  ReplyStyleConfigFor(th, status),
+		}
 	}
 	if nodes.Depth == 1 {
 		theme := th.Theme
@@ -209,7 +217,13 @@ func (r ReplyStyle) Anchoring(th *material.Theme, numNodes int) ReplyStyle {
 
 // Layout renders the ReplyStyle.
 func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
-	r.finalConfig = r.ReplyStyleTransition.InterpolateWith(r.ReplyAnimationState.Progress(gtx))
+	var progress float32
+	if r.ReplyAnimationState != nil {
+		progress = r.ReplyAnimationState.Progress(gtx)
+	} else {
+		progress = 1
+	}
+	r.finalConfig = r.ReplyStyleTransition.InterpolateWith(progress)
 	radiiDp := unit.Dp(5)
 	radii := float32(gtx.Px(radiiDp))
 	return layout.Stack{}.Layout(gtx,
