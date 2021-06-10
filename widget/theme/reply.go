@@ -161,6 +161,13 @@ type ReplyStyle struct {
 	AuthorNameStyle
 	CommunityNameStyle ForestRefStyle
 	DateStyle          material.LabelStyle
+
+	// Padding configures the padding surrounding the entire interior content of the
+	// rendered message.
+	Padding layout.Inset
+
+	// MetadataPadding configures the padding surrounding the metadata line of a node.
+	MetadataPadding layout.Inset
 }
 
 // Reply configures a ReplyStyle for the provided state.
@@ -178,6 +185,8 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		BadgeColor:          th.Primary.Dark.Bg,
 		AuthorNameStyle:     AuthorName(th, nodes.AuthorName, nodes.AuthorID, showActive),
 		CommunityNameStyle:  CommunityName(th.Theme, nodes.CommunityName, nodes.CommunityID),
+		Padding:             layout.UniformInset(unit.Dp(8)),
+		MetadataPadding:     layout.Inset{Bottom: unit.Dp(4)},
 	}
 	if nodes.Depth == 1 {
 		theme := th.Theme
@@ -228,7 +237,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 					return inset.Layout(gtx, func(gtx C) D {
 						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return layout.UniformInset(unit.Dp(4)).Layout(gtx, r.layoutContents)
+								return r.Padding.Layout(gtx, r.layoutContents)
 							}),
 							layout.Rigid(func(gtx C) D {
 								if isConversationRoot {
@@ -352,7 +361,7 @@ func (r ReplyStyle) layoutContents(gtx layout.Context) layout.Dimensions {
 	if !r.CollapseMetadata {
 		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
-				return layout.Inset{Bottom: unit.Dp(4)}.Layout(gtx, r.layoutMetadata)
+				return r.MetadataPadding.Layout(gtx, r.layoutMetadata)
 			}),
 			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
 				return r.layoutContent(gtx)
