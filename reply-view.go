@@ -493,10 +493,10 @@ func (c *ReplyListView) sendReply() {
 	} else {
 		parent, has, err = c.Arbor().Store().Get(c.ReplyingTo.ID)
 		if err != nil {
-			log.Println("failed finding parent node %v in store: %v", c.ReplyingTo.ID, err)
+			log.Printf("failed finding parent node %v in store: %v", c.ReplyingTo.ID, err)
 			return
 		} else if !has {
-			log.Println("parent node %v is not in store: %v", c.ReplyingTo.ID, err)
+			log.Printf("parent node %v is not in store: %v", c.ReplyingTo.ID, err)
 			return
 		}
 	}
