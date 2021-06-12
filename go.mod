@@ -3,9 +3,9 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20210421151739-2296c80d288b
+	gioui.org v0.0.0-20210611190218-9b5e9ae60717
 	gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f
-	gioui.org/x v0.0.0-20210610021858-f30e764a5413
+	gioui.org/x v0.0.0-20210612224444-6c94873665bf
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25

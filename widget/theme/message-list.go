@@ -145,7 +145,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 										})
 									op.Defer(gtx.Ops, macro.Stop())
 								}
-								rs := Reply(th, anim, reply, richtext.Text(state, content...), isActive).
+								rs := Reply(th, anim, reply, richtext.Text(state, th.Shaper, content...), isActive).
 									HideMetadata(collapseMetadata)
 								if anim.Begin&sprigWidget.Anchor > 0 {
 									rs = rs.Anchoring(th.Theme, m.State.HiddenChildren(reply))

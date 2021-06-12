@@ -71,7 +71,7 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									return dims
 								}
 								content, _ := markdown.NewRenderer().Render(th.Theme, []byte(c.ReplyingTo.Content))
-								reply := Reply(th, nil, c.ReplyingTo, richtext.Text(&c.Composer.TextState, content...), false)
+								reply := Reply(th, nil, c.ReplyingTo, richtext.Text(&c.Composer.TextState, th.Shaper, content...), false)
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
 							})

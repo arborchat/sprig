@@ -156,7 +156,6 @@ type ReplyStyle struct {
 	AnchorText material.LabelStyle
 
 	Content richtext.TextStyle
-	Shaper  text.Shaper
 
 	AuthorNameStyle
 	CommunityNameStyle ForestRefStyle
@@ -177,7 +176,6 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		ReplyAnimationState: status,
 		ShowActive:          showActive,
 		Content:             text,
-		Shaper:              th.Shaper,
 		BadgeColor:          th.Primary.Dark.Bg,
 		AuthorNameStyle:     AuthorName(th, nodes.AuthorName, nodes.AuthorID, showActive),
 		CommunityNameStyle:  CommunityName(th.Theme, nodes.CommunityName, nodes.CommunityID),
@@ -394,7 +392,7 @@ func (r ReplyStyle) layoutContent(gtx layout.Context) layout.Dimensions {
 	for _, c := range r.Content.Styles {
 		c.Color.A = r.finalConfig.TextColor.A
 	}
-	return r.Content.Layout(gtx, r.Shaper)
+	return r.Content.Layout(gtx)
 }
 
 // ForestRefStyle configures the presentation of a reference to a forest
