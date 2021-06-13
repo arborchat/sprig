@@ -195,9 +195,9 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 		}
 	}
 	if nodes.Depth == 1 {
-		theme := th.Theme
+		theme := *th.Theme
 		theme.Palette = ApplyAsNormal(th.Palette, th.Primary.Dark)
-		rs.BadgeText = material.Body2(theme, "Root")
+		rs.BadgeText = material.Body2(&theme, "Root")
 	}
 	rs.DateStyle = material.Body2(th.Theme, nodes.CreatedAt.Local().Format("2006/01/02 15:04"))
 	rs.DateStyle.MaxLines = 1

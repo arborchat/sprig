@@ -107,6 +107,7 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	r.CommunityID = &asReply.CommunityID
 	r.CreatedAt = asReply.CreatedAt()
 	r.Content = string(asReply.Content.Blob)
+	r.Depth = int(asReply.Depth)
 	comm, has, err := store.GetCommunity(&asReply.CommunityID)
 
 	if err != nil || !has {
