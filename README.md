@@ -7,17 +7,28 @@ Sprig is the [Arbor](https://arbor.chat) reference chat client.
 
 ### Try it
 
-To give it a shot on desktop, install [go 1.13+](https://golang.org/dl).
+To give it a shot on desktop, install [go 1.16+](https://golang.org/dl).
 
 Then make sure you have the [gio dependencies](https://gioui.org/doc/install#linux) for your current OS.
 
-Finally, run:
+Run:
 
 ```
-env GO111MODULE=on go run git.sr.ht/~whereswaldon/sprig
+git clone https://git.sr.ht/~whereswaldon/sprig
+cd sprig
 ```
 
-To run on android, clone this repo and run:
+Then issue a build for the platform you're targeting by executing one of these:
+
+- `windows`: `make windows`
+- `macos`: `make macos` (only works from a macOS computer)
+- `linux`: `make linux`
+- `android`: `make android` (requires android development environment)
+- `ios`: `make ios` (only works from a macOS computer)
+
+After running `make`, there should be an archive file containing a build for the target platform in your current working directory.
+
+For android in particular, you can automatically install it on a plugged-in device (in developer mode) with:
 
 ```
 make android_install
