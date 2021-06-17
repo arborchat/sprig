@@ -14,7 +14,11 @@ Then make sure you have the [gio dependencies](https://gioui.org/doc/install#lin
 Run:
 
 ```
+# install a build system tool
+go install github.com/magefile/mage@latest
+# clone the source code
 git clone https://git.sr.ht/~whereswaldon/sprig
+# enter the source code directory
 cd sprig
 ```
 
