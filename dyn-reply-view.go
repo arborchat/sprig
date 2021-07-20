@@ -117,6 +117,7 @@ func (c *DynamicChatView) BecomeVisible() {
 // time-based, paginated queries about forest nodes.
 type pageableStore interface {
 	RecentReplies(ts fields.Timestamp, q int) (replies []forest.Reply, err error)
+	RepliesAfter(ts fields.Timestamp, q int) (replies []forest.Reply, err error)
 	forest.Store
 }
 
@@ -201,8 +202,8 @@ func (c *DynamicChatView) loadMessagesPaged(store pageableStore, dir list.Direct
 	if dir == list.Before {
 		for len(batch) < batchSize {
 			replies, err := store.RecentReplies(fields.TimestampFrom(createdAt), batchSize)
-			if err != nil {
-				return nil
+			if err != nil || len(replies) == 0 {
+				return batch
 			}
 			batch = append(batch, repliesToElements(c.Arbor().Store(), replies...)...)
 			sort.Slice(replies, func(i, j int) bool {
@@ -212,7 +213,18 @@ func (c *DynamicChatView) loadMessagesPaged(store pageableStore, dir list.Direct
 		}
 		return batch
 	}
-	return nil
+	for len(batch) < batchSize {
+		replies, err := store.RepliesAfter(fields.TimestampFrom(createdAt), batchSize)
+		if err != nil || len(replies) == 0 {
+			return batch
+		}
+		batch = append(batch, repliesToElements(c.Arbor().Store(), replies...)...)
+		sort.Slice(replies, func(i, j int) bool {
+			return replies[i].CreatedAt().Before(replies[j].CreatedAt())
+		})
+		createdAt = replies[len(replies)-1].CreatedAt()
+	}
+	return batch
 }
 
 // loadMessages loads chat messages in a given direction relative to a given
