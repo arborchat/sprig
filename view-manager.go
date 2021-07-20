@@ -176,6 +176,7 @@ func (vm *viewManager) SetView(id ViewID) {
 		vm.AppBar.Title = title
 		vm.AppBar.SetActions(actions, overflow)
 	}
+	vm.NavDrawer.SetNavDestination(id)
 	view.BecomeVisible()
 }
 
