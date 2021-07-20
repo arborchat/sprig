@@ -22,15 +22,19 @@ type MessageListStyle struct {
 	Replies           []ds.ReplyData
 	Prefixes          []layout.Widget
 	CreateReplyButton *widget.Clickable
+	material.ListStyle
 }
 
 func MessageList(th *Theme, state *sprigWidget.MessageList, replyBtn *widget.Clickable, replies []ds.ReplyData) MessageListStyle {
-	return MessageListStyle{
+	mls := MessageListStyle{
 		Theme:             th,
 		State:             state,
 		Replies:           replies,
 		CreateReplyButton: replyBtn,
+		ListStyle:         material.List(th.Theme, &state.List),
 	}
+	mls.ListStyle.Indicator.MajorMinLen = unit.Dp(12)
+	return mls
 }
 
 const insetUnit = 12
@@ -72,7 +76,7 @@ const scrollSlotWidthDp = 12
 func (m MessageListStyle) Layout(gtx C) D {
 	m.State.Layout(gtx)
 	th := m.Theme
-	dims := m.State.List.Layout(gtx, len(m.Replies)+len(m.Prefixes), func(gtx layout.Context, index int) layout.Dimensions {
+	dims := m.ListStyle.Layout(gtx, len(m.Replies)+len(m.Prefixes), func(gtx layout.Context, index int) layout.Dimensions {
 		if index < len(m.Prefixes) {
 			return m.Prefixes[index](gtx)
 		}

@@ -20,7 +20,7 @@ type SettingsView struct {
 
 	core.App
 
-	layout.List
+	widget.List
 	ConnectionForm          sprigWidget.TextForm
 	IdentityButton          widget.Clickable
 	CommunityList           layout.List
@@ -331,9 +331,9 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 			},
 		},
 	}
-	return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
-		return component.Surface(theme).Layout(gtx, func(gtx C) D {
-			return c.List.Layout(gtx, len(sections), func(gtx C, index int) D {
+	return material.List(theme, &c.List).Layout(gtx, len(sections), func(gtx C, index int) D {
+		return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
+			return component.Surface(theme).Layout(gtx, func(gtx C) D {
 				gtx.Constraints.Min.X = gtx.Constraints.Max.X
 				return itemInset.Layout(gtx, func(gtx C) D {
 					sections[index].Theme = theme

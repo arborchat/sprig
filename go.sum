@@ -1,12 +1,5 @@
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20190408044501-666a987793e9/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
 dmitri.shuralyov.com/gpu/mtl v0.0.0-20201218220906-28db891af037/go.mod h1:H6x//7gZCb22OMCxBHrMx7a5I7Hp++hsVxbQ4BYO7hU=
-gioui.org v0.0.0-20201105153338-edaa112c40df/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20201127082448-4c3de5f5d294/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20210116085804-99bfa6a33cdf/go.mod h1:Y+uS7hHMvku1Q+ooaoq6fYD5B2LGoT8JtFgvmYmRzTw=
-gioui.org v0.0.0-20210306132744-26d9e7fe5f05/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
-gioui.org v0.0.0-20210611190218-9b5e9ae60717/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
-gioui.org v0.0.0-20210623091900-5b8da35a798b h1:N5MMMh46Yg3o8UDFpfEzIIXi4K9x02QoHl89kjmqTOc=
-gioui.org v0.0.0-20210623091900-5b8da35a798b/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
 gioui.org/cmd v0.0.0-20201109100145-fb70fb1c95ca/go.mod h1:rb6Y4o4cRygUtCpmJVQizWNnyYx6HdfcDIuCcSNoGlE=
 gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f h1:GDWo3mtRes+wOfWT9SDDhqPV31mThrPMw6CYF/n1b1w=
 gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f/go.mod h1:eCa1TPjrHBwcRm7cGK4XPE9oBkGA7uebIRatbMOD7V4=
@@ -23,6 +16,8 @@ git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:a
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210408011444-effb84ecc2c5/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210610022432-d59588450728 h1:TljB3gpsOR9nRPHTIH/l6NM3eeDus4+JDaGFUJiXykE=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210610022432-d59588450728/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
+git.sr.ht/~whereswaldon/gio v0.0.0-20210629190709-e5f518f03dc0 h1:dZdgmD8BzxaQe4bAZttm3IcCkjIuecb27nXGkUrHIic=
+git.sr.ht/~whereswaldon/gio v0.0.0-20210629190709-e5f518f03dc0/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zumjgTw83q2ge/PI+yyw8=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb h1:jcEZhfRWnqY+XwZMk2+ldbJDnPrB8v+UiwrC3sPnv8I=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb/go.mod h1:jUOuersHq1652DgWF5rTCCH/Xoepj8z+NpU09IAeqCw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8 h1:dwWqsCFWPZwrST71jhZT+/gkThU2KwdyeUuKSLXR/B8=
@@ -103,7 +98,6 @@ golang.org/x/sys v0.0.0-20190412213103-97732733099d/go.mod h1:h1NjWce9XRLGQEsW7w
 golang.org/x/sys v0.0.0-20190626150813-e07cf5db2756/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191001151750-bb3f8db39f24/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20191113165036-4c7a9d0fe056/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
-golang.org/x/sys v0.0.0-20200124204421-9fbb57f87de9/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200923182605-d9f96fdee20d/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20200930185726-fdedc70b468f/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/sys v0.0.0-20210113181707-4bcb84eeeb78/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
