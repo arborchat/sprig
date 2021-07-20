@@ -26,7 +26,6 @@ import (
 
 	materials "gioui.org/x/component"
 	events "gioui.org/x/eventx"
-	"gioui.org/x/scroll"
 
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/core"
@@ -114,8 +113,6 @@ type ReplyListView struct {
 	LoadMoreHistoryButton widget.Clickable
 	// how many nodes of history does the view want
 	HistoryRequestCount int
-
-	scroll.Scrollable
 
 	FilterState
 	ds.HiddenTracker
@@ -696,9 +693,6 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
 		c.startConversation()
 	}
-	if did, progress := c.Scrollable.Scrolled(); did {
-		c.reveal(int(float32(c.replyCount) * progress))
-	}
 	if c.LoadMoreHistoryButton.Clicked() || overflowTag == &c.LoadMoreHistoryButton {
 		go c.loadMoreHistory()
 	}
@@ -883,9 +877,8 @@ func (c *ReplyListView) shouldFilter(status sprigWidget.ReplyStatus) bool {
 func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	gtx.Constraints.Min = gtx.Constraints.Max
 	var (
-		dims                 layout.Dimensions
-		th                       = c.Theme().Current()
-		totalUnfilteredNodes int = 1 + len(c.Ancestry) + len(c.Descendants)
+		dims layout.Dimensions
+		th   = c.Theme().Current()
 	)
 	if c.loading {
 		return layout.Center.Layout(gtx, func(gtx C) D {
@@ -911,30 +904,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 		dims = ml.Layout(gtx)
 	})
 
-	totalNodes := func() int {
-		if c.Filtered() {
-			return totalUnfilteredNodes
-		}
-		return c.replyCount
-	}()
-	progress := float32(c.MessageList.Position.First) / float32(c.replyCount)
-	visibleFraction := float32(0)
 	if c.replyCount > 0 {
 		if c.States.Current > c.maxRepliesVisible {
 			c.maxRepliesVisible = c.States.Current
 		}
-		visibleFraction = float32(c.maxRepliesVisible) / float32(totalNodes)
-		if visibleFraction > 1 {
-			visibleFraction = 1
-		}
 	}
-	bar := scroll.DefaultBar(&c.Scrollable, progress, visibleFraction)
-	bar.Color = materials.WithAlpha(th.Background.Default.Fg, 200)
-	layout.Inset{
-		Top:    unit.Dp(2),
-		Bottom: unit.Dp(2),
-	}.Layout(gtx, bar.Layout)
-
 	return dims
 }
 

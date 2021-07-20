@@ -2,6 +2,7 @@ package widget
 
 import (
 	"gioui.org/layout"
+	"gioui.org/widget"
 	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -27,7 +28,7 @@ type MessageListEvent struct {
 }
 
 type MessageList struct {
-	layout.List
+	widget.List
 	textCache RichTextCache
 	States
 	ShouldHide     func(reply ds.ReplyData) bool
