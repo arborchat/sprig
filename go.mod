@@ -3,9 +3,9 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20210623091900-5b8da35a798b
+	gioui.org v0.0.0-20210719172005-4f40b58e0d14
 	gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f
-	gioui.org/x v0.0.0-20210612224444-6c94873665bf
+	gioui.org/x v0.0.0-20210720122105-82464c04dbf0
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
@@ -24,5 +24,3 @@ require (
 )
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
-
-replace gioui.org => git.sr.ht/~whereswaldon/gio v0.0.0-20210629190709-e5f518f03dc0
