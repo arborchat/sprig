@@ -1,6 +1,7 @@
 package widget
 
 import (
+	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 )
 
@@ -9,6 +10,8 @@ type Reply struct {
 	Hash    *fields.QualifiedHash
 	Content string
 	Polyclick
+	richtext.InteractiveText
+	ReplyStatus
 }
 
 func (r *Reply) WithHash(h *fields.QualifiedHash) *Reply {

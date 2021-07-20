@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"git.sr.ht/~gioverse/chat/list"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/store"
@@ -124,6 +125,18 @@ func (r *ReplyData) Populate(reply forest.Node, store store.ExtendedStore) bool 
 	r.AuthorName = string(asAuthor.Name.Blob)
 
 	return true
+}
+
+// ensure ReplyData satisfies list.Element.
+var _ list.Element = ReplyData{}
+
+// Serial returns a unique identifier for this ReplyData which can be used for
+// dynamic list state management.
+func (r ReplyData) Serial() list.Serial {
+	if r.ID != nil {
+		return list.Serial(r.ID.String())
+	}
+	return list.NoSerial
 }
 
 // NodeList implements a generic data structure for storing ordered lists of forest nodes.
