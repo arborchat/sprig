@@ -2,7 +2,9 @@ package main
 
 import (
 	"gioui.org/layout"
+	"gioui.org/widget"
 	materials "gioui.org/x/component"
+	"git.sr.ht/~gioverse/chat/list"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 )
@@ -15,6 +17,9 @@ import (
 type DynamicChatView struct {
 	manager ViewManager
 
+	chatList    widget.List
+	chatManager *list.Manager
+
 	core.App
 }
 
@@ -25,6 +30,21 @@ func NewDynamicChatView(app core.App) View {
 	c := &DynamicChatView{
 		App: app,
 	}
+	c.chatList.Axis = layout.Vertical
+	c.chatManager = list.NewManager(100, list.Hooks{
+		Invalidator: func() { c.manager.RequestInvalidate() },
+		Allocator: func(elem list.Element) interface{} {
+			return nil
+		},
+		Comparator: func(a, b list.Element) bool {
+			return true
+		},
+		Synthesizer: func(prev, current list.Element) []list.Element {
+			return []list.Element{current}
+		},
+		Presenter: c.layoutReply,
+		Loader:    c.loadMessages,
+	})
 	return c
 }
 
@@ -69,4 +89,16 @@ func (c *DynamicChatView) HandleIntent(intent Intent) {}
 
 // BecomeVisible prepares the chat to be displayed to the user.
 func (c *DynamicChatView) BecomeVisible() {
+}
+
+// loadMessages loads chat messages in a given direction relative to a given
+// other chat message.
+func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Serial) []list.Element {
+	return []list.Element{}
+}
+
+// layoutReply returns a widget that will render the provided reply using the
+// provided state.
+func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{}) layout.Widget {
+	return func(gtx C) D { return D{} }
 }
