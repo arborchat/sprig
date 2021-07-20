@@ -77,6 +77,7 @@ func eventLoop(w *app.Window) error {
 	vm.RegisterView(IdentityFormID, NewIdentityFormView(app))
 	vm.RegisterView(ConsentViewID, NewConsentView(app))
 	vm.RegisterView(SubscriptionSetupFormViewID, NewSubSetupFormView(app))
+	vm.RegisterView(DynamicChatViewID, NewDynamicChatView(app))
 
 	if app.Settings().AcknowledgedNoticeVersion() < NoticeVersion {
 		vm.SetView(ConsentViewID)
@@ -87,7 +88,7 @@ func eventLoop(w *app.Window) error {
 	} else if len(app.Settings().Subscriptions()) < 1 {
 		vm.SetView(SubscriptionSetupFormViewID)
 	} else {
-		vm.SetView(ReplyViewID)
+		vm.SetView(DynamicChatViewID)
 	}
 
 	var ops op.Ops
@@ -159,6 +160,7 @@ const (
 	ConsentViewID
 	SubscriptionViewID
 	SubscriptionSetupFormViewID
+	DynamicChatViewID
 )
 
 // getDataDir returns application specific file directory to use for storage.
