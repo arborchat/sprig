@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"image"
 	"image/color"
 	"log"
 	"net/url"
@@ -250,7 +251,9 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 								layout.Rigid(func(gtx C) D {
 									icon := icons.FilterIcon
 									icon.Color = buttonForeground
-									return icon.Layout(gtx, unit.Dp(24))
+									sz := gtx.Px(unit.Dp(24))
+									gtx.Constraints = layout.Exact(image.Pt(sz, sz))
+									return icon.Layout(gtx)
 								}),
 								layout.Rigid(func(gtx C) D {
 									gtx.Constraints.Max.X = gtx.Px(unit.Dp(40))
