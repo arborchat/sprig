@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"sort"
+	"time"
 
 	"gioui.org/layout"
 	"gioui.org/widget"
@@ -9,8 +11,11 @@ import (
 	materials "gioui.org/x/component"
 	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
+	matlayout "git.sr.ht/~gioverse/chat/layout"
 	"git.sr.ht/~gioverse/chat/list"
+	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
+	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/ds"
@@ -108,10 +113,116 @@ func (c *DynamicChatView) HandleIntent(intent Intent) {}
 func (c *DynamicChatView) BecomeVisible() {
 }
 
+// pageableStore defines the interface of a type that can answer
+// time-based, paginated queries about forest nodes.
+type pageableStore interface {
+	RecentReplies(ts fields.Timestamp, q int) (replies []forest.Reply, err error)
+	forest.Store
+}
+
+func serialToID(s list.Serial) *fields.QualifiedHash {
+	asString := string(s)
+	var qh fields.QualifiedHash
+	err := qh.UnmarshalText([]byte(asString))
+	if err != nil {
+		return fields.NullHash()
+	}
+	return &qh
+}
+
+func replyToElement(store store.ExtendedStore, reply *forest.Reply) list.Element {
+	md, err := reply.TwigMetadata()
+	if err != nil {
+		return nil
+	}
+	if md.Contains("invisible", 1) {
+		return nil
+	}
+	var rd ds.ReplyData
+	rd.Populate(reply, store)
+	return rd
+}
+
+func replyNodesToElements(store store.ExtendedStore, replies ...forest.Node) []list.Element {
+	elements := make([]list.Element, 0, len(replies))
+	for _, reply := range replies {
+		if reply, ok := reply.(*forest.Reply); ok {
+			element := replyToElement(store, reply)
+			if element != nil {
+				elements = append(elements, element)
+			}
+		}
+	}
+	return elements
+}
+func repliesToElements(store store.ExtendedStore, replies ...forest.Reply) []list.Element {
+	elements := make([]list.Element, 0, len(replies))
+	for _, reply := range replies {
+		element := replyToElement(store, &reply)
+		if element != nil {
+			elements = append(elements, element)
+		}
+	}
+	return elements
+}
+
+func (c *DynamicChatView) loadMessagesPaged(store pageableStore, dir list.Direction, relativeTo list.Serial) []list.Element {
+	const batchSize = 10
+	batch := make([]list.Element, 0, batchSize)
+	if relativeTo == list.NoSerial {
+		// We are loading the very first messages, so look relative to
+		// right now (plus a little because clock skew).
+		startTime := time.Now().Add(time.Hour)
+		// Since some messages aren't meant to be displayed, we may have
+		// to query multiple times. Keep trying until we get enough messages
+		// or there are no more messages.
+		for len(batch) < batchSize {
+			replies, err := store.RecentReplies(fields.TimestampFrom(startTime), batchSize)
+			if err != nil || len(replies) == 0 {
+				return batch
+			}
+			batch = append(batch, repliesToElements(c.Arbor().Store(), replies...)...)
+			sort.Slice(replies, func(i, j int) bool {
+				return replies[i].CreatedAt().Before(replies[j].CreatedAt())
+			})
+			startTime = replies[0].CreatedAt()
+		}
+		return batch
+	}
+	relID := serialToID(relativeTo)
+	if relID.Equals(fields.NullHash()) {
+		return nil
+	}
+	node, has, err := store.Get(relID)
+	if err != nil || !has {
+		return nil
+	}
+	createdAt := node.CreatedAt()
+	if dir == list.Before {
+		for len(batch) < batchSize {
+			replies, err := store.RecentReplies(fields.TimestampFrom(createdAt), batchSize)
+			if err != nil {
+				return nil
+			}
+			batch = append(batch, repliesToElements(c.Arbor().Store(), replies...)...)
+			sort.Slice(replies, func(i, j int) bool {
+				return replies[i].CreatedAt().Before(replies[j].CreatedAt())
+			})
+			createdAt = replies[0].CreatedAt()
+		}
+		return batch
+	}
+	return nil
+}
+
 // loadMessages loads chat messages in a given direction relative to a given
 // other chat message.
 func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Serial) []list.Element {
-	log.Println(dir, relativeTo)
+	if archive, ok := c.Arbor().Store().(*store.Archive); ok {
+		if pageable, ok := archive.UnderlyingStore().(pageableStore); ok {
+			return c.loadMessagesPaged(pageable, dir, relativeTo)
+		}
+	}
 	if relativeTo != list.NoSerial || dir == 0 {
 		return nil
 	}
@@ -150,6 +261,6 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 			Normal: &c.FocusAnimation,
 			Begin:  state.ReplyStatus,
 		}
-		return sprigtheme.Reply(sTheme, animState, rd, richContent, false).Layout(gtx)
+		return matlayout.VerticalMargin().Layout(gtx, sprigtheme.Reply(sTheme, animState, rd, richContent, false).Layout)
 	}
 }
