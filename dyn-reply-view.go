@@ -12,7 +12,6 @@ import (
 	materials "gioui.org/x/component"
 	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
-	matlayout "git.sr.ht/~gioverse/chat/layout"
 	"git.sr.ht/~gioverse/chat/list"
 	forest "git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
@@ -55,7 +54,7 @@ func NewDynamicChatView(app core.App) View {
 	}
 	c.chatList.Axis = layout.Vertical
 	c.chatList.List.ScrollToEnd = true
-	c.FocusAnimation.Duration = time.Millisecond * 250
+	c.FocusAnimation.Duration = time.Millisecond * 100
 	c.chatManager = list.NewManager(100, list.Hooks{
 		Invalidator: func() { c.manager.RequestInvalidate() },
 		Allocator: func(elem list.Element) interface{} {
@@ -328,11 +327,6 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 			}
 		}
 		// Layout the reply.
-		return matlayout.VerticalMargin().Layout(gtx, func(gtx C) D {
-			return layout.Stack{}.Layout(gtx,
-				layout.Stacked(sprigtheme.Reply(sTheme, animState, rd, richContent, false).Layout),
-				layout.Expanded(state.Polyclick.Layout),
-			)
-		})
+		return sprigtheme.ReplyRow(sTheme, state, animState, rd, richContent).Layout(gtx)
 	}
 }
