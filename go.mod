@@ -10,7 +10,7 @@ require (
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~gioverse/chat v0.0.0-20210720041446-add6d960e392
-	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210720174252-cfd305f69920
+	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8
 	github.com/inkeliz/giohyperlink v0.0.0-20210728190223-81136d95d4bb
@@ -22,5 +22,3 @@ require (
 )
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
-
-replace git.sr.ht/~whereswaldon/forest-go => ../forest-go/

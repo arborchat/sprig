@@ -24,10 +24,8 @@ git.sr.ht/~gioverse/chat v0.0.0-20210720041446-add6d960e392 h1:i6ayynrU68Nt7Zk4a
 git.sr.ht/~gioverse/chat v0.0.0-20210720041446-add6d960e392/go.mod h1:ipj/RtEe64+ZkUsjl/3V2Uxl8Ug1/esPeMyznhI52ug=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:aGmm4R7ifFBvJWOHINDvZcKVOu+ODkD75NmNm/O0zME=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210408011444-effb84ecc2c5/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20210610022432-d59588450728 h1:TljB3gpsOR9nRPHTIH/l6NM3eeDus4+JDaGFUJiXykE=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20210610022432-d59588450728/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20210720174252-cfd305f69920 h1:dnwsOw9O9KOj4Xbi46TBEFixE3X9hj/AR0yBh6D3lZE=
-git.sr.ht/~whereswaldon/forest-go v0.0.0-20210720174252-cfd305f69920/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020 h1:V9zx3h6+j9QW7+EpKtfY+ifqh3oFbEuGqnvkWZ9R1pU=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb h1:jcEZhfRWnqY+XwZMk2+ldbJDnPrB8v+UiwrC3sPnv8I=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb/go.mod h1:jUOuersHq1652DgWF5rTCCH/Xoepj8z+NpU09IAeqCw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8 h1:dwWqsCFWPZwrST71jhZT+/gkThU2KwdyeUuKSLXR/B8=
