@@ -5,6 +5,7 @@ import (
 	"sort"
 	"time"
 
+	"gioui.org/gesture"
 	"gioui.org/layout"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -40,6 +41,8 @@ type DynamicChatView struct {
 	// FocusAnimation is the shared animation state for all messages.
 	FocusAnimation anim.Normal
 
+	FocusTracker
+
 	core.App
 }
 
@@ -51,6 +54,8 @@ func NewDynamicChatView(app core.App) View {
 		App: app,
 	}
 	c.chatList.Axis = layout.Vertical
+	c.chatList.List.ScrollToEnd = true
+	c.FocusAnimation.Duration = time.Millisecond * 250
 	c.chatManager = list.NewManager(100, list.Hooks{
 		Invalidator: func() { c.manager.RequestInvalidate() },
 		Allocator: func(elem list.Element) interface{} {
@@ -90,6 +95,9 @@ func (c *DynamicChatView) NavItem() *materials.NavItem {
 
 // Update the state of the view in response to events.
 func (c *DynamicChatView) Update(gtx layout.Context) {
+	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
+		c.FocusAnimation.Start(gtx.Now)
+	}
 }
 
 // Layout the view in the provided context.
@@ -259,20 +267,72 @@ func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Seria
 	return elements
 }
 
+func (c *DynamicChatView) replyState(reply ds.ReplyData) (status sprigwidget.ReplyStatus) {
+	if reply.Depth == 1 {
+		status |= sprigwidget.ConversationRoot
+	}
+	if c.Focused == nil || c.Focused.ID == nil {
+		status |= sprigwidget.None
+		return
+	}
+	if reply.ID.Equals(c.Focused.ID) {
+		status |= sprigwidget.Selected
+		return
+	}
+	for _, id := range c.FocusTracker.Ancestry {
+		if id.Equals(reply.ID) {
+			status |= sprigwidget.Ancestor
+			return
+		}
+	}
+	for _, id := range c.FocusTracker.Descendants {
+		if id.Equals(reply.ID) {
+			status |= sprigwidget.Descendant
+			return
+		}
+	}
+	return
+}
+
 // layoutReply returns a widget that will render the provided reply using the
 // provided state.
 func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{}) layout.Widget {
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
 	return func(gtx C) D {
+		// Expose the concrete types of the parameters.
 		state := state.(*sprigwidget.Reply)
 		rd := replyData.(ds.ReplyData)
+		// Render the markdown content of the reply.
 		content, _ := markdown.NewRenderer().Render(theme, []byte(rd.Content))
 		richContent := richtext.Text(&state.InteractiveText, theme.Shaper, content...)
+		// Construct an animation state using the shared animation progress
+		// but use discrete begin and end states for this reply.
 		animState := &sprigwidget.ReplyAnimationState{
 			Normal: &c.FocusAnimation,
 			Begin:  state.ReplyStatus,
+			End:    c.replyState(rd),
 		}
-		return matlayout.VerticalMargin().Layout(gtx, sprigtheme.Reply(sTheme, animState, rd, richContent, false).Layout)
+		// At the end of an animation, update the persistent state of the
+		// reply to reflect its new state.
+		if !c.FocusAnimation.Animating(gtx) {
+			state.ReplyStatus = animState.End
+		}
+		// Process any clicks on the reply.
+		for _, e := range state.Polyclick.Events(gtx) {
+			switch e.Type {
+			case gesture.TypeClick:
+				if e.NumClicks == 1 {
+					c.FocusTracker.SetFocus(rd)
+				}
+			}
+		}
+		// Layout the reply.
+		return matlayout.VerticalMargin().Layout(gtx, func(gtx C) D {
+			return layout.Stack{}.Layout(gtx,
+				layout.Stacked(sprigtheme.Reply(sTheme, animState, rd, richContent, false).Layout),
+				layout.Expanded(state.Polyclick.Layout),
+			)
+		})
 	}
 }
