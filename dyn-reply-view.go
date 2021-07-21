@@ -71,11 +71,35 @@ func NewDynamicChatView(app core.App) View {
 		Presenter: c.layoutReply,
 		Loader:    c.loadMessages,
 	})
+
+	c.Arbor().Store().SubscribeToNewMessages(c.handleNewNode)
 	return c
 }
 
 // DynamicChatViewName defines the user-presented name for this view.
 const DynamicChatViewName = "Chat"
+
+// handleNewNode processes nodes that have been recieved new after the
+// view was instantiated.
+func (c *DynamicChatView) handleNewNode(node forest.Node) {
+	go func() {
+		switch node := node.(type) {
+		case *forest.Reply:
+			if !replyIsVisible(node) {
+				return
+			}
+			var rd ds.ReplyData
+			if !rd.Populate(node, c.Arbor().Store()) {
+				return
+			}
+			c.chatManager.Modify([]list.Element{rd}, nil, nil)
+			c.FocusTracker.Invalidate()
+			c.manager.RequestInvalidate()
+		default:
+			// Discard, we only display replies in this view.
+		}
+	}()
+}
 
 // AppBarData returns the configuration of the app bar for this view.
 func (c *DynamicChatView) AppBarData() (bool, string, []materials.AppBarAction, []materials.OverflowAction) {
@@ -138,12 +162,19 @@ func serialToID(s list.Serial) *fields.QualifiedHash {
 	return &qh
 }
 
-func replyToElement(store store.ExtendedStore, reply *forest.Reply) list.Element {
+func replyIsVisible(reply *forest.Reply) bool {
 	md, err := reply.TwigMetadata()
 	if err != nil {
-		return nil
+		return false
 	}
 	if md.Contains("invisible", 1) {
+		return false
+	}
+	return true
+}
+
+func replyToElement(store store.ExtendedStore, reply *forest.Reply) list.Element {
+	if !replyIsVisible(reply) {
 		return nil
 	}
 	var rd ds.ReplyData
@@ -252,11 +283,9 @@ func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Seria
 	}
 	elements := make([]list.Element, 0, len(replies))
 	for _, reply := range replies {
-		md, err := reply.TwigMetadata()
-		if err != nil {
+		if reply, ok := reply.(*forest.Reply); !ok {
 			continue
-		}
-		if md.Contains("invisible", 1) {
+		} else if !replyIsVisible(reply) {
 			continue
 		}
 		var rd ds.ReplyData
