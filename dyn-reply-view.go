@@ -266,30 +266,13 @@ func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Seria
 	return elements
 }
 
+// replyState returns the display status of a given message within the view.
+// This varies based on what is selected, filtered, and hidden.
 func (c *DynamicChatView) replyState(reply ds.ReplyData) (status sprigwidget.ReplyStatus) {
 	if reply.Depth == 1 {
 		status |= sprigwidget.ConversationRoot
 	}
-	if c.Focused == nil || c.Focused.ID == nil {
-		status |= sprigwidget.None
-		return
-	}
-	if reply.ID.Equals(c.Focused.ID) {
-		status |= sprigwidget.Selected
-		return
-	}
-	for _, id := range c.FocusTracker.Ancestry {
-		if id.Equals(reply.ID) {
-			status |= sprigwidget.Ancestor
-			return
-		}
-	}
-	for _, id := range c.FocusTracker.Descendants {
-		if id.Equals(reply.ID) {
-			status |= sprigwidget.Descendant
-			return
-		}
-	}
+	status |= c.FocusTracker.StatusFor(reply)
 	return
 }
 
@@ -322,7 +305,7 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 			switch e.Type {
 			case gesture.TypeClick:
 				if e.NumClicks == 1 {
-					c.FocusTracker.SetFocus(rd)
+					c.FocusTracker.SetFocusDeferred(rd)
 				}
 			}
 		}

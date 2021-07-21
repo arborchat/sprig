@@ -47,10 +47,10 @@ const (
 // FocusTracker keeps track of which message (if any) is focused and the status
 // of ancestor/descendant messages relative to that message.
 type FocusTracker struct {
-	Focused      *ds.ReplyData
-	Ancestry     []*fields.QualifiedHash
-	Descendants  []*fields.QualifiedHash
-	Conversation *fields.QualifiedHash
+	Pending     *ds.ReplyData
+	Focused     *ds.ReplyData
+	Ancestry    []*fields.QualifiedHash
+	Descendants []*fields.QualifiedHash
 	// Whether the Ancestry and Descendants need to be regenerated because the
 	// contents of the replylist changed
 	stateRefreshNeeded bool
@@ -60,7 +60,13 @@ type FocusTracker struct {
 func (f *FocusTracker) SetFocus(focused ds.ReplyData) {
 	f.stateRefreshNeeded = true
 	f.Focused = &focused
-	f.Conversation = f.Focused.ConversationID
+}
+
+// SetFocusDeferred requests that the provided ReplyData become the focused message
+// at the next state refresh.
+func (f *FocusTracker) SetFocusDeferred(focused ds.ReplyData) {
+	f.stateRefreshNeeded = true
+	f.Pending = &focused
 }
 
 // Invalidate notifies the FocusTracker that its Ancestry and Descendants lists
@@ -76,6 +82,9 @@ func (f *FocusTracker) Invalidate() {
 func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 	if f.stateRefreshNeeded {
 		f.stateRefreshNeeded = false
+		if f.Pending != nil {
+			f.Focused, f.Pending = f.Pending, nil
+		}
 		if f.Focused == nil {
 			f.Ancestry = nil
 			f.Descendants = nil
@@ -86,6 +95,35 @@ func (f *FocusTracker) RefreshNodeStatus(s store.ExtendedStore) bool {
 		return true
 	}
 	return false
+}
+
+// StatusFor returns one of these statuses for a ReplyData, depending on
+// what is currently focused:
+// - Selected
+// - Ancestor
+// - Descendant
+func (f *FocusTracker) StatusFor(rd ds.ReplyData) (status sprigWidget.ReplyStatus) {
+	if f.Focused == nil || f.Focused.ID == nil {
+		return
+	}
+	if rd.ID.Equals(f.Focused.ID) {
+		return sprigWidget.Selected
+	}
+	for _, id := range f.Ancestry {
+		if id.Equals(rd.ID) {
+			return sprigWidget.Ancestor
+		}
+	}
+	for _, id := range f.Descendants {
+		if id.Equals(rd.ID) {
+			return sprigWidget.Descendant
+		}
+	}
+	if f.Focused.ConversationID != nil &&
+		f.Focused.ConversationID.Equals(rd.ConversationID) {
+		return sprigWidget.Sibling
+	}
+	return
 }
 
 // ReplyListView manages the state and layout of the reply list view in
@@ -805,8 +843,8 @@ func (c *ReplyListView) statusOf(reply ds.ReplyData) (status sprigWidget.ReplySt
 		status |= sprigWidget.ConversationRoot
 		return
 	}
-	if c.Conversation != nil && !c.Conversation.Equals(fields.NullHash()) {
-		if c.Conversation.Equals(reply.ConversationID) {
+	if c.Focused.ConversationID != nil && !c.Focused.ConversationID.Equals(fields.NullHash()) {
+		if c.Focused.ConversationID.Equals(reply.ConversationID) {
 			status |= sprigWidget.Sibling
 			return
 		}

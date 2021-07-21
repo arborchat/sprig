@@ -1,6 +1,8 @@
 package widget
 
 import (
+	"strings"
+
 	"gioui.org/layout"
 	"gioui.org/widget"
 	"gioui.org/x/markdown"
@@ -153,6 +155,39 @@ const (
 	// Hidden indicates that this node is not currently visible.
 	Hidden
 )
+
+func (r ReplyStatus) Contains(other ReplyStatus) bool {
+	return r&other > 0
+}
+
+func (r ReplyStatus) String() string {
+	var out []string
+	if r.Contains(None) {
+		out = append(out, "None")
+	}
+	if r.Contains(Sibling) {
+		out = append(out, "Sibling")
+	}
+	if r.Contains(Selected) {
+		out = append(out, "Selected")
+	}
+	if r.Contains(Ancestor) {
+		out = append(out, "Ancestor")
+	}
+	if r.Contains(Descendant) {
+		out = append(out, "Descendant")
+	}
+	if r.Contains(ConversationRoot) {
+		out = append(out, "ConversationRoot")
+	}
+	if r.Contains(Anchor) {
+		out = append(out, "Anchor")
+	}
+	if r.Contains(Hidden) {
+		out = append(out, "Hidden")
+	}
+	return strings.Join(out, "|")
+}
 
 // ReplyAnimationState holds the state of an in-progress animation for a reply.
 // The anim.Normal field defines how far through the animation the node is, and
