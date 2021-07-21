@@ -1,12 +1,15 @@
 package main
 
 import (
+	"image"
 	"log"
 	"sort"
 	"time"
 
 	"gioui.org/gesture"
+	"gioui.org/io/pointer"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
@@ -41,6 +44,8 @@ type DynamicChatView struct {
 	FocusAnimation anim.Normal
 
 	FocusTracker
+
+	BackgroundClick gesture.Click
 
 	core.App
 }
@@ -121,6 +126,12 @@ func (c *DynamicChatView) Update(gtx layout.Context) {
 	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
 		c.FocusAnimation.Start(gtx.Now)
 	}
+	for _, e := range c.BackgroundClick.Events(gtx) {
+		switch e.Type {
+		case gesture.TypeClick:
+			c.FocusTracker.SetFocus(nil)
+		}
+	}
 }
 
 // Layout the view in the provided context.
@@ -129,7 +140,20 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
 
-	return material.List(theme, &c.chatList).Layout(gtx, c.chatManager.UpdatedLen(&c.chatList.List), c.chatManager.Layout)
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(func(gtx C) D {
+			defer op.Save(gtx.Ops).Load()
+			pointer.Rect(image.Rectangle{
+				Max: gtx.Constraints.Max,
+			}).Add(gtx.Ops)
+			c.BackgroundClick.Add(gtx.Ops)
+			return D{Size: gtx.Constraints.Max}
+		}),
+		layout.Stacked(func(gtx C) D {
+			gtx.Constraints.Min = gtx.Constraints.Max
+			return material.List(theme, &c.chatList).Layout(gtx, c.chatManager.UpdatedLen(&c.chatList.List), c.chatManager.Layout)
+		}),
+	)
 }
 
 // Set the view manager for this view.
@@ -334,7 +358,7 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 			switch e.Type {
 			case gesture.TypeClick:
 				if e.NumClicks == 1 {
-					c.FocusTracker.SetFocusDeferred(rd)
+					c.FocusTracker.SetFocusDeferred(&rd)
 				}
 			}
 		}

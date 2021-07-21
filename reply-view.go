@@ -57,16 +57,16 @@ type FocusTracker struct {
 }
 
 // SetFocus requests that the provided ReplyData become the focused message.
-func (f *FocusTracker) SetFocus(focused ds.ReplyData) {
+func (f *FocusTracker) SetFocus(focused *ds.ReplyData) {
 	f.stateRefreshNeeded = true
-	f.Focused = &focused
+	f.Focused = focused
 }
 
 // SetFocusDeferred requests that the provided ReplyData become the focused message
 // at the next state refresh.
-func (f *FocusTracker) SetFocusDeferred(focused ds.ReplyData) {
+func (f *FocusTracker) SetFocusDeferred(focused *ds.ReplyData) {
 	f.stateRefreshNeeded = true
-	f.Pending = &focused
+	f.Pending = focused
 }
 
 // Invalidate notifies the FocusTracker that its Ancestry and Descendants lists
@@ -404,7 +404,7 @@ func (c *ReplyListView) moveFocus(indexIncrement int) {
 			if c.shouldFilter(status) {
 				continue
 			}
-			c.FocusTracker.SetFocus(replies[currentIndex])
+			c.FocusTracker.SetFocus(&replies[currentIndex])
 			c.ensureFocusedVisible(currentIndex)
 			break
 		}
@@ -430,7 +430,7 @@ func (c *ReplyListView) moveFocusEnd(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
 	}
-	c.SetFocus(replies[len(replies)-1])
+	c.SetFocus(&replies[len(replies)-1])
 	c.requestKeyboardFocus()
 	c.MessageList.Position.BeforeEnd = false
 }
@@ -441,7 +441,7 @@ func (c *ReplyListView) moveFocusStart(replies []ds.ReplyData) {
 	if len(replies) < 1 {
 		return
 	}
-	c.SetFocus(replies[0])
+	c.SetFocus(&replies[0])
 	c.requestKeyboardFocus()
 	c.MessageList.Position.BeforeEnd = true
 	c.MessageList.Position.First = 0
@@ -609,7 +609,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		reply, _, _ := c.Arbor().Store().Get(handler.Hash)
 		var data ds.ReplyData
 		data.Populate(reply, c.Arbor().Store())
-		c.SetFocus(data)
+		c.SetFocus(&data)
 	}
 	for i := range c.States.Buffer {
 		handler := &c.States.Buffer[i]
@@ -767,7 +767,7 @@ func (c *ReplyListView) toggleConversationHidden() {
 	c.WithReplies(func(replies []ds.ReplyData) {
 		for _, rd := range replies {
 			if rd.ID.Equals(focusedID) {
-				c.SetFocus(rd)
+				c.SetFocus(&rd)
 				if err := c.HiddenTracker.ToggleAnchor(rd.ID, c.Arbor().Store()); err != nil {
 					log.Printf("Failed hiding descendants of selected: %v", err)
 				}
