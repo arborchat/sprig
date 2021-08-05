@@ -3,10 +3,12 @@ package main
 import (
 	"image"
 	"log"
+	"runtime"
 	"sort"
 	"time"
 
 	"gioui.org/gesture"
+	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -42,6 +44,11 @@ type DynamicChatView struct {
 	chatList widget.List
 	// chatManager controls which list elements are loaded into memory.
 	chatManager *list.Manager
+	// updatedListLen holds the most recent value of the chatManager's UpdatedLen()
+	// This view calls UpdatedLen early so that it can traverse the resulting list
+	// state, and this field allows passing the resulting length to the layout
+	// call site.
+	updatedListLen int
 
 	// FocusAnimation is the shared animation state for all messages.
 	FocusAnimation anim.Normal
@@ -127,14 +134,48 @@ func (c *DynamicChatView) NavItem() *materials.NavItem {
 }
 
 func (c *DynamicChatView) Update(gtx layout.Context) {
-}
-
-// Layout the view in the provided context.
-func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
-	sTheme := c.Theme().Current()
-	theme := sTheme.Theme
-
-	listLength := c.chatManager.UpdatedLen(&c.chatList.List)
+	c.updatedListLen = c.chatManager.UpdatedLen(&c.chatList.List)
+	key.InputOp{Tag: c}.Add(gtx.Ops)
+	key.FocusOp{Tag: c}.Add(gtx.Ops)
+	for _, event := range gtx.Events(c) {
+		switch event := event.(type) {
+		case key.Event:
+			if event.State == key.Press {
+				switch event.Name {
+				case "D", key.NameDeleteBackward:
+					if event.Modifiers.Contain(key.ModShift) {
+						c.toggleConversationHidden()
+					} else {
+						c.toggleDescendantsHidden()
+					}
+				case "K", key.NameUpArrow:
+					c.moveFocusUp(gtx)
+				case "J", key.NameDownArrow:
+					c.moveFocusDown(gtx)
+				case key.NameHome:
+					c.moveFocusStart(gtx)
+				case "G":
+					if !event.Modifiers.Contain(key.ModShift) {
+						c.moveFocusStart(gtx)
+					} else {
+						c.moveFocusEnd(gtx)
+					}
+				case key.NameEnd:
+					c.moveFocusEnd(gtx)
+				case key.NameReturn, key.NameEnter:
+					c.startReply()
+				case "C":
+					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+						c.copyFocused(gtx)
+					} else {
+						c.startConversation()
+					}
+				case key.NameSpace, "F":
+					c.toggleFilter()
+				}
+			}
+		}
+	}
 
 	elements := c.chatManager.ManagedElements(gtx)
 	states := c.chatManager.ManagedState(gtx)
@@ -165,6 +206,160 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 			c.FocusTracker.SetFocus(nil)
 		}
 	}
+}
+
+// TODO
+func (c *DynamicChatView) toggleConversationHidden() {
+}
+
+// TODO
+func (c *DynamicChatView) toggleDescendantsHidden() {
+}
+
+// moveFocusUp shifts the focused message upwards by one message.
+// If there is no focused message, it automatically selects the
+// final message.
+func (c *DynamicChatView) moveFocusUp(gtx layout.Context) {
+	if c.Focused == nil {
+		c.moveFocusEnd(gtx)
+		return
+	}
+	defer c.makeFocusedVisible(gtx)
+	elements := c.chatManager.ManagedElements(gtx)
+	var lastElement *ds.ReplyData
+searchLoop:
+	for _, e := range elements {
+		switch e := e.(type) {
+		case ds.ReplyData:
+			if c.Focused.ID.Equals(e.ID) {
+				break searchLoop
+			} else {
+				lastElement = &e
+			}
+		}
+	}
+	if lastElement == nil {
+		return
+	}
+	c.SetFocus(lastElement)
+}
+
+// moveFocusDown shifts the focused message downward by one message.
+// If there is no focused message, it automatically selects the
+// final message.
+func (c *DynamicChatView) moveFocusDown(gtx layout.Context) {
+	if c.Focused == nil {
+		c.moveFocusEnd(gtx)
+		return
+	}
+	defer c.makeFocusedVisible(gtx)
+	elements := c.chatManager.ManagedElements(gtx)
+	var foundFocused bool
+	for _, e := range elements {
+		switch e := e.(type) {
+		case ds.ReplyData:
+			if c.Focused.ID.Equals(e.ID) {
+				foundFocused = true
+			} else if foundFocused {
+				c.SetFocus(&e)
+				return
+			}
+		}
+	}
+}
+
+// moveFocusStart shifts focus to the first loaded element of history.
+func (c *DynamicChatView) moveFocusStart(gtx layout.Context) {
+	defer c.makeFocusedVisible(gtx)
+	elements := c.chatManager.ManagedElements(gtx)
+	for _, e := range elements {
+		switch e := e.(type) {
+		case ds.ReplyData:
+			c.SetFocus(&e)
+			return
+		}
+	}
+}
+
+// moveFocusEnd shifts focus to the final loaded element of history.
+func (c *DynamicChatView) moveFocusEnd(gtx layout.Context) {
+	defer c.makeFocusedVisible(gtx)
+	elements := c.chatManager.ManagedElements(gtx)
+	for i := len(elements) - 1; i >= 0; i-- {
+		e := elements[i]
+		switch e := e.(type) {
+		case ds.ReplyData:
+			c.SetFocus(&e)
+			return
+		}
+	}
+}
+
+// makeFocusedVisible ensures that the focused message (if any) is visible
+// in the UI by manipulating the scroll position.
+func (c *DynamicChatView) makeFocusedVisible(gtx layout.Context) {
+	if c.Focused == nil {
+		return
+	}
+	elements := c.chatManager.ManagedElements(gtx)
+	index := -1
+searchLoop:
+	for i, e := range elements {
+		switch e := e.(type) {
+		case ds.ReplyData:
+			if e.ID.Equals(c.Focused.ID) {
+				index = i
+				break searchLoop
+			}
+		}
+	}
+	if index == -1 {
+		return
+	}
+	visibleStart := c.chatList.Position.First
+	visibleEnd := visibleStart + c.chatList.Position.Count - 1
+
+	// If the focused element is before the start of the current viewport,
+	// move the viewport to begin with it.
+	if visibleStart >= index {
+		c.chatList.Position.First = index
+		c.chatList.Position.Offset = 0
+		c.chatList.Position.BeforeEnd = true
+		return
+	}
+	if visibleEnd == index && c.chatList.Position.OffsetLast != 0 {
+		c.chatList.Position.Offset -= c.chatList.Position.OffsetLast
+		c.chatList.Position.OffsetLast = 0
+		return
+	}
+	if visibleEnd < index {
+		c.chatList.Position.First = index
+		c.chatList.Position.Offset = 0
+		c.chatList.Position.BeforeEnd = true
+		return
+	}
+}
+
+// TODO
+func (c *DynamicChatView) copyFocused(gtx layout.Context) {
+}
+
+// TODO
+func (c *DynamicChatView) startConversation() {
+}
+
+// TODO
+func (c *DynamicChatView) startReply() {
+}
+
+// TODO
+func (c *DynamicChatView) toggleFilter() {
+}
+
+// Layout the view in the provided context.
+func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
+	sTheme := c.Theme().Current()
+	theme := sTheme.Theme
 
 	// Show text, if any.
 	if c.Hint != "" {
@@ -189,7 +384,7 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 		}),
 		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min = gtx.Constraints.Max
-			return material.List(theme, &c.chatList).Layout(gtx, listLength, c.chatManager.Layout)
+			return material.List(theme, &c.chatList).Layout(gtx, c.updatedListLen, c.chatManager.Layout)
 		}),
 	)
 }
