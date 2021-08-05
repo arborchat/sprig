@@ -66,15 +66,10 @@ func (r ReplyRowStyle) Layout(gtx C) D {
 			},
 		}
 		pointer.Rect(rect).Add(gtx.Ops)
-		r.Reply.Layout(gtx)
+		r.Reply.Layout(gtx, dims.Size.X)
 
-		if r.Reply.Drag.Dragging() {
-			offset := r.Reply.DragOffset()
-			if dims.Size.X+int(offset) >= gtx.Constraints.Max.X {
-				offset = float32(gtx.Constraints.Max.X - dims.Size.X)
-			}
-			op.Offset(f32.Pt(offset, 0)).Add(gtx.Ops)
-		}
+		offset := r.Reply.DragOffset()
+		op.Offset(f32.Pt(offset, 0)).Add(gtx.Ops)
 		call.Add(gtx.Ops)
 
 		return dims

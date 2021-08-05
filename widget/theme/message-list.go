@@ -169,6 +169,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 							return state.
 								WithHash(reply.ID).
 								WithContent(reply.Content).
+								Polyclick.
 								Layout(gtx)
 						}),
 					)

@@ -643,6 +643,14 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 		if !c.FocusAnimation.Animating(gtx) {
 			state.ReplyStatus = animState.End
 		}
+
+		for _, e := range state.Events() {
+			switch e.Type {
+			case sprigwidget.SwipedRight:
+				log.Println("buzz")
+				c.App.Haptic().Buzz()
+			}
+		}
 		// Layout the reply.
 		return sprigtheme.ReplyRow(sTheme, state, animState, rd, richContent).Layout(gtx)
 	}

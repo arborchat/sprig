@@ -4,6 +4,7 @@ import (
 	"gioui.org/gesture"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/x/richtext"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 )
@@ -17,6 +18,8 @@ type Reply struct {
 	ReplyStatus
 	gesture.Drag
 	dragStart, dragOffset float32
+	dragFinished          bool
+	events                []ReplyEvent
 }
 
 func (r *Reply) WithHash(h *fields.QualifiedHash) *Reply {
@@ -31,7 +34,7 @@ func (r *Reply) WithContent(s string) *Reply {
 
 // Layout adds the drag operation (using the most recently laid out
 // pointer hit area) and processes drag status.
-func (r *Reply) Layout(gtx layout.Context) layout.Dimensions {
+func (r *Reply) Layout(gtx layout.Context, replyWidth int) layout.Dimensions {
 	r.Drag.Add(gtx.Ops)
 
 	for _, e := range r.Drag.Events(gtx.Metric, gtx, gesture.Horizontal) {
@@ -39,16 +42,29 @@ func (r *Reply) Layout(gtx layout.Context) layout.Dimensions {
 		case pointer.Press:
 			r.dragStart = e.Position.X
 			r.dragOffset = 0
+			r.dragFinished = false
 		case pointer.Drag:
 			r.dragOffset = e.Position.X - r.dragStart
-		case pointer.Release:
+		case pointer.Release, pointer.Cancel:
 			r.dragStart = 0
 			r.dragOffset = 0
+			r.dragFinished = false
 		}
+	}
+
+	if r.Dragging() {
+		op.InvalidateOp{}.Add(gtx.Ops)
 	}
 
 	if r.dragOffset < 0 {
 		r.dragOffset = 0
+	}
+	if replyWidth+int(r.dragOffset) >= gtx.Constraints.Max.X {
+		r.dragOffset = float32(gtx.Constraints.Max.X - replyWidth)
+		if !r.dragFinished {
+			r.events = append(r.events, ReplyEvent{Type: SwipedRight})
+			r.dragFinished = true
+		}
 	}
 	return layout.Dimensions{}
 }
@@ -56,3 +72,19 @@ func (r *Reply) Layout(gtx layout.Context) layout.Dimensions {
 func (r *Reply) DragOffset() float32 {
 	return r.dragOffset
 }
+
+func (r *Reply) Events() []ReplyEvent {
+	events := r.events
+	r.events = r.events[:0]
+	return events
+}
+
+type ReplyEvent struct {
+	Type ReplyEventType
+}
+
+type ReplyEventType uint8
+
+const (
+	SwipedRight ReplyEventType = iota
+)
