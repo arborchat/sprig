@@ -46,6 +46,12 @@ var (
 	descendantInset = unit.Dp(3 * insetUnit)
 )
 
+// MaxReplyInset returns the maximum distance that a reply will be inset
+// based on its position within the message tree.
+func MaxReplyInset() unit.Value {
+	return descendantInset
+}
+
 func insetForStatus(status sprigWidget.ReplyStatus) unit.Value {
 	switch {
 	case status&sprigWidget.Selected > 0:

@@ -362,16 +362,25 @@ func (c *DynamicChatView) toggleFilter() {
 
 // Layout the view in the provided context.
 func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
-	sTheme := c.Theme().Current()
-	theme := sTheme.Theme
+	return layout.Flex{
+		Axis: layout.Vertical,
+	}.Layout(gtx,
+		layout.Flexed(1, c.layoutMessageList),
+		layout.Rigid(c.layoutCompositionArea),
+	)
+}
 
+// layoutMessageList lays out the vertical list of chat history with optional hint text
+// atop it.
+func (c *DynamicChatView) layoutMessageList(gtx layout.Context) D {
+	th := c.Theme().Current()
 	// Show hint text, if any.
 	if c.Hint != "" {
 		macro := op.Record(gtx.Ops)
 		layout.SW.Layout(gtx, func(gtx C) D {
-			return component.Surface(theme).Layout(gtx,
+			return component.Surface(th.Theme).Layout(gtx,
 				func(gtx C) D {
-					return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(theme, c.Hint).Layout)
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(th.Theme, c.Hint).Layout)
 				})
 		})
 		op.Defer(gtx.Ops, macro.Stop())
@@ -388,7 +397,25 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 		}),
 		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min = gtx.Constraints.Max
-			return material.List(theme, &c.chatList).Layout(gtx, c.updatedListLen, c.chatManager.Layout)
+			return material.List(th.Theme, &c.chatList).Layout(gtx, c.updatedListLen, c.chatManager.Layout)
+		}),
+	)
+}
+
+func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
+	th := c.Theme().Current()
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(func(gtx C) D {
+			return sprigtheme.Rect{
+				Size:  layout.FPt(gtx.Constraints.Min),
+				Color: th.Background.Default.Bg,
+			}.Layout(gtx)
+		}),
+		layout.Stacked(func(gtx C) D {
+			gtx.Constraints.Min.X = gtx.Constraints.Max.X
+			return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
+				return layout.Center.Layout(gtx, material.Body1(th.Theme, "Swipe right to reply").Layout)
+			})
 		}),
 	)
 }

@@ -39,6 +39,7 @@ var (
 	darkGold     = color.NRGBA{R: 200, G: 165, B: 21, A: 255}
 	white        = color.NRGBA{R: 255, G: 255, B: 255, A: 255}
 	lightGray    = color.NRGBA{R: 225, G: 225, B: 225, A: 255}
+	gray         = color.NRGBA{R: 200, G: 200, B: 200, A: 255}
 	darkGray     = color.NRGBA{R: 100, G: 100, B: 100, A: 255}
 	veryDarkGray = color.NRGBA{R: 50, G: 50, B: 50, A: 255}
 	black        = color.NRGBA{A: 255}
@@ -72,7 +73,7 @@ func New() *Theme {
 	t.Background = Swatch{
 		Default: PairFor(lightGray),
 		Light:   PairFor(white),
-		Dark:    PairFor(black),
+		Dark:    PairFor(gray),
 	}
 	t.Theme.Palette.ContrastBg = t.Primary.Default.Bg
 	t.Theme.Palette.ContrastFg = t.Primary.Default.Fg

@@ -131,7 +131,7 @@ func eventLoop(w *app.Window) error {
 						return layout.Stack{}.Layout(gtx,
 							layout.Expanded(func(gtx C) D {
 								return sprigTheme.Rect{
-									Color: th.Background.Default.Bg,
+									Color: th.Background.Dark.Bg,
 									Size: f32.Point{
 										X: float32(gtx.Constraints.Max.X),
 										Y: float32(gtx.Constraints.Max.Y),

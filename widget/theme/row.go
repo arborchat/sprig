@@ -1,7 +1,12 @@
 package theme
 
 import (
+	"image"
+
+	"gioui.org/f32"
+	"gioui.org/io/pointer"
 	"gioui.org/layout"
+	"gioui.org/op"
 	"gioui.org/unit"
 	"gioui.org/x/richtext"
 	chatlayout "git.sr.ht/~gioverse/chat/layout"
@@ -36,7 +41,9 @@ func ReplyRow(th *Theme, state *sprigwidget.Reply, anim *sprigwidget.ReplyAnimat
 // Layout the row.
 func (r ReplyRowStyle) Layout(gtx C) D {
 	return r.VerticalMarginStyle.Layout(gtx, func(gtx C) D {
-		return layout.Inset{
+		defer op.Save(gtx.Ops).Load()
+		macro := op.Record(gtx.Ops)
+		dims := layout.Inset{
 			Left: interpolateInset(r.ReplyAnimationState, r.ReplyAnimationState.Progress(gtx)),
 		}.Layout(gtx, func(gtx C) D {
 			gtx.Constraints.Max.X -= gtx.Px(descendantInset) + gtx.Px(defaultInset)
@@ -49,5 +56,27 @@ func (r ReplyRowStyle) Layout(gtx C) D {
 				layout.Expanded(r.Reply.Polyclick.Layout),
 			)
 		})
+		call := macro.Stop()
+
+		pointer.PassOp{Pass: true}.Add(gtx.Ops)
+		rect := image.Rectangle{
+			Max: image.Point{
+				X: gtx.Constraints.Max.X,
+				Y: dims.Size.Y,
+			},
+		}
+		pointer.Rect(rect).Add(gtx.Ops)
+		r.Reply.Layout(gtx)
+
+		if r.Reply.Drag.Dragging() {
+			offset := r.Reply.DragOffset()
+			if dims.Size.X+int(offset) >= gtx.Constraints.Max.X {
+				offset = float32(gtx.Constraints.Max.X - dims.Size.X)
+			}
+			op.Offset(f32.Pt(offset, 0)).Add(gtx.Ops)
+		}
+		call.Add(gtx.Ops)
+
+		return dims
 	})
 }
