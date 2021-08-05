@@ -10,8 +10,10 @@ import (
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/component"
 	materials "gioui.org/x/component"
 	"gioui.org/x/markdown"
 	"gioui.org/x/richtext"
@@ -25,6 +27,7 @@ import (
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigwidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigtheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
+	"github.com/inkeliz/giohyperlink"
 )
 
 // DynamicChatView lays out a view of chat history built atop a
@@ -48,6 +51,8 @@ type DynamicChatView struct {
 	BackgroundClick gesture.Click
 
 	core.App
+
+	Hint string
 }
 
 var _ View = &DynamicChatView{}
@@ -121,8 +126,36 @@ func (c *DynamicChatView) NavItem() *materials.NavItem {
 	}
 }
 
-// Update the state of the view in response to events.
 func (c *DynamicChatView) Update(gtx layout.Context) {
+}
+
+// Layout the view in the provided context.
+func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
+	sTheme := c.Theme().Current()
+	theme := sTheme.Theme
+
+	listLength := c.chatManager.UpdatedLen(&c.chatList.List)
+
+	elements := c.chatManager.ManagedElements(gtx)
+	states := c.chatManager.ManagedState(gtx)
+
+	c.Hint = ""
+
+	for _, e := range elements {
+		element, ok := e.(ds.ReplyData)
+		if !ok {
+			continue
+		}
+		state, ok := states[e.Serial()]
+		if !ok {
+			continue
+		}
+		switch state := state.(type) {
+		case *sprigwidget.Reply:
+			c.processReplyStateUpdates(gtx, element, state)
+		}
+	}
+
 	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
 		c.FocusAnimation.Start(gtx.Now)
 	}
@@ -132,13 +165,18 @@ func (c *DynamicChatView) Update(gtx layout.Context) {
 			c.FocusTracker.SetFocus(nil)
 		}
 	}
-}
 
-// Layout the view in the provided context.
-func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
-	c.Update(gtx)
-	sTheme := c.Theme().Current()
-	theme := sTheme.Theme
+	// Show text, if any.
+	if c.Hint != "" {
+		macro := op.Record(gtx.Ops)
+		layout.SW.Layout(gtx, func(gtx C) D {
+			return component.Surface(theme).Layout(gtx,
+				func(gtx C) D {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, material.Body2(theme, c.Hint).Layout)
+				})
+		})
+		op.Defer(gtx.Ops, macro.Stop())
+	}
 
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
@@ -151,9 +189,35 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 		}),
 		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min = gtx.Constraints.Max
-			return material.List(theme, &c.chatList).Layout(gtx, c.chatManager.UpdatedLen(&c.chatList.List), c.chatManager.Layout)
+			return material.List(theme, &c.chatList).Layout(gtx, listLength, c.chatManager.Layout)
 		}),
 	)
+}
+
+func (c *DynamicChatView) processReplyStateUpdates(gtx layout.Context, element ds.ReplyData, state *sprigwidget.Reply) {
+	// Process any clicks on the reply.
+	for _, e := range state.Polyclick.Events(gtx) {
+		switch e.Type {
+		case gesture.TypeClick:
+			if e.NumClicks == 1 {
+				c.FocusTracker.SetFocus(&element)
+			}
+		}
+	}
+	for span, events := state.InteractiveText.Events(); len(events) > 0; span, events = state.InteractiveText.Events() {
+		for _, event := range events {
+			url := span.Get(markdown.MetadataURL)
+			switch event.Type {
+			case richtext.Click:
+				giohyperlink.Open(url)
+			case richtext.LongPress:
+				c.Haptic().Buzz()
+				fallthrough
+			case richtext.Hover:
+				c.Hint = url
+			}
+		}
+	}
 }
 
 // Set the view manager for this view.
@@ -352,15 +416,6 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 		// reply to reflect its new state.
 		if !c.FocusAnimation.Animating(gtx) {
 			state.ReplyStatus = animState.End
-		}
-		// Process any clicks on the reply.
-		for _, e := range state.Polyclick.Events(gtx) {
-			switch e.Type {
-			case gesture.TypeClick:
-				if e.NumClicks == 1 {
-					c.FocusTracker.SetFocusDeferred(&rd)
-				}
-			}
 		}
 		// Layout the reply.
 		return sprigtheme.ReplyRow(sTheme, state, animState, rd, richContent).Layout(gtx)
