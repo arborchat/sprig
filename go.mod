@@ -4,7 +4,7 @@ go 1.14
 
 require (
 	gioui.org v0.0.0-20210804105805-1efe68c1540b
-	gioui.org/cmd v0.0.0-20210422101526-9dae29844c9f
+	gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b
 	gioui.org/x v0.0.0-20210805142029-e0acbf68bc23
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
