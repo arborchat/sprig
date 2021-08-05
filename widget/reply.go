@@ -69,22 +69,29 @@ func (r *Reply) Layout(gtx layout.Context, replyWidth int) layout.Dimensions {
 	return layout.Dimensions{}
 }
 
+// DragOffset returns the X-axis offset for this reply as a result of a user
+// dragging it.
 func (r *Reply) DragOffset() float32 {
 	return r.dragOffset
 }
 
+// Events returns reply events that have occurred since the last call to Events.
 func (r *Reply) Events() []ReplyEvent {
 	events := r.events
 	r.events = r.events[:0]
 	return events
 }
 
+// ReplyEvent models a change or interaction with a reply.
 type ReplyEvent struct {
 	Type ReplyEventType
 }
 
+// ReplyEventType encodes a kind of event.
 type ReplyEventType uint8
 
 const (
+	// SwipedRight indicates that a given reply was swiped to the right margin
+	// by a user.
 	SwipedRight ReplyEventType = iota
 )

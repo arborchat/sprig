@@ -24,3 +24,15 @@ func (r Rect) Layout(gtx C) D {
 	paint.FillShape(gtx.Ops, r.Color, clip.UniformRRect(f32.Rectangle{Max: r.Size}, r.Radii).Op(gtx.Ops))
 	return layout.Dimensions{Size: image.Pt(int(r.Size.X), int(r.Size.Y))}
 }
+
+// LayoutUnder ignores the Size field and lays the rectangle out beneath the
+// provided widget, matching its dimensions.
+func (r Rect) LayoutUnder(gtx C, w layout.Widget) D {
+	return layout.Stack{}.Layout(gtx,
+		layout.Expanded(func(gtx C) D {
+			r.Size = layout.FPt(gtx.Constraints.Min)
+			return r.Layout(gtx)
+		}),
+		layout.Stacked(w),
+	)
+}

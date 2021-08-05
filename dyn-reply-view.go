@@ -5,6 +5,7 @@ import (
 	"log"
 	"runtime"
 	"sort"
+	"strings"
 	"time"
 
 	"gioui.org/gesture"
@@ -61,6 +62,13 @@ type DynamicChatView struct {
 	core.App
 
 	Hint string
+
+	Editing      bool
+	ReplyingTo   *ds.ReplyData
+	Editor       widget.Editor
+	ReplyPreview richtext.InteractiveText
+
+	DismissButton, SendButton widget.Clickable
 }
 
 var _ View = &DynamicChatView{}
@@ -134,10 +142,103 @@ func (c *DynamicChatView) NavItem() *materials.NavItem {
 	}
 }
 
+// sendMessage sends a new reply or converstaion with the current contents of the editor.
+// TODO: implement conversation sending
+func (c *DynamicChatView) sendMessage() {
+	if !c.Editing {
+		return
+	}
+	replyText := c.Editor.Text()
+	if replyText == "" {
+		return
+	}
+	var (
+		newReplies []*forest.Reply
+		author     *forest.Identity
+		parent     forest.Node
+		has        bool
+	)
+
+	replyText = strings.TrimSpace(replyText)
+
+	nodeBuilder, err := c.Settings().Builder()
+	if err != nil {
+		log.Printf("failed acquiring node builder: %v", err)
+	}
+	author = nodeBuilder.User
+	if c.ReplyingTo == nil {
+		/*
+			if c.Community.Value != "" {
+				chosenString := c.Community.Value
+				c.Arbor().Communities().WithCommunities(func(communities []*forest.Community) {
+					for _, community := range communities {
+						if community.ID().String() == chosenString {
+							parent = community
+							break
+						}
+					}
+				})
+			}
+		*/
+	} else {
+		parent, has, err = c.Arbor().Store().Get(c.ReplyingTo.ID)
+		if err != nil {
+			log.Printf("failed finding parent node %v in store: %v", c.ReplyingTo.ID, err)
+			return
+		} else if !has {
+			log.Printf("parent node %v is not in store: %v", c.ReplyingTo.ID, err)
+			return
+		}
+	}
+
+	for _, paragraph := range strings.Split(replyText, "\n\n") {
+		if paragraph != "" {
+			reply, err := nodeBuilder.NewReply(parent, paragraph, []byte{})
+			if err != nil {
+				log.Printf("failed creating new conversation: %v", err)
+			} else {
+				newReplies = append(newReplies, reply)
+			}
+			parent = reply
+		}
+	}
+
+	c.postReplies(author, newReplies)
+}
+
+// postReplies actually adds the replies to the store of history (and
+// causes them to be sent because the sprout working is watching the
+// store for updates).
+func (c *DynamicChatView) postReplies(author *forest.Identity, replies []*forest.Reply) {
+	go func() {
+		for _, reply := range replies {
+			if err := c.Arbor().Store().Add(author); err != nil {
+				log.Printf("failed adding replying identity to store: %v", err)
+				return
+			}
+			if err := c.Arbor().Store().Add(reply); err != nil {
+				log.Printf("failed adding reply to store: %v", err)
+				return
+			}
+		}
+	}()
+}
+
 func (c *DynamicChatView) Update(gtx layout.Context) {
+	if c.DismissButton.Clicked() {
+		c.Editing = false
+		c.Editor.SetText("")
+	}
+	if c.SendButton.Clicked() {
+		c.sendMessage()
+		c.Editing = false
+		c.Editor.SetText("")
+	}
 	c.updatedListLen = c.chatManager.UpdatedLen(&c.chatList.List)
 	key.InputOp{Tag: c}.Add(gtx.Ops)
-	key.FocusOp{Tag: c}.Add(gtx.Ops)
+	if !c.Editing {
+		key.FocusOp{Tag: c}.Add(gtx.Ops)
+	}
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
@@ -402,8 +503,25 @@ func (c *DynamicChatView) layoutMessageList(gtx layout.Context) D {
 	)
 }
 
+func min(a int, ints ...int) int {
+	for _, i := range ints {
+		if i < a {
+			a = i
+		}
+	}
+	return a
+}
+
+func truncate(a string, length int) string {
+	if len(a) < length {
+		return a
+	}
+	return a[:length] + "..."
+}
+
 func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 	th := c.Theme().Current()
+	internalInset := unit.Dp(4)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			return sprigtheme.Rect{
@@ -414,8 +532,74 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 		layout.Stacked(func(gtx C) D {
 			gtx.Constraints.Min.X = gtx.Constraints.Max.X
 			return layout.UniformInset(unit.Dp(8)).Layout(gtx, func(gtx C) D {
-				return layout.Center.Layout(gtx, material.Body1(th.Theme, "Swipe right to reply").Layout)
+				if !c.Editing {
+					return layout.Center.Layout(gtx, material.Body1(th.Theme, "Swipe right to reply").Layout)
+				}
+				return layout.Flex{
+					Axis: layout.Horizontal,
+				}.Layout(gtx,
+					layout.Flexed(1, func(gtx C) D {
+						return layout.Flex{
+							Axis: layout.Vertical,
+						}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								// Reply preview or community selector
+								return layout.Inset{
+									Right:  internalInset,
+									Bottom: internalInset,
+								}.Layout(gtx, func(gtx C) D {
+									shortenedContent := truncate(c.ReplyingTo.Content, 128)
+									content, _ := markdown.NewRenderer().Render(th.Theme, []byte(shortenedContent))
+									reply := sprigtheme.Reply(th, nil, *c.ReplyingTo, richtext.Text(&c.ReplyPreview, th.Shaper, content...), false)
+									reply.MaxLines = 2
+									return reply.Layout(gtx)
+								})
+							}),
+							layout.Rigid(func(gtx C) D {
+								return layout.Inset{
+									Right: internalInset,
+									Top:   internalInset,
+								}.Layout(gtx, func(gtx C) D {
+									return sprigtheme.Rect{
+										Color: th.Background.Light.Bg,
+										Radii: float32(gtx.Px(unit.Dp(4))),
+									}.LayoutUnder(gtx, func(gtx C) D {
+										return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+											gtx.Constraints.Min.X = gtx.Constraints.Max.X
+											return material.Editor(th.Theme, &c.Editor, "Write your message here").Layout(gtx)
+										})
+									})
+								})
+							}),
+						)
+					}),
+					layout.Rigid(func(gtx C) D {
+						return layout.Flex{
+							Axis: layout.Vertical,
+						}.Layout(gtx,
+							layout.Rigid(func(gtx C) D {
+								// Dismiss button
+								return layout.Inset{
+									Left:   internalInset,
+									Bottom: internalInset,
+								}.Layout(gtx, func(gtx C) D {
+									return material.IconButton(th.Theme, &c.DismissButton, icons.CancelReplyIcon).Layout(gtx)
+								})
+							}),
+							layout.Rigid(func(gtx C) D {
+								// Send button
+								return layout.Inset{
+									Left: internalInset,
+									Top:  internalInset,
+								}.Layout(gtx, func(gtx C) D {
+									return material.IconButton(th.Theme, &c.SendButton, icons.SendReplyIcon).Layout(gtx)
+								})
+							}),
+						)
+					}),
+				)
 			})
+
 		}),
 	)
 }
@@ -649,6 +833,8 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 			case sprigwidget.SwipedRight:
 				log.Println("buzz")
 				c.App.Haptic().Buzz()
+				c.ReplyingTo = &rd
+				c.Editing = true
 			}
 		}
 		// Layout the reply.
