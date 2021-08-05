@@ -70,7 +70,7 @@ func NewDynamicChatView(app core.App) View {
 			bRD := b.(ds.ReplyData)
 			return aRD.CreatedAt.Before(bRD.CreatedAt)
 		},
-		Synthesizer: func(prev, current list.Element) []list.Element {
+		Synthesizer: func(prev, current, next list.Element) []list.Element {
 			return []list.Element{current}
 		},
 		Presenter: c.layoutReply,

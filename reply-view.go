@@ -288,10 +288,9 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 								layout.Rigid(func(gtx C) D {
 									icon := icons.FilterIcon
-									icon.Color = buttonForeground
 									sz := gtx.Px(unit.Dp(24))
 									gtx.Constraints = layout.Exact(image.Pt(sz, sz))
-									return icon.Layout(gtx)
+									return icon.Layout(gtx, buttonForeground)
 								}),
 								layout.Rigid(func(gtx C) D {
 									gtx.Constraints.Max.X = gtx.Px(unit.Dp(40))
