@@ -103,7 +103,7 @@ func NewDynamicChatView(app core.App) View {
 }
 
 // DynamicChatViewName defines the user-presented name for this view.
-const DynamicChatViewName = "Chat"
+const DynamicChatViewName = "Work-in-Progress Chat"
 
 // handleNewNode processes nodes that have been recieved new after the
 // view was instantiated.

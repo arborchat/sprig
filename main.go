@@ -88,7 +88,7 @@ func eventLoop(w *app.Window) error {
 	} else if len(app.Settings().Subscriptions()) < 1 {
 		vm.SetView(SubscriptionSetupFormViewID)
 	} else {
-		vm.SetView(DynamicChatViewID)
+		vm.SetView(ReplyViewID)
 	}
 
 	var ops op.Ops
