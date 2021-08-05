@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"gioui.org/gesture"
+	"gioui.org/io/clipboard"
 	"gioui.org/io/key"
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
@@ -340,8 +341,11 @@ searchLoop:
 	}
 }
 
-// TODO
+// copyFocused copies the text of the focused message.
 func (c *DynamicChatView) copyFocused(gtx layout.Context) {
+	clipboard.WriteOp{
+		Text: c.Focused.Content,
+	}.Add(gtx.Ops)
 }
 
 // TODO
@@ -361,7 +365,7 @@ func (c *DynamicChatView) Layout(gtx layout.Context) layout.Dimensions {
 	sTheme := c.Theme().Current()
 	theme := sTheme.Theme
 
-	// Show text, if any.
+	// Show hint text, if any.
 	if c.Hint != "" {
 		macro := op.Record(gtx.Ops)
 		layout.SW.Layout(gtx, func(gtx C) D {
