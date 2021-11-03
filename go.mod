@@ -3,13 +3,14 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20210804105805-1efe68c1540b
+	gioui.org v0.0.0-20211026101311-9cf7cc75f468
 	gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b
-	gioui.org/x v0.0.0-20210805142029-e0acbf68bc23
+	gioui.org/x v0.0.0-20211102210401-cead9283b8ff
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
 	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
-	git.sr.ht/~gioverse/chat v0.0.0-20210805134857-00743bdf2b8a
+	git.sr.ht/~gioverse/chat v0.0.0-20211102210743-a2a29f81c013
+	git.sr.ht/~gioverse/skel v0.0.0-20211008142525-ecdaf33bb3a7
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8
@@ -22,3 +23,6 @@ require (
 )
 
 replace golang.org/x/crypto => github.com/ProtonMail/crypto v0.0.0-20200605105621-11f6ee2dd602
+
+replace gioui.org => ../../gioui/gio
+replace git.sr.ht/~gioverse/skel => ../../skel
