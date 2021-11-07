@@ -33,7 +33,6 @@ type Settings struct {
 	NotificationsSwitch     widget.Bool
 	TestNotificationsButton widget.Clickable
 	TestResults             string
-	BottomBarSwitch         widget.Bool
 	DarkModeSwitch          widget.Bool
 	UseOrchardStoreSwitch   widget.Bool
 }
@@ -75,7 +74,6 @@ func (s *Settings) updateForm() {
 	if s.Current.NotificationsEnabled != nil {
 		s.NotificationsSwitch.Value = *s.Current.NotificationsEnabled
 	}
-	s.BottomBarSwitch.Value = s.Current.BottomAppBar
 	s.DarkModeSwitch.Value = s.Current.DarkMode
 	s.UseOrchardStoreSwitch.Value = s.Current.OrchardStore
 }
@@ -184,25 +182,6 @@ func (s *Settings) Layout(gtx C) D {
 		{
 			Heading: "User Interface",
 			Items: []layout.Widget{
-				SimpleSectionItem{
-					Theme: s.Th.Theme,
-					Control: func(gtx C) D {
-						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
-							layout.Rigid(func(gtx C) D {
-								if s.BottomBarSwitch.Changed() {
-									s.Conn.Message(settings.BottomBarRequest{
-										Enabled: s.BottomBarSwitch.Value,
-									})
-								}
-								return itemInset.Layout(gtx, material.Switch(s.Th.Theme, &s.BottomBarSwitch).Layout)
-							}),
-							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Body1(s.Th.Theme, "Use bottom app bar").Layout)
-							}),
-						)
-					},
-					Context: "Only recommended on mobile devices.",
-				}.Layout,
 				SimpleSectionItem{
 					Theme: s.Th.Theme,
 					Control: func(gtx C) D {
