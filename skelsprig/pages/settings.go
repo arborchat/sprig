@@ -41,6 +41,14 @@ type Settings struct {
 // Ensure settings is a valid router.Page.
 var _ router.Page = (*Settings)(nil)
 
+// NavItem returns a navigation element for this page.
+func (s *Settings) NavItem() component.NavItem {
+	return component.NavItem{
+		Tag:  settingsPage,
+		Name: "Settings",
+	}
+}
+
 // Update the settings page in response to bus events.
 func (s *Settings) Update(event interface{}) bool {
 	log.Printf("%T %v", event, event)

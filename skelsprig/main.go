@@ -64,7 +64,6 @@ func main() {
 	}()
 
 	// Create a new application window.
-	w.Wait()
 	window.NewWindow(bus, pages.Window, app.Title("Sprig"))
 	app.Main()
 }
