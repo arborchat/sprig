@@ -14,6 +14,7 @@ import (
 	"git.sr.ht/~gioverse/skel/router"
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~gioverse/skel/window"
+	"git.sr.ht/~whereswaldon/sprig/skelsprig/platform"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -26,6 +27,12 @@ type (
 type NavigablePage interface {
 	router.Page
 	NavItem() component.NavItem
+}
+
+// AppBarPage is a page that provides actions for the app bar.
+type AppBarPage interface {
+	router.Page
+	Actions() ([]component.AppBarAction, []component.OverflowAction)
 }
 
 const (
@@ -41,9 +48,9 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 			settingsPage: sp,
 		},
 	}
-	r.Push(settingsPage)
 
 	modal := component.NewModal()
+	bar := component.NewAppBar(modal)
 	nav := component.NewModalNav(modal, "Sprig", "Arbor Chat Client")
 	nav.AddNavItem(sp.NavItem())
 	nonModalVis := component.VisibilityAnimation{
@@ -52,6 +59,26 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 	resize := component.Resize{
 		Ratio: 0.3,
 	}
+	if platform.Mobile {
+		bar.Anchor = component.Bottom
+	} else {
+		bar.Anchor = component.Top
+	}
+	nav.Anchor = bar.Anchor
+
+	// Set up initial route.
+	r.Push(nav.CurrentNavDestination().(string))
+	if p, ok := r.Current().(AppBarPage); ok {
+		bar.SetActions(p.Actions())
+	} else {
+		bar.SetActions(nil, nil)
+	}
+	if p, ok := r.Current().(NavigablePage); ok {
+		bar.Title = p.NavItem().Name
+	} else {
+		bar.Title = ""
+	}
+
 	var ops op.Ops
 	for {
 		select {
@@ -61,29 +88,55 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 				return event.Err
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, event)
-				paint.Fill(gtx.Ops, sth.Background.Default.Bg)
-				if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
-					// Lay out the nav non-modally.
-					resize.Layout(gtx,
-						func(gtx C) D {
-							return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
-						},
-						func(gtx C) D {
-							return r.Layout(gtx)
-						},
-						func(gtx C) D {
-							size := image.Point{
-								X: gtx.Px(unit.Dp(4)),
-								Y: gtx.Constraints.Max.Y,
-							}
-							return D{Size: size}
-						},
-					)
 
-				} else {
-					// Lay out the nav in a modal drawer.
-					r.Layout(gtx)
+				if nav.NavDestinationChanged() {
+					r.Push(nav.CurrentNavDestination().(string))
+					if p, ok := r.Current().(AppBarPage); ok {
+						bar.SetActions(p.Actions())
+					} else {
+						bar.SetActions(nil, nil)
+					}
+					if p, ok := r.Current().(NavigablePage); ok {
+						bar.Title = p.NavItem().Name
+					} else {
+						bar.Title = ""
+					}
 				}
+
+				paint.Fill(gtx.Ops, sth.Background.Default.Bg)
+				bar := layout.Rigid(func(gtx C) D {
+					return bar.Layout(gtx, sth.Theme)
+				})
+				content := layout.Flexed(1, func(gtx C) D {
+					if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
+						// Lay out the nav non-modally.
+						return resize.Layout(gtx,
+							func(gtx C) D {
+								return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
+							},
+							func(gtx C) D {
+								return r.Layout(gtx)
+							},
+							func(gtx C) D {
+								size := image.Point{
+									X: gtx.Px(unit.Dp(4)),
+									Y: gtx.Constraints.Max.Y,
+								}
+								return D{Size: size}
+							},
+						)
+					} else {
+						// Lay out the nav in a modal drawer.
+						return r.Layout(gtx)
+					}
+				})
+				var elements []layout.FlexChild
+				if platform.Mobile {
+					elements = []layout.FlexChild{content, bar}
+				} else {
+					elements = []layout.FlexChild{bar, content}
+				}
+				layout.Flex{Axis: layout.Vertical}.Layout(gtx, elements...)
 				event.Frame(&ops)
 			case key.Event:
 				if event.Name == "N" && event.Modifiers.Contain(key.ModCtrl) {
