@@ -19,10 +19,10 @@ var VersionString = "git"
 
 // Settings is a page for manipulating application settings.
 type Settings struct {
-	Th             *sprigTheme.Theme
-	Conn           scheduler.Connection
-	Current        settings.Settings
-	init, updating bool
+	Th                                *sprigTheme.Theme
+	Conn                              scheduler.Connection
+	Current                           settings.Settings
+	initStart, initComplete, updating bool
 
 	widget.List
 	ConnectionForm          sprigWidget.TextForm
@@ -56,9 +56,11 @@ func (s *Settings) Update(event interface{}) bool {
 	case settings.Event:
 		s.Current = event.Settings
 		s.updating = false
+		s.initComplete = true
 	case settings.UpdateEvent:
 		s.Current = event.Settings
 		s.updating = false
+		s.initComplete = true
 	default:
 		return false
 	}
@@ -80,14 +82,16 @@ func (s *Settings) updateForm() {
 
 // Layout the settings page.
 func (s *Settings) Layout(gtx C) D {
-	if !s.init {
+	if !s.initStart {
 		// Request the current application settings over the bus.
-		s.init = true
+		s.initStart = true
 		s.updating = true
 		s.Conn.Message(settings.Request{})
 
 		// Perform first-time widget initialization.
 		s.List.Axis = layout.Vertical
+	} else if !s.initComplete {
+		gtx.Queue = nil
 	}
 	sections := []Section{
 		{
