@@ -35,24 +35,34 @@ type AppBarPage interface {
 	Actions() ([]component.AppBarAction, []component.OverflowAction)
 }
 
+// StandalonePage is implemented by pages that want full screen control,
+// with no navigation or app bar.
+type StandalonePage interface {
+	router.Page
+	StandalonePage()
+}
+
 const (
 	settingsPage string = "settings"
+	setupPage    string = "setup"
 )
 
 // Window is the main event loop for application windows.
 func Window(w *app.Window, bus scheduler.Connection) error {
 	sth := sprigTheme.New()
-	sp := &Settings{Th: sth, Conn: bus}
+	settingsP := &Settings{Th: sth, Conn: bus}
+	setupP := &Setup{Th: sth, Conn: bus}
 	r := router.Router{
 		Pages: map[string]router.Page{
-			settingsPage: sp,
+			settingsPage: settingsP,
+			setupPage:    setupP,
 		},
 	}
 
 	modal := component.NewModal()
 	bar := component.NewAppBar(modal)
 	nav := component.NewModalNav(modal, "Sprig", "Arbor Chat Client")
-	nav.AddNavItem(sp.NavItem())
+	nav.AddNavItem(settingsP.NavItem())
 	nonModalVis := component.VisibilityAnimation{
 		State: component.Visible,
 	}
@@ -67,7 +77,7 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 	nav.Anchor = bar.Anchor
 
 	// Set up initial route.
-	r.Push(nav.CurrentNavDestination().(string))
+	r.Push(setupPage)
 	if p, ok := r.Current().(AppBarPage); ok {
 		bar.SetActions(p.Actions())
 	} else {
@@ -104,39 +114,43 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 				}
 
 				paint.Fill(gtx.Ops, sth.Background.Default.Bg)
-				bar := layout.Rigid(func(gtx C) D {
-					return bar.Layout(gtx, sth.Theme)
-				})
-				content := layout.Flexed(1, func(gtx C) D {
-					if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
-						// Lay out the nav non-modally.
-						return resize.Layout(gtx,
-							func(gtx C) D {
-								return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
-							},
-							func(gtx C) D {
-								return r.Layout(gtx)
-							},
-							func(gtx C) D {
-								size := image.Point{
-									X: gtx.Px(unit.Dp(4)),
-									Y: gtx.Constraints.Max.Y,
-								}
-								return D{Size: size}
-							},
-						)
-					} else {
-						// Lay out the nav in a modal drawer.
-						return r.Layout(gtx)
-					}
-				})
-				var elements []layout.FlexChild
-				if platform.Mobile {
-					elements = []layout.FlexChild{content, bar}
+				if _, ok := r.Current().(StandalonePage); ok {
+					r.Layout(gtx)
 				} else {
-					elements = []layout.FlexChild{bar, content}
+					bar := layout.Rigid(func(gtx C) D {
+						return bar.Layout(gtx, sth.Theme)
+					})
+					content := layout.Flexed(1, func(gtx C) D {
+						if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
+							// Lay out the nav non-modally.
+							return resize.Layout(gtx,
+								func(gtx C) D {
+									return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
+								},
+								func(gtx C) D {
+									return r.Layout(gtx)
+								},
+								func(gtx C) D {
+									size := image.Point{
+										X: gtx.Px(unit.Dp(4)),
+										Y: gtx.Constraints.Max.Y,
+									}
+									return D{Size: size}
+								},
+							)
+						} else {
+							// Lay out the nav in a modal drawer.
+							return r.Layout(gtx)
+						}
+					})
+					var elements []layout.FlexChild
+					if platform.Mobile {
+						elements = []layout.FlexChild{content, bar}
+					} else {
+						elements = []layout.FlexChild{bar, content}
+					}
+					layout.Flex{Axis: layout.Vertical}.Layout(gtx, elements...)
 				}
-				layout.Flex{Axis: layout.Vertical}.Layout(gtx, elements...)
 				event.Frame(&ops)
 			case key.Event:
 				if event.Name == "N" && event.Modifiers.Contain(key.ModCtrl) {

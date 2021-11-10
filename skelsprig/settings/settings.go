@@ -160,6 +160,10 @@ func (s *Service) removeSubscription(id string) {
 	}
 }
 
+type AcknowledgedNoticeRequest struct {
+	Version int
+}
+
 func (s *Service) SetAcknowledgedNoticeVersion(version int) {
 	s.Settings.AcknowledgedNoticeVersion = version
 }
