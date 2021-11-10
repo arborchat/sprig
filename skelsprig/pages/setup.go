@@ -50,6 +50,8 @@ func (s *Setup) Update(event interface{}) bool {
 	case settings.Event:
 		s.Current = event.Settings
 		s.gotSettings = true
+	case StorageMigrationCompleteEvent:
+		s.finishedStorageMigration = true
 	default:
 		return false
 	}
@@ -58,6 +60,12 @@ func (s *Setup) Update(event interface{}) bool {
 
 func (s *Setup) loader(gtx C) D {
 	return layout.Center.Layout(gtx, material.Loader(s.Th.Theme).Layout)
+}
+
+type StorageMigrationCompleteEvent struct{}
+
+func migrateStorage() interface{} {
+	return StorageMigrationCompleteEvent{}
 }
 
 // Layout the setup page.
@@ -82,6 +90,8 @@ func (s *Setup) Layout(gtx C) D {
 			}
 		case UpdatingStorage:
 			if !s.startedStorageMigration {
+				s.startedStorageMigration = true
+				s.Conn.Schedule(migrateStorage)
 				return s.loader(gtx)
 			} else if !s.finishedStorageMigration {
 				return s.loader(gtx)

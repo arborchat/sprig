@@ -162,6 +162,10 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 			}
 		case update := <-bus.Output():
 			window.Update(w, update)
+			if _, ok := update.(SetupCompleteEvent); ok {
+				r.Push(settingsPage)
+				w.Invalidate()
+			}
 			if r.Update(update) {
 				w.Invalidate()
 			}
