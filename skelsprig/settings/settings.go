@@ -8,7 +8,6 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
-	"time"
 
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~whereswaldon/forest-go"
@@ -45,14 +44,24 @@ type Settings struct {
 	Subscriptions []string
 }
 
+type DataDirs struct {
+	DataPath       string
+	GrovePath      string
+	OrchardPath    string
+	KeysPath       string
+	IdentitiesPath string
+}
+
 // UpdateEvent announces updated application settings.
 type UpdateEvent struct {
 	Settings
-	Err error
+	Dirs DataDirs
+	Err  error
 }
 
 // Event announces the current application settings.
 type Event struct {
+	Dirs DataDirs
 	Settings
 }
 
@@ -101,8 +110,10 @@ func (s *Service) run() {
 			s.setBottomAppBar(event.Enabled)
 		case Request:
 			changed = false
-			time.Sleep(time.Second)
-			s.conn.Message(Event{Settings: s.Settings})
+			s.conn.Message(Event{
+				Settings: s.Settings,
+				Dirs:     s.dataDirs(),
+			})
 		default:
 			changed = false
 		}
@@ -110,9 +121,20 @@ func (s *Service) run() {
 			err := s.persist()
 			s.conn.Message(UpdateEvent{
 				Settings: s.Settings,
+				Dirs:     s.dataDirs(),
 				Err:      err,
 			})
 		}
+	}
+}
+
+func (s *Service) dataDirs() DataDirs {
+	return DataDirs{
+		DataPath:       s.dataDir,
+		GrovePath:      filepath.Join(s.dataDir, "grove"),
+		OrchardPath:    filepath.Join(s.dataDir, "data", "orchard.db"),
+		KeysPath:       filepath.Join(s.dataDir, "keys"),
+		IdentitiesPath: filepath.Join(s.dataDir, "identities"),
 	}
 }
 
