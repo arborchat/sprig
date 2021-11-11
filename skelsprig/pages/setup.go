@@ -8,11 +8,13 @@ import (
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
+	"gioui.org/x/component"
 	"git.sr.ht/~gioverse/skel/router"
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/orchard"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/settings"
+	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
 
@@ -27,6 +29,10 @@ type Setup struct {
 	startedStorageMigration, finishedStorageMigration bool
 	notifiedComplete                                  bool
 	dataDirs                                          settings.DataDirs
+	username                                          component.TextField
+	createIdButton                                    widget.Clickable
+	connectForm                                       sprigWidget.TextForm
+	connectionList                                    widget.List
 }
 
 type SetupPhase uint8
@@ -80,6 +86,9 @@ type StorageMigrationCompleteEvent struct {
 	Err error
 }
 
+// migrateStorage dumps the contents of the local grove into the
+// local orchard, then renames the grove. If the grove has been
+// renamed away from the default name, it does nothing.
 func migrateStorage(paths settings.DataDirs) interface{} {
 	_, err := os.Stat(paths.GrovePath)
 	if err != nil {
@@ -156,6 +165,23 @@ func (s *Setup) Layout(gtx C) D {
 			} else if !s.finishedStorageMigration {
 				return s.loader(gtx)
 			} else {
+				s.Phase = CreatingIdentity
+			}
+		case CreatingIdentity:
+			if s.Current.ActiveIdentity == nil {
+				return s.layoutCreateIdentityForm(gtx)
+			} else {
+				s.Phase = GettingRelayAddress
+			}
+		case GettingRelayAddress:
+			if s.Current.Address == "" {
+				return s.layoutConnectForm(gtx)
+			} else {
+				s.Phase = SubscribingToCommunity
+			}
+		case SubscribingToCommunity:
+			if len(s.Current.Subscriptions) == 0 {
+			} else {
 				s.Phase = Complete
 			}
 		case Complete:
@@ -215,4 +241,75 @@ func (s *Setup) displayNotice(gtx C) D {
 			}),
 		)
 	})
+}
+
+func (s *Setup) layoutCreateIdentityForm(gtx C) D {
+	return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Body1(s.Th.Theme, "Your Arbor Username:").Layout,
+					)
+				})
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+						return s.username.Layout(gtx, s.Th.Theme, "Username")
+					})
+				})
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Body2(s.Th.Theme, "Your username is public, and cannot currently be changed once it is chosen.").Layout,
+					)
+				})
+			}),
+			layout.Rigid(func(gtx layout.Context) layout.Dimensions {
+				return layout.Center.Layout(gtx, func(gtx layout.Context) layout.Dimensions {
+					return layout.UniformInset(unit.Dp(4)).Layout(gtx,
+						material.Button(s.Th.Theme, &s.createIdButton, "Create").Layout,
+					)
+				})
+			}),
+		)
+	})
+}
+
+func (s *Setup) layoutConnectForm(gtx C) D {
+	inset := layout.UniformInset(unit.Dp(8))
+	return inset.Layout(gtx, func(gtx C) D {
+		return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
+			layout.Rigid(func(gtx C) D {
+				return inset.Layout(gtx,
+					material.H6(s.Th.Theme, "Arbor Relay Address:").Layout,
+				)
+			}),
+			layout.Rigid(func(gtx C) D {
+				return inset.Layout(gtx, sprigTheme.TextForm(s.Th, &s.connectForm, "Connect", "HOST:PORT").Layout)
+			}),
+		)
+	})
+}
+
+func (s *Setup) layoutSubscriptionForm(gtx C) D {
+	inset := layout.UniformInset(unit.Dp(12))
+
+	return layout.Flex{
+		Axis:      layout.Vertical,
+		Alignment: layout.Middle,
+	}.Layout(gtx,
+		layout.Rigid(func(gtx C) D {
+			return inset.Layout(gtx, func(gtx C) D {
+				return material.Body1(s.Th.Theme, "Subscribe to a few communities to get started:").Layout(gtx)
+			})
+		}),
+		layout.Flexed(1.0, func(gtx C) D {
+			return material.List(s.Th.Theme, &s.connectionList).Layout(gtx, 1, func(gtx C, index int) D {
+				return D{}
+			})
+		}),
+	)
 }
