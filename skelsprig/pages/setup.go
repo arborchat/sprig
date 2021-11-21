@@ -13,6 +13,7 @@ import (
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~whereswaldon/forest-go/grove"
 	"git.sr.ht/~whereswaldon/forest-go/orchard"
+	"git.sr.ht/~whereswaldon/sprig/skelsprig/arbor"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/settings"
 	sprigWidget "git.sr.ht/~whereswaldon/sprig/widget"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -72,6 +73,7 @@ func (s *Setup) Update(event interface{}) bool {
 		s.gotSettings = true
 	case StorageMigrationCompleteEvent:
 		s.finishedStorageMigration = true
+		s.Conn.Message(arbor.InitializeRequest{})
 	default:
 		return false
 	}

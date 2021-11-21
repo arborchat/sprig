@@ -10,6 +10,7 @@ import (
 	"gioui.org/app"
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~gioverse/skel/window"
+	"git.sr.ht/~whereswaldon/sprig/skelsprig/arbor"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/pages"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/settings"
 )
@@ -48,6 +49,10 @@ func main() {
 	_, err = settings.New(dataDir, bus.Connect())
 	if err != nil {
 		log.Fatalf("Failed initializing settings: %v", err)
+	}
+	_, err = arbor.New(bus.Connect())
+	if err != nil {
+		log.Fatalf("Failed initializing arbor storage: %v", err)
 	}
 
 	w := window.NewWindower(bus)
