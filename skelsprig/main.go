@@ -11,6 +11,7 @@ import (
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~gioverse/skel/window"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/arbor"
+	"git.sr.ht/~whereswaldon/sprig/skelsprig/banner"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/pages"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/settings"
 )
@@ -54,6 +55,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed initializing arbor storage: %v", err)
 	}
+	_ = banner.New(bus.Connect())
 
 	w := window.NewWindower(bus)
 	go func() {
