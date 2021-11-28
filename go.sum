@@ -8,10 +8,8 @@ gioui.org v0.0.0-20210518185901-8611894b4bb3/go.mod h1:RSH6KIUZ0p2xy5zHDxgAM4zum
 gioui.org v0.0.0-20210925100615-41f3a7e74ee6/go.mod h1:vJAHQwoR+DMYs8X5RpdWAgkpnw31wFSofF1hHHcZ6gs=
 gioui.org v0.0.0-20210930162118-d6e6ca848aeb/go.mod h1:vJAHQwoR+DMYs8X5RpdWAgkpnw31wFSofF1hHHcZ6gs=
 gioui.org v0.0.0-20211026101311-1eab4b84a6d3/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
-gioui.org v0.0.0-20211026101311-9cf7cc75f468 h1:8lKC0jESs/gMz+kYbJWzFB1bkwMdlux36LYvBB9UDtw=
-gioui.org v0.0.0-20211026101311-9cf7cc75f468/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
-gioui.org v0.0.0-20211107100252-3f25a49c7554 h1:T474bE2bEzwOnrxjpDm1li/IxsN48sHL2mEozYrVtnI=
-gioui.org v0.0.0-20211107100252-3f25a49c7554/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
+gioui.org v0.0.0-20211126213425-227c5a132be6 h1:I/VXI7iHRGYHVqkhLBOxw43zvDH+uzANxKhCj2DNbms=
+gioui.org v0.0.0-20211126213425-227c5a132be6/go.mod h1:yoWOxPng6WkDpsud+NRmkoftmyWn3rkKsYGEcWHpjTI=
 gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b h1:AxIq6D8gkBjUAGFfAbJw1OfQY0iaapVPi42tt3c6Zhc=
 gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b/go.mod h1:SgBjN+8Jtku8vvbXc6AsTebvxPY9+h68PUjSKGNryvQ=
 gioui.org/cpu v0.0.0-20210808092351-bfe733dd3334/go.mod h1:A8M0Cn5o+vY5LTMlnRoK3O5kG+rH0kWfJjeKd9QpBmQ=

@@ -3,7 +3,7 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20211107100252-3f25a49c7554
+	gioui.org v0.0.0-20211126213425-227c5a132be6
 	gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b
 	gioui.org/x v0.0.0-20211102210401-cead9283b8ff
 	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
