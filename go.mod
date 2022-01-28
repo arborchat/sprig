@@ -12,7 +12,7 @@ require (
 	git.sr.ht/~gioverse/chat v0.0.0-20210805134857-00743bdf2b8a
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
-	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20210408013049-fedf4ae2e7f8
+	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20220128205300-c2f66369262c
 	github.com/inkeliz/giohyperlink v0.0.0-20210728190223-81136d95d4bb
 	github.com/magefile/mage v1.10.0
 	github.com/pkg/profile v1.6.0
