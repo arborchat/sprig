@@ -8,12 +8,15 @@ import (
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
+	"gioui.org/widget/material"
 	"gioui.org/x/component"
 	"git.sr.ht/~gioverse/skel/router"
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~gioverse/skel/window"
+	"git.sr.ht/~whereswaldon/sprig/skelsprig/banner"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/platform"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
 )
@@ -89,6 +92,8 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 		bar.Title = ""
 	}
 
+	var banServ *banner.Service
+
 	var ops op.Ops
 	for {
 		select {
@@ -121,27 +126,38 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 						return bar.Layout(gtx, sth.Theme)
 					})
 					content := layout.Flexed(1, func(gtx C) D {
-						if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
-							// Lay out the nav non-modally.
-							return resize.Layout(gtx,
-								func(gtx C) D {
-									return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
-								},
-								func(gtx C) D {
+						return layout.Stack{}.Layout(gtx,
+							layout.Stacked(func(gtx C) D {
+								if gtx.Constraints.Max.X > gtx.Px(unit.Dp(500)) {
+									// Lay out the nav non-modally.
+									return resize.Layout(gtx,
+										func(gtx C) D {
+											return nav.NavDrawer.Layout(gtx, sth.Theme, &nonModalVis)
+										},
+										func(gtx C) D {
+											return r.Layout(gtx)
+										},
+										func(gtx C) D {
+											size := image.Point{
+												X: gtx.Px(unit.Dp(4)),
+												Y: gtx.Constraints.Max.Y,
+											}
+											return D{Size: size}
+										},
+									)
+								} else {
+									// Lay out the nav in a modal drawer.
 									return r.Layout(gtx)
-								},
-								func(gtx C) D {
-									size := image.Point{
-										X: gtx.Px(unit.Dp(4)),
-										Y: gtx.Constraints.Max.Y,
-									}
-									return D{Size: size}
-								},
-							)
-						} else {
-							// Lay out the nav in a modal drawer.
-							return r.Layout(gtx)
-						}
+								}
+							}),
+							layout.Expanded(func(gtx C) D {
+								if banServ == nil {
+									return D{}
+								}
+								top := banServ.Top()
+								return layoutBanner(gtx, sth, top)
+							}),
+						)
 					})
 					var elements []layout.FlexChild
 					if platform.Mobile {
@@ -162,13 +178,44 @@ func Window(w *app.Window, bus scheduler.Connection) error {
 			}
 		case update := <-bus.Output():
 			window.Update(w, update)
-			if _, ok := update.(SetupCompleteEvent); ok {
+			switch update := update.(type) {
+			case SetupCompleteEvent:
 				r.Push(settingsPage)
 				w.Invalidate()
+			case banner.Event:
+				banServ = update.Service
 			}
 			if r.Update(update) {
 				w.Invalidate()
 			}
 		}
+	}
+}
+
+func layoutBanner(gtx C, th *sprigTheme.Theme, b banner.Banner) D {
+	switch bannerConfig := b.(type) {
+	case *banner.LoadingBanner:
+		secondary := th.Secondary.Default
+		th := *(th.Theme)
+		th.ContrastFg = th.Fg
+		th.ContrastBg = th.Bg
+		th.Palette = sprigTheme.ApplyAsNormal(th.Palette, secondary)
+		return layout.Stack{}.Layout(gtx,
+			layout.Expanded(func(gtx C) D {
+				paint.FillShape(gtx.Ops, th.Bg, clip.Rect(image.Rectangle{Max: gtx.Constraints.Min}).Op())
+				return D{Size: gtx.Constraints.Min}
+			}),
+			layout.Stacked(func(gtx C) D {
+				return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
+					gtx.Constraints.Min.X = gtx.Constraints.Max.X
+					return layout.Flex{Spacing: layout.SpaceAround}.Layout(gtx,
+						layout.Rigid(material.Body1(&th, bannerConfig.Text).Layout),
+						layout.Rigid(material.Loader(&th).Layout),
+					)
+				})
+			}),
+		)
+	default:
+		return D{}
 	}
 }

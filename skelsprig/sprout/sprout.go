@@ -1,4 +1,4 @@
-package conn
+package sprout
 
 import (
 	"crypto/tls"
@@ -7,65 +7,41 @@ import (
 	"sync"
 	"time"
 
+	status "git.sr.ht/~athorp96/forest-ex/active-status"
 	"git.sr.ht/~gioverse/skel/scheduler"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/fields"
 	"git.sr.ht/~whereswaldon/forest-go/store"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/arbor"
-	"git.sr.ht/~whereswaldon/sprig/skelsprig/banner"
 	"git.sr.ht/~whereswaldon/sprig/skelsprig/settings"
 	"git.sr.ht/~whereswaldon/sprout-go"
 )
 
-// Service provides connection management services over an application
-// bus.
 type Service struct {
+	arbor.Service
+	BannerService
+	current    settings.Settings
 	conn       scheduler.Connection
 	workerLock sync.Mutex
 	workerDone chan struct{}
 	workers    map[string]*sprout.Worker
-	arborSvc   *arbor.Service
-	bannerSvc  *banner.Service
-	current    settings.Settings
 }
 
-// New initializes a connection service on the given bus connection.
-func New(bus scheduler.Connection) (*Service, error) {
+func New(conn scheduler.Connection) (Service, error) {
 	s := &Service{
-		conn:       bus,
-		workers:    make(map[string]*sprout.Worker),
-		workerDone: make(chan struct{}),
+		conn:          conn,
+		BannerService: banner,
+		workers:       make(map[string]*sprout.Worker),
+		workerDone:    make(chan struct{}),
 	}
 	go s.run()
 	return s, nil
 }
 
-// Request is a request for a handle to the connection service.
-type Request struct{}
-
-// Event provides a handle to the connection service.
-type Event struct {
-	*Service
-}
-
 func (s *Service) run() {
 	for event := range s.conn.Output() {
-		if s.arborSvc == nil || s.bannerSvc == nil || s.current == (settings.Settings{}) {
-			switch event := event.(type) {
-			case settings.Event:
-				s.current = event.Settings
-			case settings.UpdateEvent:
-				s.current = event.Settings
-			case arbor.Event:
-				s.arborSvc = event.Service
-			case banner.Event:
-				s.bannerSvc = event.Service
-			}
-			continue
-		}
 		switch event := event.(type) {
-		case Request:
-			s.conn.Message(Event{s})
+		case settings.Event:
 		}
 	}
 }
@@ -78,7 +54,7 @@ func (s *Service) ConnectTo(address string) error {
 		close(s.workerDone)
 	}
 	s.workerDone = make(chan struct{})
-	go s.launchWorker(address, s.arborSvc.Store(), s.current.Subscriptions)
+	go s.launchWorker(address)
 	return nil
 }
 
@@ -102,11 +78,17 @@ func (s *Service) WorkerFor(address string) *sprout.Worker {
 	return out
 }
 
-func (s *Service) launchWorker(addr string, nodeStore store.ExtendedStore, subs []string) {
+func (s *Service) launchWorker(addr string) {
 	firstAttempt := true
 	logger := log.New(log.Writer(), "worker "+addr, log.LstdFlags|log.Lshortfile)
 	for {
 		worker, done := func() (*sprout.Worker, chan struct{}) {
+			connectionBanner := &LoadingBanner{
+				Priority: Info,
+				Text:     "Connecting to " + addr + "...",
+			}
+			defer connectionBanner.Cancel()
+			s.BannerService.Add(connectionBanner)
 			if !firstAttempt {
 				logger.Printf("Restarting worker for address %s", addr)
 				time.Sleep(time.Second)
@@ -117,7 +99,7 @@ func (s *Service) launchWorker(addr string, nodeStore store.ExtendedStore, subs 
 			done := s.workerDone
 			s.workerLock.Unlock()
 
-			worker, err := NewWorker(addr, done, nodeStore)
+			worker, err := NewWorker(addr, done, s.ArborService.Store())
 			if err != nil {
 				log.Printf("Failed starting worker: %v", err)
 				return nil, nil
@@ -134,7 +116,13 @@ func (s *Service) launchWorker(addr string, nodeStore store.ExtendedStore, subs 
 		}
 
 		go func() {
-			BootstrapSubscribed(worker, subs)
+			synchronizingBanner := &LoadingBanner{
+				Priority: Info,
+				Text:     "Syncing with " + addr + "...",
+			}
+			s.BannerService.Add(synchronizingBanner)
+			defer synchronizingBanner.Cancel()
+			BootstrapSubscribed(worker, s.SettingsService.Subscriptions())
 		}()
 
 		worker.Run()
@@ -149,36 +137,35 @@ func (s *Service) launchWorker(addr string, nodeStore store.ExtendedStore, subs 
 // MarkSelfOffline announces that the local user is offline in all known
 // communities.
 func (s *Service) MarkSelfOffline() {
-	// TODO
-	/*
-		for _, conn := range s.Connections() {
-			if worker := s.WorkerFor(conn); worker != nil {
-				var nodes []forest.Node
-				s.arborSvc.Communities().WithCommunities(func(coms []*forest.Community) {
-					if s.current.ActiveIdentity != nil {
-						builder, err := s.SettingsService.Builder()
-						if err == nil {
-							log.Printf("killing active-status heartbeat")
-							for _, c := range coms {
-								n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
-								if err != nil {
-									log.Printf("creating inactive node: %v", err)
-									continue
-								}
-								log.Printf("sending offline node to community %s", c.ID())
-								nodes = append(nodes, n)
+	for _, conn := range s.Connections() {
+		if worker := s.WorkerFor(conn); worker != nil {
+			var (
+				nodes []forest.Node
+			)
+			s.ArborService.Communities().WithCommunities(func(coms []*forest.Community) {
+				if s.SettingsService.ActiveArborIdentityID() != nil {
+					builder, err := s.SettingsService.Builder()
+					if err == nil {
+						log.Printf("killing active-status heartbeat")
+						for _, c := range coms {
+							n, err := status.NewActivityNode(c, builder, status.Inactive, time.Minute*5)
+							if err != nil {
+								log.Printf("creating inactive node: %v", err)
+								continue
 							}
-						} else {
-							log.Printf("aquiring builder: %v", err)
+							log.Printf("sending offline node to community %s", c.ID())
+							nodes = append(nodes, n)
 						}
+					} else {
+						log.Printf("aquiring builder: %v", err)
 					}
-				})
-				if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
-					log.Printf("sending shutdown messages: %v", err)
 				}
+			})
+			if err := worker.SendAnnounce(nodes, time.NewTicker(time.Second*5).C); err != nil {
+				log.Printf("sending shutdown messages: %v", err)
 			}
 		}
-	*/
+	}
 }
 
 func makeTicker(duration time.Duration) <-chan time.Time {
