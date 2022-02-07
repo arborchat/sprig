@@ -298,7 +298,7 @@ func (vm *viewManager) layoutCurrentView(gtx layout.Context) layout.Dimensions {
 
 	bar := layout.Rigid(func(gtx C) D {
 		if displayBar {
-			return vm.AppBar.Layout(gtx, th.Theme)
+			return vm.AppBar.Layout(gtx, th.Theme, "Navigation", "More")
 		}
 		return layout.Dimensions{}
 	})

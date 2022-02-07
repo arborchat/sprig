@@ -25,7 +25,7 @@ func TextForm(th *Theme, state *widget.TextForm, submitText, formHint string) Te
 	t := TextFormStyle{
 		State:            state,
 		Inset:            layout.UniformInset(unit.Dp(8)),
-		PasteButton:      material.IconButton(th.Theme, &state.PasteButton, icons.PasteIcon),
+		PasteButton:      material.IconButton(th.Theme, &state.PasteButton, icons.PasteIcon, "Paste"),
 		SubmitButton:     material.Button(th.Theme, &state.SubmitButton, submitText),
 		EditorHint:       formHint,
 		EditorBackground: th.Background.Light.Bg,

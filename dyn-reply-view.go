@@ -11,9 +11,9 @@ import (
 	"gioui.org/gesture"
 	"gioui.org/io/clipboard"
 	"gioui.org/io/key"
-	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/op/clip"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -489,10 +489,9 @@ func (c *DynamicChatView) layoutMessageList(gtx layout.Context) D {
 
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
-			defer op.Save(gtx.Ops).Load()
-			pointer.Rect(image.Rectangle{
+			defer clip.Rect(image.Rectangle{
 				Max: gtx.Constraints.Max,
-			}).Add(gtx.Ops)
+			}).Push(gtx.Ops).Pop()
 			c.BackgroundClick.Add(gtx.Ops)
 			return D{Size: gtx.Constraints.Max}
 		}),
@@ -583,7 +582,7 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 									Left:   internalInset,
 									Bottom: internalInset,
 								}.Layout(gtx, func(gtx C) D {
-									return material.IconButton(th.Theme, &c.DismissButton, icons.CancelReplyIcon).Layout(gtx)
+									return material.IconButton(th.Theme, &c.DismissButton, icons.CancelReplyIcon, "Cancel").Layout(gtx)
 								})
 							}),
 							layout.Rigid(func(gtx C) D {
@@ -592,7 +591,7 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 									Left: internalInset,
 									Top:  internalInset,
 								}.Layout(gtx, func(gtx C) D {
-									return material.IconButton(th.Theme, &c.SendButton, icons.SendReplyIcon).Layout(gtx)
+									return material.IconButton(th.Theme, &c.SendButton, icons.SendReplyIcon, "Send").Layout(gtx)
 								})
 							}),
 						)
@@ -765,19 +764,20 @@ func (c *DynamicChatView) loadMessagesPaged(store pageableStore, dir list.Direct
 
 // loadMessages loads chat messages in a given direction relative to a given
 // other chat message.
-func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Serial) []list.Element {
+func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Serial) ([]list.Element, bool) {
 	if archive, ok := c.Arbor().Store().(*store.Archive); ok {
 		if pageable, ok := archive.UnderlyingStore().(pageableStore); ok {
-			return c.loadMessagesPaged(pageable, dir, relativeTo)
+			msgs := c.loadMessagesPaged(pageable, dir, relativeTo)
+			return msgs, len(msgs) > 0
 		}
 	}
 	if relativeTo != list.NoSerial || dir == 0 {
-		return nil
+		return nil, false
 	}
 	replies, err := c.Arbor().Store().Recent(fields.NodeTypeReply, 100)
 	if err != nil {
 		log.Printf("failed loading replies: %v", err)
-		return nil
+		return nil, false
 	}
 	elements := make([]list.Element, 0, len(replies))
 	for _, reply := range replies {
@@ -790,7 +790,7 @@ func (c *DynamicChatView) loadMessages(dir list.Direction, relativeTo list.Seria
 		rd.Populate(reply, c.Arbor().Store())
 		elements = append(elements, rd)
 	}
-	return elements
+	return elements, len(elements) > 0
 }
 
 // replyState returns the display status of a given message within the view.

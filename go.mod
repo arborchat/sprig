@@ -3,13 +3,11 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.14
 
 require (
-	gioui.org v0.0.0-20210804105805-1efe68c1540b
-	gioui.org/cmd v0.0.0-20210804105805-1efe68c1540b
-	gioui.org/x v0.0.0-20210805142029-e0acbf68bc23
-	gioui.org/x/haptic v0.0.0-20210120222453-b55819bc712b
-	gioui.org/x/notify v0.0.0-20210117185607-25b1f7920092
+	gioui.org v0.0.0-20220206102100-9d778d7bde57
+	gioui.org/cmd v0.0.0-20220206102100-9d778d7bde57
+	gioui.org/x v0.0.0-20220207222704-60bcbabb6b02
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
-	git.sr.ht/~gioverse/chat v0.0.0-20210805134857-00743bdf2b8a
+	git.sr.ht/~gioverse/chat v0.0.0-20211202160049-1ac8bd0d6f8d
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20220128205300-c2f66369262c

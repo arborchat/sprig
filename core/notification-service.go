@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
+	niotify "gioui.org/x/notify"
 	"git.sr.ht/~whereswaldon/forest-go"
 	"git.sr.ht/~whereswaldon/forest-go/store"
-	niotify "gioui.org/x/notify"
 )
 
 // NotificationService provides methods to send notifications and to
@@ -24,7 +24,7 @@ type NotificationService interface {
 type notificationManager struct {
 	SettingsService
 	ArborService
-	niotify.Manager
+	niotify.Notifier
 	TimeLaunched uint64
 }
 
@@ -33,14 +33,14 @@ var _ NotificationService = &notificationManager{}
 // newNotificationService constructs a new NotificationService for the
 // provided App.
 func newNotificationService(settings SettingsService, arbor ArborService) (NotificationService, error) {
-	m, err := niotify.NewManager()
+	m, err := niotify.NewNotifier()
 	if err != nil {
 		return nil, fmt.Errorf("failed initializing notification support: %w", err)
 	}
 	return &notificationManager{
 		SettingsService: settings,
 		ArborService:    arbor,
-		Manager:         m,
+		Notifier:        m,
 		TimeLaunched:    uint64(time.Now().UnixNano() / 1000000),
 	}, nil
 }

@@ -7,6 +7,7 @@ import (
 	"gioui.org/io/pointer"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/op/clip"
 	"gioui.org/unit"
 	"gioui.org/x/richtext"
 	chatlayout "git.sr.ht/~gioverse/chat/layout"
@@ -41,7 +42,6 @@ func ReplyRow(th *Theme, state *sprigwidget.Reply, anim *sprigwidget.ReplyAnimat
 // Layout the row.
 func (r ReplyRowStyle) Layout(gtx C) D {
 	return r.VerticalMarginStyle.Layout(gtx, func(gtx C) D {
-		defer op.Save(gtx.Ops).Load()
 		macro := op.Record(gtx.Ops)
 		dims := layout.Inset{
 			Left: interpolateInset(r.ReplyAnimationState, r.ReplyAnimationState.Progress(gtx)),
@@ -58,14 +58,14 @@ func (r ReplyRowStyle) Layout(gtx C) D {
 		})
 		call := macro.Stop()
 
-		pointer.PassOp{Pass: true}.Add(gtx.Ops)
+		defer pointer.PassOp{}.Push(gtx.Ops).Pop()
 		rect := image.Rectangle{
 			Max: image.Point{
 				X: gtx.Constraints.Max.X,
 				Y: dims.Size.Y,
 			},
 		}
-		pointer.Rect(rect).Add(gtx.Ops)
+		defer clip.Rect(rect).Push(gtx.Ops).Pop()
 		r.Reply.Layout(gtx, dims.Size.X)
 
 		offset := r.Reply.DragOffset()

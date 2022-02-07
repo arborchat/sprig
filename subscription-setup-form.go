@@ -86,10 +86,10 @@ func (c *SubSetupFormView) Layout(gtx layout.Context) layout.Dimensions {
 			return inset.Layout(gtx, func(gtx C) D {
 				return layout.Flex{Spacing: layout.SpaceAround}.Layout(gtx,
 					layout.Rigid(func(gtx C) D {
-						return material.IconButton(theme, &c.Refresh, icons.RefreshIcon).Layout(gtx)
+						return material.IconButton(theme, &c.Refresh, icons.RefreshIcon, "Refresh").Layout(gtx)
 					}),
 					layout.Rigid(func(gtx C) D {
-						return material.IconButton(theme, &c.Continue, icons.ForwardIcon).Layout(gtx)
+						return material.IconButton(theme, &c.Continue, icons.ForwardIcon, "Continue").Layout(gtx)
 					}),
 				)
 			})

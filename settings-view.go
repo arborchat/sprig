@@ -214,7 +214,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.NotificationsSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.NotificationsSwitch, "Enable Notifications").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Enable notifications").Layout)
@@ -239,7 +239,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.UseOrchardStoreSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.UseOrchardStoreSwitch, "Use Orchard Store").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Use Orchard store").Layout)
@@ -258,7 +258,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.BottomBarSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.BottomBarSwitch, "Use Bottom App Bar").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Use bottom app bar").Layout)
@@ -272,7 +272,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.DockNavSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.DockNavSwitch, "Dock navigation").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Dock navigation to the left edge of the UI").Layout)
@@ -286,7 +286,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.DarkModeSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.DarkModeSwitch, "Dark Mode").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Dark Mode").Layout)
@@ -304,7 +304,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.ProfilingSwitch, "Enable Profiling").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Display graphics profiling").Layout)
@@ -317,7 +317,7 @@ func (c *SettingsView) Layout(gtx layout.Context) layout.Dimensions {
 					Control: func(gtx C) D {
 						return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 							layout.Rigid(func(gtx C) D {
-								return itemInset.Layout(gtx, material.Switch(theme, &c.ThemeingSwitch).Layout)
+								return itemInset.Layout(gtx, material.Switch(theme, &c.ThemeingSwitch, "Enable Theme Editor").Layout)
 							}),
 							layout.Rigid(func(gtx C) D {
 								return itemInset.Layout(gtx, material.Body1(theme, "Display theme editor").Layout)

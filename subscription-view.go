@@ -120,7 +120,7 @@ func (s SubscriptionCardStyle) Layout(gtx C) D {
 			}.Layout(gtx,
 				layout.Rigid(func(gtx C) D {
 					return s.Inset.Layout(gtx, func(gtx C) D {
-						return material.Switch(s.Theme, &s.Subbed).Layout(gtx)
+						return material.Switch(s.Theme, &s.Subbed, "Subscribed").Layout(gtx)
 					})
 				}),
 				layout.Rigid(func(gtx C) D {
