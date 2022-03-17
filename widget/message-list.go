@@ -32,7 +32,7 @@ type MessageListEvent struct {
 type MessageList struct {
 	widget.List
 	textCache RichTextCache
-	States
+	ReplyStates
 	ShouldHide     func(reply ds.ReplyData) bool
 	StatusOf       func(reply ds.ReplyData) ReplyStatus
 	HiddenChildren func(reply ds.ReplyData) int
@@ -66,7 +66,7 @@ func (m *MessageList) GetTextState(id *fields.QualifiedHash) (*richtext.Interact
 // Layout updates the state of the message list each frame.
 func (m *MessageList) Layout(gtx layout.Context) layout.Dimensions {
 	m.textCache.Frame()
-	m.States.Begin()
+	m.ReplyStates.Begin()
 	m.List.Axis = layout.Vertical
 	return layout.Dimensions{}
 }
@@ -79,22 +79,27 @@ func (m *MessageList) Events() []MessageListEvent {
 	return out
 }
 
-// States implements a buffer of reply states such that memory
-// is reused each frame, yet grows as the view expands to hold more replies.
-type States struct {
-	Buffer  []Reply
+type ReplyStates = States[Reply]
+
+// States implements a buffer states such that memory
+// is reused each frame, yet grows as the view expands
+// to hold more values.
+type States[T any] struct {
+	Buffer  []T
 	Current int
 }
 
 // Begin resets the buffer to the start.
-func (s *States) Begin() {
+func (s *States[T]) Begin() {
 	s.Current = 0
 }
 
-func (s *States) Next() *Reply {
+// Next returns the next available state to use, growing the underlying
+// buffer if necessary.
+func (s *States[T]) Next() *T {
 	defer func() { s.Current++ }()
 	if s.Current > len(s.Buffer)-1 {
-		s.Buffer = append(s.Buffer, Reply{})
+		s.Buffer = append(s.Buffer, *new(T))
 	}
 	return &s.Buffer[s.Current]
 }

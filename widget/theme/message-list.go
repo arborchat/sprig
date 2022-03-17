@@ -116,7 +116,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 		}
 		// Only acquire a state after ensuring the node should be rendered. This allows
 		// us to count used states in order to determine how many nodes were rendered.
-		var state = m.State.States.Next()
+		var state = m.State.ReplyStates.Next()
 		return layout.Center.Layout(gtx, func(gtx C) D {
 			var (
 				cs         = &gtx.Constraints
