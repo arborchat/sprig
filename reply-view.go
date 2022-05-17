@@ -610,8 +610,8 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 		data.Populate(reply, c.Arbor().Store())
 		c.SetFocus(&data)
 	}
-	for i := range c.States.Buffer {
-		handler := &c.States.Buffer[i]
+	for i := range c.ReplyStates.Buffer {
+		handler := &c.ReplyStates.Buffer[i]
 		if click, ok := clicked(&handler.Polyclick); ok {
 			if click.Modifiers.Contain(key.ModCtrl) {
 				for _, word := range strings.Fields(handler.Content) {
@@ -945,8 +945,8 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 	})
 
 	if c.replyCount > 0 {
-		if c.States.Current > c.maxRepliesVisible {
-			c.maxRepliesVisible = c.States.Current
+		if c.ReplyStates.Current > c.maxRepliesVisible {
+			c.maxRepliesVisible = c.ReplyStates.Current
 		}
 	}
 	return dims
