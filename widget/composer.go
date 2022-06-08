@@ -19,6 +19,12 @@ const (
 	ComposerCancelled
 )
 
+// Editor prompts
+const (
+	reply_prompt        = "Compose your reply"
+	conversation_prompt = "Start a new conversation"
+)
+
 // Composer holds the state for a widget that creates new arbor nodes.
 type Composer struct {
 	CommunityList layout.List
@@ -33,6 +39,8 @@ type Composer struct {
 
 	events    []ComposerEvent
 	composing bool
+
+	PromptText string
 }
 
 // update handles all state processing.
@@ -71,6 +79,7 @@ func (c *Composer) StartReply(to ds.ReplyData) {
 	c.Reset()
 	c.composing = true
 	c.ReplyingTo = to
+	c.PromptText = reply_prompt
 	c.Editor.Focus()
 }
 
@@ -78,6 +87,7 @@ func (c *Composer) StartReply(to ds.ReplyData) {
 func (c *Composer) StartConversation() {
 	c.Reset()
 	c.composing = true
+	c.PromptText = conversation_prompt
 	c.Editor.Focus()
 }
 
@@ -85,6 +95,7 @@ func (c *Composer) StartConversation() {
 func (c *Composer) Reset() {
 	c.ReplyingTo = ds.ReplyData{}
 	c.Editor.SetText("")
+	c.PromptText = ""
 	c.composing = false
 }
 

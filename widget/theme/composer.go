@@ -113,7 +113,7 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
 											c.Editor.Submit = true
-											return material.Editor(th.Theme, &c.Editor, "Compose your reply").Layout(gtx)
+											return material.Editor(th.Theme, &c.Editor, c.PromptText).Layout(gtx)
 										})
 									}),
 								)

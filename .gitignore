@@ -4,3 +4,4 @@ sprig
 *.apk
 pakbuild/
 .flatpak-builder/
+vendor/
