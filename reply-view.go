@@ -44,6 +44,8 @@ const (
 	Message
 )
 
+const replyCoverAnimationTime = 100 * time.Millisecond
+
 // FocusTracker keeps track of which message (if any) is focused and the status
 // of ancestor/descendant messages relative to that message.
 type FocusTracker struct {
@@ -143,6 +145,8 @@ type ReplyListView struct {
 
 	sprigWidget.Composer
 
+	replyListCover materials.ScrimState
+
 	FilterButton                        widget.Clickable
 	CreateReplyButton                   widget.Clickable
 	CreateConversationButton            widget.Clickable
@@ -190,6 +194,14 @@ func NewReplyListView(app core.App) View {
 	c.MessageList.HiddenChildren = func(r ds.ReplyData) int {
 		return c.HiddenTracker.NumDescendants(r.ID)
 	}
+
+	c.replyListCover = materials.ScrimState{
+		VisibilityAnimation: materials.VisibilityAnimation{
+			Duration: replyCoverAnimationTime,
+			State:    materials.Invisible,
+		},
+	}
+
 	c.loading = true
 	go func() {
 		defer func() { c.loading = false }()
@@ -492,11 +504,13 @@ func (c *ReplyListView) copyFocused(gtx layout.Context) {
 // startReply begins replying to the focused message.
 func (c *ReplyListView) startReply() {
 	data := c.Focused
+	c.replyListCover.Disappear(time.Now())
 	c.Composer.StartReply(*data)
 }
 
 // sendReply sends the reply with the current contents of the editor.
 func (c *ReplyListView) sendReply() {
+	c.replyListCover.Disappear(time.Now())
 	replyText := c.Composer.Text()
 	if replyText == "" {
 		return
@@ -639,6 +653,7 @@ func (c *ReplyListView) processMessagePointerEvents(gtx C) {
 
 // startConversation triggers composition of a new conversation message.
 func (c *ReplyListView) startConversation() {
+	c.replyListCover.Appear(time.Now())
 	c.Composer.StartConversation()
 }
 
@@ -660,6 +675,13 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 			c.moveFocusEnd(replies)
 		})
 	}
+
+	// Dismiss the composer if the scrim is clicked
+	if c.replyListCover.Clicked() {
+		c.replyListCover.Disappear(gtx.Now)
+		c.hideEditor()
+	}
+
 	for _, event := range gtx.Events(c) {
 		switch event := event.(type) {
 		case key.Event:
@@ -807,6 +829,7 @@ func (c *ReplyListView) loadMoreHistory() {
 
 // resetReplyState erases the current contents of the message composer.
 func (c *ReplyListView) resetReplyState() {
+	c.replyListCover.Disappear(time.Now())
 	c.Composer.Reset()
 }
 
@@ -859,6 +882,7 @@ func (c *ReplyListView) shouldDisplayEditor() bool {
 
 // hideEditor makes the editor invisible.
 func (c *ReplyListView) hideEditor() {
+	c.replyListCover.Disappear(time.Now())
 	c.Composer.Reset()
 	c.requestKeyboardFocus()
 }
@@ -867,10 +891,11 @@ func (c *ReplyListView) hideEditor() {
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
 	c.ShouldRequestKeyboardFocus = false
+
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: c.Theme().Current().Bg,
+				Color: theme.Bg,
 				Size:  layout.FPt(gtx.Constraints.Max),
 			}.Layout(gtx)
 			return layout.Dimensions{}
@@ -878,7 +903,16 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 		layout.Stacked(func(gtx C) D {
 			return layout.Flex{Axis: layout.Vertical}.Layout(gtx,
 				layout.Flexed(1, func(gtx C) D {
-					return c.layoutReplyList(gtx)
+					// Cover the reply list with a scrim if the
+					// list is supposed to be hidden entirely
+					return layout.Stack{}.Layout(gtx,
+						layout.Stacked(func(gtx C) D {
+							return c.layoutReplyList(gtx)
+						}),
+						layout.Expanded(func(gtx C) D {
+							return materials.NewScrim(theme.Theme, &c.replyListCover, theme.FadeAlpha).Layout(gtx)
+						}),
+					)
 				}),
 				layout.Rigid(func(gtx C) D {
 					if c.shouldDisplayEditor() {
@@ -890,8 +924,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 					return layout.Dimensions{}
 				}),
 			)
-		}),
-	)
+		}))
 }
 
 const buttonWidthDp = 20

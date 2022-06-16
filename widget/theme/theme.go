@@ -82,6 +82,9 @@ func New() *Theme {
 	t.Selected = &t.Secondary.Light.Bg
 	t.Unselected = &t.Background.Light.Bg
 	t.Siblings = t.Unselected
+
+	t.FadeAlpha = 128
+
 	return &t
 }
 
@@ -131,5 +134,12 @@ type Theme struct {
 	Secondary  Swatch
 	Background Swatch
 
+	FadeAlpha uint8
+
 	Ancestors, Descendants, Selected, Siblings, Unselected *color.NRGBA
+}
+
+func (t *Theme) ApplyAlpha(c color.NRGBA) color.NRGBA {
+	c.A = t.FadeAlpha
+	return c
 }

@@ -36,3 +36,15 @@ func (r Rect) LayoutUnder(gtx C, w layout.Widget) D {
 		layout.Stacked(w),
 	)
 }
+
+// LayoutUnder ignores the Size field and lays the rectangle out beneath the
+// provided widget, matching its dimensions.
+func (r Rect) LayoutOver(gtx C, w layout.Widget) D {
+	return layout.Stack{}.Layout(gtx,
+		layout.Stacked(w),
+		layout.Expanded(func(gtx C) D {
+			r.Size = layout.FPt(gtx.Constraints.Min)
+			return r.Layout(gtx)
+		}),
+	)
+}

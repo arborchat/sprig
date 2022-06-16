@@ -14,6 +14,14 @@ import (
 // ComposerEvent represents a change in the Composer's state
 type ComposerEvent uint
 
+type MessageType int32
+
+const (
+	MessageTypeNone MessageType = iota
+	MessageTypeConversation
+	MessageTypeReply
+)
+
 const (
 	ComposerSubmitted ComposerEvent = iota
 	ComposerCancelled
@@ -21,8 +29,8 @@ const (
 
 // Editor prompts
 const (
-	reply_prompt        = "Compose your reply"
-	conversation_prompt = "Start a new conversation"
+	replyPrompt        = "Compose your reply"
+	conversationPrompt = "Start a new conversation"
 )
 
 // Composer holds the state for a widget that creates new arbor nodes.
@@ -37,10 +45,9 @@ type Composer struct {
 
 	ReplyingTo ds.ReplyData
 
-	events    []ComposerEvent
-	composing bool
-
-	PromptText string
+	events      []ComposerEvent
+	composing   bool
+	messageType MessageType
 }
 
 // update handles all state processing.
@@ -79,23 +86,22 @@ func (c *Composer) StartReply(to ds.ReplyData) {
 	c.Reset()
 	c.composing = true
 	c.ReplyingTo = to
-	c.PromptText = reply_prompt
 	c.Editor.Focus()
 }
 
 // StartConversation configures the composer to write a new conversation.
 func (c *Composer) StartConversation() {
 	c.Reset()
+	c.messageType = MessageTypeConversation
 	c.composing = true
-	c.PromptText = conversation_prompt
 	c.Editor.Focus()
 }
 
 // Reset clears the internal state of the composer.
 func (c *Composer) Reset() {
+	c.messageType = MessageTypeNone
 	c.ReplyingTo = ds.ReplyData{}
 	c.Editor.SetText("")
-	c.PromptText = ""
 	c.composing = false
 }
 
@@ -109,6 +115,19 @@ func (c *Composer) ComposingConversation() bool {
 // kind.
 func (c Composer) Composing() bool {
 	return c.composing
+}
+
+// PromptText returns the text prompt for the composer, based off of the message type
+func (c Composer) PromptText() string {
+	if c.messageType == MessageTypeConversation {
+		return conversationPrompt
+	} else {
+		return replyPrompt
+	}
+}
+
+func (c Composer) MessageType() MessageType {
+	return c.messageType
 }
 
 // Events returns state change events for the composer since the last call
