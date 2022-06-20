@@ -22,7 +22,7 @@ type ReplyRowStyle struct {
 	chatlayout.VerticalMarginStyle
 	// MaxWidth constrains the maximum display width of a message.
 	// ReplyStyle configures the presentation of the message.
-	MaxWidth unit.Value
+	MaxWidth unit.Dp
 	ReplyStyle
 	*sprigwidget.Reply
 }
@@ -46,8 +46,8 @@ func (r ReplyRowStyle) Layout(gtx C) D {
 		dims := layout.Inset{
 			Left: interpolateInset(r.ReplyAnimationState, r.ReplyAnimationState.Progress(gtx)),
 		}.Layout(gtx, func(gtx C) D {
-			gtx.Constraints.Max.X -= gtx.Px(descendantInset) + gtx.Px(defaultInset)
-			if mw := gtx.Px(r.MaxWidth); gtx.Constraints.Max.X > mw {
+			gtx.Constraints.Max.X -= gtx.Dp(descendantInset) + gtx.Dp(defaultInset)
+			if mw := gtx.Dp(r.MaxWidth); gtx.Constraints.Max.X > mw {
 				gtx.Constraints.Max.X = mw
 				gtx.Constraints.Min = gtx.Constraints.Constrain(gtx.Constraints.Min)
 			}
@@ -69,7 +69,7 @@ func (r ReplyRowStyle) Layout(gtx C) D {
 		r.Reply.Layout(gtx, dims.Size.X)
 
 		offset := r.Reply.DragOffset()
-		op.Offset(f32.Pt(offset, 0)).Add(gtx.Ops)
+		op.Offset(f32.Pt(offset, 0).Round()).Add(gtx.Ops)
 		call.Add(gtx.Ops)
 
 		return dims

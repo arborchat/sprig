@@ -9,6 +9,7 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
+	"gioui.org/io/key"
 	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op"
@@ -104,8 +105,8 @@ func eventLoop(w *app.Window) error {
 			case system.DestroyEvent:
 				app.Shutdown()
 				return event.Err
-			case *system.CommandEvent:
-				if event.Type == system.CommandBack {
+			case *key.Event:
+				if event.Name == key.NameBack {
 					vm.HandleBackNavigation(event)
 				}
 			case system.FrameEvent:

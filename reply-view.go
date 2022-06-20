@@ -288,12 +288,12 @@ func (c *ReplyListView) AppBarData() (bool, string, []materials.AppBarAction, []
 							return layout.Flex{Alignment: layout.Middle}.Layout(gtx,
 								layout.Rigid(func(gtx C) D {
 									icon := icons.FilterIcon
-									sz := gtx.Px(unit.Dp(24))
+									sz := gtx.Dp(unit.Dp(24))
 									gtx.Constraints = layout.Exact(image.Pt(sz, sz))
 									return icon.Layout(gtx, buttonForeground)
 								}),
 								layout.Rigid(func(gtx C) D {
-									gtx.Constraints.Max.X = gtx.Px(unit.Dp(40))
+									gtx.Constraints.Max.X = gtx.Dp(unit.Dp(40))
 									gtx.Constraints.Min.X = gtx.Constraints.Max.X
 									label := material.Body1(th, buttonText)
 									label.Color = buttonForeground
@@ -870,7 +870,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: theme.Background.Default.Bg,
+				Color: c.Theme().Current().Bg,
 				Size:  layout.FPt(gtx.Constraints.Max),
 			}.Layout(gtx)
 			return layout.Dimensions{}

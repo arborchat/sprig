@@ -14,14 +14,14 @@ import (
 type IconButton struct {
 	Button *widget.Clickable
 	Icon   *widget.Icon
-	Size   unit.Value
+	Size   unit.Dp
 	Inset  layout.Inset
 }
 
 const DefaultIconButtonWidthDp = 20
 
 func (btn IconButton) Layout(gtx C, th *Theme) D {
-	if btn.Size.V == 0 {
+	if btn.Size == 0 {
 		btn.Size = unit.Dp(DefaultIconButtonWidthDp)
 	}
 	if btn.Inset == (layout.Inset{}) {

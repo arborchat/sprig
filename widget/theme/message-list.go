@@ -48,11 +48,11 @@ var (
 
 // MaxReplyInset returns the maximum distance that a reply will be inset
 // based on its position within the message tree.
-func MaxReplyInset() unit.Value {
+func MaxReplyInset() unit.Dp {
 	return descendantInset
 }
 
-func insetForStatus(status sprigWidget.ReplyStatus) unit.Value {
+func insetForStatus(status sprigWidget.ReplyStatus) unit.Dp {
 	switch {
 	case status&sprigWidget.Selected > 0:
 		return selectedInset
@@ -67,13 +67,13 @@ func insetForStatus(status sprigWidget.ReplyStatus) unit.Value {
 	}
 }
 
-func interpolateInset(anim *sprigWidget.ReplyAnimationState, progress float32) unit.Value {
+func interpolateInset(anim *sprigWidget.ReplyAnimationState, progress float32) unit.Dp {
 	if progress == 0 {
 		return insetForStatus(anim.Begin)
 	}
-	begin := insetForStatus(anim.Begin).V
-	end := insetForStatus(anim.End).V
-	return unit.Dp((end-begin)*progress + begin)
+	begin := insetForStatus(anim.Begin)
+	end := insetForStatus(anim.End)
+	return unit.Dp((end-begin)*unit.Dp(progress) + begin)
 }
 
 const buttonWidthDp = 20
@@ -120,7 +120,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 		return layout.Center.Layout(gtx, func(gtx C) D {
 			var (
 				cs         = &gtx.Constraints
-				contentMax = gtx.Px(unit.Dp(800))
+				contentMax = gtx.Dp(unit.Dp(800))
 			)
 			if cs.Max.X > contentMax {
 				cs.Max.X = contentMax
@@ -128,14 +128,14 @@ func (m MessageListStyle) Layout(gtx C) D {
 			return layout.Stack{}.Layout(gtx,
 				layout.Stacked(func(gtx C) D {
 					var (
-						extraWidth   = gtx.Px(unit.Dp(5*insetUnit + DefaultIconButtonWidthDp + scrollSlotWidthDp))
+						extraWidth   = gtx.Dp(unit.Dp(5*insetUnit + DefaultIconButtonWidthDp + scrollSlotWidthDp))
 						messageWidth = gtx.Constraints.Max.X - extraWidth
 					)
 					dims := layout.Stack{}.Layout(gtx,
 						layout.Stacked(func(gtx C) D {
 							gtx.Constraints.Min.X = gtx.Constraints.Max.X
 							return layout.Inset{
-								Top: func() unit.Value {
+								Top: func() unit.Dp {
 									if collapseMetadata {
 										return unit.Dp(0)
 									}

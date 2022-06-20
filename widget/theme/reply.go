@@ -86,7 +86,7 @@ type ReplyStyleConfig struct {
 	Background     color.NRGBA
 	TextColor      color.NRGBA
 	Border         color.NRGBA
-	highlightWidth unit.Value
+	highlightWidth unit.Dp
 }
 
 // ReplyStyleConfigFor returns a configuration tailored to the given ReplyStatus
@@ -202,7 +202,7 @@ func Reply(th *Theme, status *sprigWidget.ReplyAnimationState, nodes ds.ReplyDat
 	rs.DateStyle = material.Body2(th.Theme, nodes.CreatedAt.Local().Format("2006/01/02 15:04"))
 	rs.DateStyle.MaxLines = 1
 	rs.DateStyle.Color.A = 200
-	rs.DateStyle.TextSize = unit.Dp(12)
+	rs.DateStyle.TextSize = unit.Sp(12)
 	return rs
 }
 
@@ -223,7 +223,7 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 	}
 	r.finalConfig = r.ReplyStyleTransition.InterpolateWith(progress)
 	radiiDp := unit.Dp(5)
-	radii := float32(gtx.Px(radiiDp))
+	radii := float32(gtx.Dp(radiiDp))
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			innerSize := gtx.Constraints.Min
@@ -239,12 +239,12 @@ func (r ReplyStyle) Layout(gtx layout.Context) layout.Dimensions {
 			return layout.Stack{}.Layout(gtx,
 				layout.Expanded(func(gtx C) D {
 					max := layout.FPt(gtx.Constraints.Min)
-					max.X = float32(gtx.Px(r.finalConfig.highlightWidth))
+					max.X = float32(gtx.Dp(r.finalConfig.highlightWidth))
 					return Rect{Color: r.finalConfig.Highlight, Size: max, Radii: radii}.Layout(gtx)
 				}),
 				layout.Stacked(func(gtx C) D {
 					inset := layout.Inset{}
-					inset.Left = unit.Add(gtx.Metric, r.finalConfig.highlightWidth, inset.Left)
+					inset.Left = r.finalConfig.highlightWidth + inset.Left
 					isConversationRoot := r.ReplyData.Depth == 1
 					return inset.Layout(gtx, func(gtx C) D {
 						return layout.Flex{Axis: layout.Vertical}.Layout(gtx,

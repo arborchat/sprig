@@ -561,7 +561,7 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 								}.Layout(gtx, func(gtx C) D {
 									return sprigtheme.Rect{
 										Color: th.Background.Light.Bg,
-										Radii: float32(gtx.Px(unit.Dp(4))),
+										Radii: float32(gtx.Dp(unit.Dp(4))),
 									}.LayoutUnder(gtx, func(gtx C) D {
 										return layout.UniformInset(unit.Dp(4)).Layout(gtx, func(gtx C) D {
 											gtx.Constraints.Min.X = gtx.Constraints.Max.X

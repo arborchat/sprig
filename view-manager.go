@@ -8,14 +8,15 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
+	"gioui.org/io/key"
 	"gioui.org/io/profile"
-	"gioui.org/io/system"
 	"gioui.org/layout"
 	"gioui.org/op/clip"
 	"gioui.org/op/paint"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	materials "gioui.org/x/component"
+
 	"git.sr.ht/~whereswaldon/sprig/core"
 	"git.sr.ht/~whereswaldon/sprig/icons"
 	sprigTheme "git.sr.ht/~whereswaldon/sprig/widget/theme"
@@ -37,7 +38,7 @@ type ViewManager interface {
 	// request a screen invalidation from outside of a render context
 	RequestInvalidate()
 	// handle logical "back" navigation operations
-	HandleBackNavigation(*system.CommandEvent)
+	HandleBackNavigation(*key.Event)
 	// trigger a contextual app menu with the given title and actions
 	RequestContextualBar(gtx layout.Context, title string, actions []materials.AppBarAction, overflow []materials.OverflowAction)
 	// request that any contextual menu disappear
@@ -202,13 +203,10 @@ func (vm *viewManager) SelectedOverflowTag() interface{} {
 	return vm.selectedOverflowTag
 }
 
-func (vm *viewManager) HandleBackNavigation(event *system.CommandEvent) {
-	if len(vm.viewStack) < 1 {
-		event.Cancel = false
-		return
+func (vm *viewManager) HandleBackNavigation(event *key.Event) {
+	if len(vm.viewStack) > 0 {
+		vm.Pop()
 	}
-	vm.Pop()
-	event.Cancel = true
 }
 
 func (vm *viewManager) Push(id ViewID) {

@@ -46,7 +46,7 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 					return layout.Flex{}.Layout(gtx,
 						layout.Rigid(func(gtx C) D {
 							return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
-								gtx.Constraints.Max.X = gtx.Px(unit.Dp(30))
+								gtx.Constraints.Max.X = gtx.Dp(unit.Dp(30))
 								gtx.Constraints.Min.X = gtx.Constraints.Max.X
 								if c.ComposingConversation() {
 									return material.Body1(th.Theme, "In:").Layout(gtx)
@@ -106,7 +106,7 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 												X: float32(gtx.Constraints.Max.X),
 												Y: float32(gtx.Constraints.Min.Y),
 											},
-											Radii: float32(gtx.Px(unit.Dp(5))),
+											Radii: float32(gtx.Dp(unit.Dp(5))),
 										}.Layout(gtx)
 
 									}),
