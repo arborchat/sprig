@@ -5,7 +5,7 @@ go 1.18
 require (
 	gioui.org v0.0.0-20220725085722-26e71011f536
 	gioui.org/cmd v0.0.0-20220206102100-9d778d7bde57
-	gioui.org/x v0.0.0-20220724142818-8415d02c9cf2
+	gioui.org/x v0.0.0-20220725205657-7ef360c4fe31
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~gioverse/chat v0.0.0-20220607180414-f0addfc0d932
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020

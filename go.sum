@@ -24,6 +24,8 @@ gioui.org/x v0.0.0-20220609132952-25f67b5b7e87 h1:eDqXd8eBki1JnauEdrpHKMqZGFBRp2
 gioui.org/x v0.0.0-20220609132952-25f67b5b7e87/go.mod h1:8XMNUPk+xNpfAHkIGWcHGTfXjtdcyA1hxsWGmF9gogU=
 gioui.org/x v0.0.0-20220724142818-8415d02c9cf2 h1:u5JM9Ou/aw1S0u776IJkUeOlQOpcE7xhf7/+Q0ES4PA=
 gioui.org/x v0.0.0-20220724142818-8415d02c9cf2/go.mod h1:0apkSvH2FYyzQyIxgGpp9JgFI/3+plcgKXeI9dLSOSU=
+gioui.org/x v0.0.0-20220725205657-7ef360c4fe31 h1:QJDitEBeE6zFug28DAfdzdeJF7TDoFiQlIMQTa0zhfg=
+gioui.org/x v0.0.0-20220725205657-7ef360c4fe31/go.mod h1:0apkSvH2FYyzQyIxgGpp9JgFI/3+plcgKXeI9dLSOSU=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20201012012825-01012995abe1/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25 h1:RHPTh62y7Lg8rg2UiDR1667Z6nvXu/22bElmNbkDUs0=
 git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25/go.mod h1:N2PwWOB4JHluCAc9pRmd+78OEqWTw3wYgDQnCCrrQ/Q=
