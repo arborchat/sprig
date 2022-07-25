@@ -105,10 +105,6 @@ func eventLoop(w *app.Window) error {
 			case system.DestroyEvent:
 				app.Shutdown()
 				return event.Err
-			case *key.Event:
-				if event.Name == key.NameBack {
-					vm.HandleBackNavigation(event)
-				}
 			case system.FrameEvent:
 				gtx := layout.NewContext(&ops, event)
 				if profiler.Recorder != nil {
@@ -117,6 +113,15 @@ func eventLoop(w *app.Window) error {
 				if invalidate {
 					op.InvalidateOp{}.Add(gtx.Ops)
 				}
+				for _, event := range gtx.Events(w) {
+					if ke, ok := event.(key.Event); ok && ke.Name == key.NameBack {
+						vm.HandleBackNavigation()
+					}
+				}
+				key.InputOp{
+					Tag:  w,
+					Keys: key.Set(key.NameBack),
+				}.Add(gtx.Ops)
 				th := app.Theme().Current()
 				layout.Stack{}.Layout(gtx,
 					layout.Expanded(func(gtx C) D {

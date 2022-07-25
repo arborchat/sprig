@@ -8,7 +8,6 @@ import (
 
 	"gioui.org/app"
 	"gioui.org/f32"
-	"gioui.org/io/key"
 	"gioui.org/io/profile"
 	"gioui.org/layout"
 	"gioui.org/op/clip"
@@ -38,7 +37,7 @@ type ViewManager interface {
 	// request a screen invalidation from outside of a render context
 	RequestInvalidate()
 	// handle logical "back" navigation operations
-	HandleBackNavigation(*key.Event)
+	HandleBackNavigation()
 	// trigger a contextual app menu with the given title and actions
 	RequestContextualBar(gtx layout.Context, title string, actions []materials.AppBarAction, overflow []materials.OverflowAction)
 	// request that any contextual menu disappear
@@ -171,7 +170,7 @@ func (vm *viewManager) ExecuteIntent(intent Intent) bool {
 
 func (vm *viewManager) SetView(id ViewID) {
 	vm.current = id
-	//vm.ModalNavDrawer.SetNavDestination(id)
+	// vm.ModalNavDrawer.SetNavDestination(id)
 	view := vm.views[vm.current]
 	if showBar, title, actions, overflow := view.AppBarData(); showBar {
 		vm.AppBar.Title = title
@@ -203,7 +202,7 @@ func (vm *viewManager) SelectedOverflowTag() interface{} {
 	return vm.selectedOverflowTag
 }
 
-func (vm *viewManager) HandleBackNavigation(event *key.Event) {
+func (vm *viewManager) HandleBackNavigation() {
 	if len(vm.viewStack) > 0 {
 		vm.Pop()
 	}
