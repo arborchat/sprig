@@ -548,7 +548,7 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 									Bottom: internalInset,
 								}.Layout(gtx, func(gtx C) D {
 									shortenedContent := truncate(c.ReplyingTo.Content, 128)
-									content, _ := markdown.NewRenderer().Render(th.Theme, []byte(shortenedContent))
+									content, _ := markdown.NewRenderer().Render([]byte(shortenedContent))
 									reply := sprigtheme.Reply(th, nil, *c.ReplyingTo, richtext.Text(&c.ReplyPreview, th.Shaper, content...), false)
 									reply.MaxLines = 2
 									return reply.Layout(gtx)
@@ -598,7 +598,6 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 					}),
 				)
 			})
-
 		}),
 	)
 }
@@ -691,6 +690,7 @@ func replyNodesToElements(store store.ExtendedStore, replies ...forest.Node) []l
 	}
 	return elements
 }
+
 func repliesToElements(store store.ExtendedStore, replies ...forest.Reply) []list.Element {
 	elements := make([]list.Element, 0, len(replies))
 	for _, reply := range replies {
@@ -813,7 +813,7 @@ func (c *DynamicChatView) layoutReply(replyData list.Element, state interface{})
 		state := state.(*sprigwidget.Reply)
 		rd := replyData.(ds.ReplyData)
 		// Render the markdown content of the reply.
-		content, _ := markdown.NewRenderer().Render(theme, []byte(rd.Content))
+		content, _ := markdown.NewRenderer().Render([]byte(rd.Content))
 		richContent := richtext.Text(&state.InteractiveText, theme.Shaper, content...)
 		// Construct an animation state using the shared animation progress
 		// but use discrete begin and end states for this reply.

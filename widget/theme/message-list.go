@@ -76,8 +76,10 @@ func interpolateInset(anim *sprigWidget.ReplyAnimationState, progress float32) u
 	return unit.Dp((end-begin)*unit.Dp(progress) + begin)
 }
 
-const buttonWidthDp = 20
-const scrollSlotWidthDp = 12
+const (
+	buttonWidthDp     = 20
+	scrollSlotWidthDp = 12
+)
 
 func (m MessageListStyle) Layout(gtx C) D {
 	m.State.Layout(gtx)
@@ -116,7 +118,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 		}
 		// Only acquire a state after ensuring the node should be rendered. This allows
 		// us to count used states in order to determine how many nodes were rendered.
-		var state = m.State.ReplyStates.Next()
+		state := m.State.ReplyStates.Next()
 		return layout.Center.Layout(gtx, func(gtx C) D {
 			var (
 				cs         = &gtx.Constraints
@@ -146,7 +148,7 @@ func (m MessageListStyle) Layout(gtx C) D {
 							}.Layout(gtx, func(gtx C) D {
 								gtx.Constraints.Max.X = messageWidth
 								state, hint := m.State.GetTextState(reply.ID)
-								content, _ := markdown.NewRenderer().Render(th.Theme, []byte(reply.Content))
+								content, _ := markdown.NewRenderer().Render([]byte(reply.Content))
 								if hint != "" {
 									macro := op.Record(gtx.Ops)
 									component.Surface(th.Theme).Layout(gtx,
@@ -162,7 +164,6 @@ func (m MessageListStyle) Layout(gtx C) D {
 								}
 
 								return rs.Layout(gtx)
-
 							})
 						}),
 						layout.Expanded(func(gtx C) D {

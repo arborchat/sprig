@@ -27,7 +27,7 @@ func Composer(th *Theme, state *sprigWidget.Composer, communities []*forest.Comm
 }
 
 func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
-	var th = c.Theme
+	th := c.Theme
 	c.Composer.Layout(gtx)
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
@@ -52,7 +52,6 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									return material.Body1(th.Theme, "In:").Layout(gtx)
 								}
 								return material.Body1(th.Theme, "Re:").Layout(gtx)
-
 							})
 						}),
 						layout.Flexed(1, func(gtx C) D {
@@ -70,7 +69,7 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 									})
 									return dims
 								}
-								content, _ := markdown.NewRenderer().Render(th.Theme, []byte(c.ReplyingTo.Content))
+								content, _ := markdown.NewRenderer().Render([]byte(c.ReplyingTo.Content))
 								reply := Reply(th, nil, c.ReplyingTo, richtext.Text(&c.Composer.TextState, th.Shaper, content...), false)
 								reply.MaxLines = 5
 								return reply.Layout(gtx)
@@ -108,7 +107,6 @@ func (c ComposerStyle) Layout(gtx layout.Context) layout.Dimensions {
 											},
 											Radii: float32(gtx.Dp(unit.Dp(5))),
 										}.Layout(gtx)
-
 									}),
 									layout.Stacked(func(gtx C) D {
 										return layout.UniformInset(unit.Dp(6)).Layout(gtx, func(gtx C) D {
