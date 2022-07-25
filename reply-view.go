@@ -895,7 +895,7 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	return layout.Stack{}.Layout(gtx,
 		layout.Expanded(func(gtx C) D {
 			sprigTheme.Rect{
-				Color: theme.Bg,
+				Color: theme.Background.Default.Bg,
 				Size:  layout.FPt(gtx.Constraints.Max),
 			}.Layout(gtx)
 			return layout.Dimensions{}
@@ -927,8 +927,10 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 		}))
 }
 
-const buttonWidthDp = 20
-const scrollSlotWidthDp = 12
+const (
+	buttonWidthDp     = 20
+	scrollSlotWidthDp = 12
+)
 
 // shouldFilter returns whether the provided status should be filtered based
 // on the current filter state.
