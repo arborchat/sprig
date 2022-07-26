@@ -26,7 +26,6 @@ import (
 	"git.sr.ht/~whereswaldon/forest-go/twig"
 
 	materials "gioui.org/x/component"
-	events "gioui.org/x/eventx"
 
 	"git.sr.ht/~whereswaldon/sprig/anim"
 	"git.sr.ht/~whereswaldon/sprig/core"
@@ -710,13 +709,19 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 				case key.NameReturn, key.NameEnter:
 					c.startReply()
 				case "C":
-					if event.Modifiers.Contain(key.ModCtrl) || (runtime.GOOS == "darwin" && event.Modifiers.Contain(key.ModCommand)) {
+					if event.Modifiers.Contain(key.ModShortcut) {
 						c.copyFocused(gtx)
 					} else {
 						c.startConversation()
 					}
 				case key.NameSpace, "F":
 					c.toggleFilter()
+				case "[":
+					if event.Modifiers.Contain(key.ModCtrl) {
+						c.hideEditor()
+					}
+				case key.NameEscape:
+					c.hideEditor()
 				}
 			}
 		}
@@ -887,6 +892,22 @@ func (c *ReplyListView) hideEditor() {
 	c.requestKeyboardFocus()
 }
 
+// Declare the set of keyboard shortcuts this page is interested in.
+var keySet = key.Set(strings.Join([]string{
+	"(Shift)-D",
+	"(Shift)-" + key.NameDeleteBackward,
+	"K",
+	"J",
+	key.NameHome,
+	"(Shift)-G",
+	key.NameEnd,
+	key.NameReturn,
+	key.NameEnter,
+	"(Short)-C",
+	"F",
+	key.NameSpace,
+}, "|"))
+
 // Layout renders the whole view into the provided context.
 func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 	theme := c.Theme().Current()
@@ -916,9 +937,16 @@ func (c *ReplyListView) Layout(gtx layout.Context) layout.Dimensions {
 				}),
 				layout.Rigid(func(gtx C) D {
 					if c.shouldDisplayEditor() {
+						key.InputOp{
+							Tag:  c,
+							Keys: key.NameEscape + "|Ctrl-[",
+						}.Add(gtx.Ops)
 						return c.layoutEditor(gtx)
 					} else {
-						key.InputOp{Tag: c}.Add(gtx.Ops)
+						key.InputOp{
+							Keys: keySet,
+							Tag:  c,
+						}.Add(gtx.Ops)
 						key.FocusOp{Tag: c}.Add(gtx.Ops)
 					}
 					return layout.Dimensions{}
@@ -990,29 +1018,11 @@ func (c *ReplyListView) layoutReplyList(gtx layout.Context) layout.Dimensions {
 // layoutEditor renders the message composition editor into the provided graphics
 // context.
 func (c *ReplyListView) layoutEditor(gtx layout.Context) layout.Dimensions {
-	var (
-		th  = c.Theme().Current()
-		spy *events.Spy
-	)
-	spy, gtx = events.Enspy(gtx)
+	th := c.Theme().Current()
 	var dims layout.Dimensions
 	c.Arbor().Communities().WithCommunities(func(comms []*forest.Community) {
 		dims = sprigTheme.Composer(th, &c.Composer, comms).Layout(gtx)
 	})
-
-	for _, group := range spy.AllEvents() {
-		for _, e := range group.Items {
-			switch ev := e.(type) {
-			case key.Event:
-				if ev.State == key.Press {
-					switch {
-					case ev.Name == key.NameEscape || (ev.Name == "[" && ev.Modifiers.Contain(key.ModCtrl)):
-						c.hideEditor()
-					}
-				}
-			}
-		}
-	}
 	return dims
 }
 
