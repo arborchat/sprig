@@ -617,12 +617,16 @@ func (c *DynamicChatView) processReplyStateUpdates(gtx layout.Context, element d
 			url := span.Get(markdown.MetadataURL)
 			switch event.Type {
 			case richtext.Click:
-				giohyperlink.Open(url)
+				if asStr, ok := url.(string); ok {
+					giohyperlink.Open(asStr)
+				}
 			case richtext.LongPress:
 				c.Haptic().Buzz()
 				fallthrough
 			case richtext.Hover:
-				c.Hint = url
+				if asStr, ok := url.(string); ok {
+					c.Hint = asStr
+				}
 			}
 		}
 	}

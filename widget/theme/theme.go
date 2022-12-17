@@ -1,9 +1,12 @@
 package theme
 
 import (
+	_ "embed"
 	"image/color"
 
 	"gioui.org/font/gofont"
+	"gioui.org/font/opentype"
+	"gioui.org/text"
 	"gioui.org/widget/material"
 )
 
@@ -56,8 +59,21 @@ var (
 	dmText            = color.NRGBA{R: 194, G: 196, B: 199, A: 255}
 )
 
+//go:embed fonts/static/NotoEmoji-Regular.ttf
+var emojiTTF []byte
+
+var emoji text.FontFace = func() text.FontFace {
+	face, _ := opentype.Parse(emojiTTF)
+	return text.FontFace{
+		Font: text.Font{Typeface: "emoji"},
+		Face: face,
+	}
+}()
+
 func New() *Theme {
-	gioTheme := material.NewTheme(gofont.Collection())
+	collection := gofont.Collection()
+	collection = append(collection, emoji)
+	gioTheme := material.NewTheme(collection)
 	var t Theme
 	t.Theme = gioTheme
 	t.Primary = Swatch{

@@ -51,12 +51,18 @@ func (m *MessageList) GetTextState(id *fields.QualifiedHash) (*richtext.Interact
 			url := span.Get(markdown.MetadataURL)
 			switch event.Type {
 			case richtext.Click:
-				m.events = append(m.events, MessageListEvent{Type: LinkOpen, Data: url})
+				if asStr, ok := url.(string); ok {
+					m.events = append(m.events, MessageListEvent{Type: LinkOpen, Data: asStr})
+				}
 			case richtext.LongPress:
-				m.events = append(m.events, MessageListEvent{Type: LinkLongPress, Data: url})
+				if asStr, ok := url.(string); ok {
+					m.events = append(m.events, MessageListEvent{Type: LinkLongPress, Data: asStr})
+				}
 				fallthrough
 			case richtext.Hover:
-				hint = url
+				if asStr, ok := url.(string); ok {
+					hint = asStr
+				}
 			}
 		}
 	}
