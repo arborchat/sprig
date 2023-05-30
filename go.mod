@@ -8,7 +8,7 @@ require (
 	gioui.org/x v0.0.0-20221217001840-a2b41ad69d71
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~gioverse/chat v0.0.0-20220607180414-f0addfc0d932
-	git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020
+	git.sr.ht/~whereswaldon/forest-go v0.0.0-20230530191337-133031baad4c
 	git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb
 	git.sr.ht/~whereswaldon/sprout-go v0.0.0-20220128205300-c2f66369262c
 	github.com/inkeliz/giohyperlink v0.0.0-20210728190223-81136d95d4bb

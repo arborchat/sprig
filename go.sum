@@ -29,6 +29,8 @@ git.sr.ht/~whereswaldon/forest-go v0.0.0-20201011203633-e3b60d5a8e86/go.mod h1:a
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210408011444-effb84ecc2c5/go.mod h1:alCa7uFQGCgNhV//TWMPwHnoBICVL3Lj1JAqvlJSZRc=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020 h1:V9zx3h6+j9QW7+EpKtfY+ifqh3oFbEuGqnvkWZ9R1pU=
 git.sr.ht/~whereswaldon/forest-go v0.0.0-20210721201741-28efb6fd5020/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20230530191337-133031baad4c h1:rSB4QpFOKz5SG6j1W1RuTZBCmfHG78f00j8JQuDoKn0=
+git.sr.ht/~whereswaldon/forest-go v0.0.0-20230530191337-133031baad4c/go.mod h1:dl/ar9a+I0d7qpDggdpKx4Z5y/57B4pvwSd5q87E5+E=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb h1:jcEZhfRWnqY+XwZMk2+ldbJDnPrB8v+UiwrC3sPnv8I=
 git.sr.ht/~whereswaldon/latest v0.0.0-20210304001450-aafd2a13a1bb/go.mod h1:jUOuersHq1652DgWF5rTCCH/Xoepj8z+NpU09IAeqCw=
 git.sr.ht/~whereswaldon/sprout-go v0.0.0-20220128205300-c2f66369262c h1:DayyithVSUT8vmEKwYAHKMXGcrOERBy4lGriIgHeSpQ=
