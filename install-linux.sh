@@ -12,7 +12,7 @@ ICON_DIR=$PREFIX/share/icons
 if [ ! -d "$BIN_DIR" ]; then
     mkdir -pv "$BIN_DIR"
 fi
-install -v "$BASEDIR/sprig" "$PREFIX/bin/sprig"
+install "$BASEDIR/sprig" "$PREFIX/bin/sprig" && echo "$PREFIX/bin/sprig"
 
 if [ ! -d "$APP_DIR" ]; then
     mkdir -pv "$APP_DIR"
