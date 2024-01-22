@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"image/color"
 
+	"gioui.org/font"
 	"gioui.org/layout"
 	"gioui.org/op"
-	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget"
 	"gioui.org/widget/material"
@@ -409,7 +409,7 @@ func ForestRef(theme *material.Theme, name string, id *fields.QualifiedHash) For
 		NameStyle:   material.Body2(theme, name),
 		SuffixStyle: material.Body2(theme, "#"+hex.EncodeToString(suffix)),
 	}
-	a.NameStyle.Font.Weight = text.Bold
+	a.NameStyle.Font.Weight = font.Bold
 	a.NameStyle.MaxLines = 1
 	a.SuffixStyle.Color.A = 150
 	a.SuffixStyle.MaxLines = 1
@@ -448,7 +448,7 @@ func AuthorName(theme *Theme, authorName string, authorID *fields.QualifiedHash,
 		ActivityIndicatorStyle: material.Body2(theme.Theme, "●"),
 	}
 	a.ActivityIndicatorStyle.Color = theme.Primary.Light.Bg
-	a.ActivityIndicatorStyle.Font.Weight = text.Bold
+	a.ActivityIndicatorStyle.Font.Weight = font.Bold
 	return a
 }
 

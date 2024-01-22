@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"image/color"
 
+	"gioui.org/font"
 	"gioui.org/font/gofont"
 	"gioui.org/font/opentype"
 	"gioui.org/text"
@@ -65,7 +66,7 @@ var emojiTTF []byte
 var emoji text.FontFace = func() text.FontFace {
 	face, _ := opentype.Parse(emojiTTF)
 	return text.FontFace{
-		Font: text.Font{Typeface: "emoji"},
+		Font: font.Font{Typeface: "emoji"},
 		Face: face,
 	}
 }()
