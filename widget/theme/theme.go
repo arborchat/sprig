@@ -74,7 +74,8 @@ var emoji text.FontFace = func() text.FontFace {
 func New() *Theme {
 	collection := gofont.Collection()
 	collection = append(collection, emoji)
-	gioTheme := material.NewTheme(collection)
+	gioTheme := material.NewTheme()
+	gioTheme.Shaper = text.NewShaper(text.WithCollection(collection))
 	var t Theme
 	t.Theme = gioTheme
 	t.Primary = Swatch{

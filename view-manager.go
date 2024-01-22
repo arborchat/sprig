@@ -360,7 +360,7 @@ func (vm *viewManager) layoutProfileTimings(gtx layout.Context) layout.Dimension
 		layout.Stacked(func(gtx C) D {
 			return layout.Inset{Top: unit.Dp(4), Left: unit.Dp(4)}.Layout(gtx, func(gtx C) D {
 				label := material.Body1(vm.App.Theme().Current().Theme, text)
-				label.Font.Variant = "Mono"
+				label.Font.Typeface = "Go Mono"
 				return label.Layout(gtx)
 			})
 		}),

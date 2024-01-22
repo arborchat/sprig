@@ -3,9 +3,9 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.18
 
 require (
-	gioui.org v0.1.0
+	gioui.org v0.2.0
 	gioui.org/cmd v0.0.0-20220206102100-9d778d7bde57
-	gioui.org/x v0.1.0
+	gioui.org/x v0.2.0
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~gioverse/chat v0.0.0-20220607180414-f0addfc0d932
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20230530191337-133031baad4c
@@ -26,7 +26,7 @@ require (
 	github.com/akavel/rsrc v0.10.1 // indirect
 	github.com/esiqveland/notify v0.11.0 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
-	github.com/go-text/typesetting v0.0.0-20230602202114-9797aefac433 // indirect
+	github.com/go-text/typesetting v0.0.0-20230803102845-24e03d8b5372 // indirect
 	github.com/godbus/dbus/v5 v5.0.6 // indirect
 	github.com/shamaton/msgpack v1.2.1 // indirect
 	github.com/yuin/goldmark v1.4.13 // indirect

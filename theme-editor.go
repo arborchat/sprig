@@ -8,6 +8,7 @@ import (
 	"gioui.org/font/gofont"
 	"gioui.org/layout"
 	"gioui.org/op"
+	"gioui.org/text"
 	"gioui.org/unit"
 	"gioui.org/widget/material"
 	"git.sr.ht/~whereswaldon/sprig/core"
@@ -69,9 +70,11 @@ type muxListElement struct {
 var _ View = &ThemeEditorView{}
 
 func NewThemeEditorView(app core.App) View {
+	th := material.NewTheme()
+	th.Shaper = text.NewShaper(text.WithCollection(gofont.Collection()))
 	c := &ThemeEditorView{
 		App:         app,
-		widgetTheme: material.NewTheme(gofont.Collection()),
+		widgetTheme: th,
 	}
 
 	c.ConfigurePickersFor(app.Theme().Current())
