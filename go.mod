@@ -3,9 +3,9 @@ module git.sr.ht/~whereswaldon/sprig
 go 1.18
 
 require (
-	gioui.org v0.2.0
+	gioui.org v0.3.0
 	gioui.org/cmd v0.0.0-20220206102100-9d778d7bde57
-	gioui.org/x v0.2.0
+	gioui.org/x v0.3.0
 	git.sr.ht/~athorp96/forest-ex v0.0.0-20210604181634-7063d1aadd25
 	git.sr.ht/~gioverse/chat v0.0.0-20220607180414-f0addfc0d932
 	git.sr.ht/~whereswaldon/forest-go v0.0.0-20230530191337-133031baad4c
