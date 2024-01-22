@@ -234,7 +234,7 @@ func (c *ThemeEditorView) Update(gtx layout.Context) {
 		}
 	}
 	for _, elem := range c.muxListElems {
-		if elem.Changed() {
+		if elem.Update(gtx) {
 			*elem.TargetColor = elem.Color()
 			op.InvalidateOp{}.Add(gtx.Ops)
 			log.Printf("mux changed")

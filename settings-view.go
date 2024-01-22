@@ -114,17 +114,17 @@ func (c *SettingsView) Update(gtx layout.Context) {
 	settingsChanged := false
 	for i := range c.CommunityBoxes {
 		box := &c.CommunityBoxes[i]
-		if box.Changed() {
+		if box.Update(gtx) {
 			log.Println("updated")
 		}
 	}
-	if c.IdentityButton.Clicked() {
+	if c.IdentityButton.Clicked(gtx) {
 		c.manager.RequestViewSwitch(IdentityFormID)
 	}
-	if c.ProfilingSwitch.Changed() {
+	if c.ProfilingSwitch.Update(gtx) {
 		c.manager.SetProfiling(c.ProfilingSwitch.Value)
 	}
-	if c.ThemeingSwitch.Changed() {
+	if c.ThemeingSwitch.Update(gtx) {
 		c.manager.SetThemeing(c.ThemeingSwitch.Value)
 	}
 	if c.ConnectionForm.Submitted() {
@@ -132,11 +132,11 @@ func (c *SettingsView) Update(gtx layout.Context) {
 		settingsChanged = true
 		c.Sprout().ConnectTo(c.Settings().Address())
 	}
-	if c.NotificationsSwitch.Changed() {
+	if c.NotificationsSwitch.Update(gtx) {
 		c.Settings().SetNotificationsGloballyAllowed(c.NotificationsSwitch.Value)
 		settingsChanged = true
 	}
-	if c.TestNotificationsButton.Clicked() {
+	if c.TestNotificationsButton.Clicked(gtx) {
 		err := c.Notifications().Notify("Testing!", "This is a test notification from sprig.")
 		if err == nil {
 			c.TestResults = "Sent without errors"
@@ -144,19 +144,19 @@ func (c *SettingsView) Update(gtx layout.Context) {
 			c.TestResults = "Failed: " + err.Error()
 		}
 	}
-	if c.BottomBarSwitch.Changed() {
+	if c.BottomBarSwitch.Update(gtx) {
 		c.Settings().SetBottomAppBar(c.BottomBarSwitch.Value)
 		settingsChanged = true
 	}
-	if c.DockNavSwitch.Changed() {
+	if c.DockNavSwitch.Update(gtx) {
 		c.Settings().SetDockNavDrawer(c.DockNavSwitch.Value)
 		settingsChanged = true
 	}
-	if c.DarkModeSwitch.Changed() {
+	if c.DarkModeSwitch.Update(gtx) {
 		c.Settings().SetDarkMode(c.DarkModeSwitch.Value)
 		settingsChanged = true
 	}
-	if c.UseOrchardStoreSwitch.Changed() {
+	if c.UseOrchardStoreSwitch.Update(gtx) {
 		c.Settings().SetUseOrchardStore(c.UseOrchardStoreSwitch.Value)
 		settingsChanged = true
 	}

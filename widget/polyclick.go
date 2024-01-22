@@ -26,13 +26,13 @@ type Polyclick struct {
 
 func (p *Polyclick) update(gtx layout.Context) {
 	p.currentTime = gtx.Now
-	for _, event := range p.Click.Events(gtx) {
-		switch event.Type {
-		case gesture.TypeCancel:
+	for _, event := range p.Click.Update(gtx) {
+		switch event.Kind {
+		case gesture.KindCancel:
 			p.processCancel(event, gtx)
-		case gesture.TypePress:
+		case gesture.KindPress:
 			p.processPress(event, gtx)
-		case gesture.TypeClick:
+		case gesture.KindClick:
 			p.processClick(event, gtx)
 		default:
 			continue

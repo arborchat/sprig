@@ -25,10 +25,10 @@ func (c *TextForm) Layout(gtx layout.Context) layout.Dimensions {
 			c.submitted = true
 		}
 	}
-	if c.SubmitButton.Clicked() {
+	if c.SubmitButton.Clicked(gtx) {
 		c.submitted = true
 	}
-	if c.PasteButton.Clicked() {
+	if c.PasteButton.Clicked(gtx) {
 		clipboard.ReadOp{Tag: c}.Add(gtx.Ops)
 	}
 	for _, e := range gtx.Events(c) {

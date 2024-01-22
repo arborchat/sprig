@@ -41,7 +41,7 @@ func (c *ConsentView) AppBarData() (bool, string, []materials.AppBarAction, []ma
 }
 
 func (c *ConsentView) Update(gtx layout.Context) {
-	if c.AgreeButton.Clicked() {
+	if c.AgreeButton.Clicked(gtx) {
 		c.Settings().SetAcknowledgedNoticeVersion(NoticeVersion)
 		go c.Settings().Persist()
 		if c.Settings().Address() == "" {

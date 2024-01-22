@@ -55,11 +55,11 @@ func (c *SubSetupFormView) AppBarData() (bool, string, []materials.AppBarAction,
 }
 
 func (c *SubSetupFormView) Update(gtx layout.Context) {
-	c.SubStateManager.Update()
-	if c.Refresh.Clicked() {
+	c.SubStateManager.Update(gtx)
+	if c.Refresh.Clicked(gtx) {
 		c.SubStateManager.Refresh()
 	}
-	if c.Continue.Clicked() {
+	if c.Continue.Clicked(gtx) {
 		c.manager.SetView(ReplyViewID)
 	}
 }

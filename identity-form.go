@@ -46,7 +46,7 @@ func (c *IdentityFormView) HandleClipboard(contents string) {
 }
 
 func (c *IdentityFormView) Update(gtx layout.Context) {
-	if c.CreateButton.Clicked() {
+	if c.CreateButton.Clicked(gtx) {
 		c.Settings().CreateIdentity(c.TextField.Text())
 		c.manager.RequestViewSwitch(SubscriptionSetupFormViewID)
 	}

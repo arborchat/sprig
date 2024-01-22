@@ -57,7 +57,7 @@ func (c *Composer) update(gtx layout.Context) {
 			c.events = append(c.events, ComposerSubmitted)
 		}
 	}
-	if c.PasteButton.Clicked() {
+	if c.PasteButton.Clicked(gtx) {
 		clipboard.ReadOp{Tag: &c.composing}.Add(gtx.Ops)
 	}
 	for _, e := range gtx.Events(&c.composing) {
@@ -66,10 +66,10 @@ func (c *Composer) update(gtx layout.Context) {
 			c.Editor.Insert(e.Text)
 		}
 	}
-	if c.CancelButton.Clicked() {
+	if c.CancelButton.Clicked(gtx) {
 		c.events = append(c.events, ComposerCancelled)
 	}
-	if c.SendButton.Clicked() {
+	if c.SendButton.Clicked(gtx) {
 		c.events = append(c.events, ComposerSubmitted)
 	}
 }

@@ -70,8 +70,8 @@ func (c *SubscriptionView) NavItem() *materials.NavItem {
 }
 
 func (c *SubscriptionView) Update(gtx layout.Context) {
-	c.SubStateManager.Update()
-	if c.Refresh.Clicked() {
+	c.SubStateManager.Update(gtx)
+	if c.Refresh.Clicked(gtx) {
 		c.SubStateManager.Refresh()
 	}
 }
@@ -186,7 +186,7 @@ func NewSubStateManager(app core.App, invalidate func()) SubStateManager {
 // Update checks whether the backend has new results from the background worker
 // goroutine and updates internal state to reflect those results. It should
 // always be invoked before using the Subs field directly.
-func (c *SubStateManager) Update() {
+func (c *SubStateManager) Update(gtx C) {
 outer:
 	for {
 		select {
@@ -200,7 +200,7 @@ outer:
 	var changes []Sub
 	for i := range c.Subs {
 		sub := &c.Subs[i]
-		if sub.Subbed.Changed() {
+		if sub.Subbed.Update(gtx) {
 			changes = append(changes, *sub)
 		}
 	}

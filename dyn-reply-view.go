@@ -225,11 +225,11 @@ func (c *DynamicChatView) postReplies(author *forest.Identity, replies []*forest
 }
 
 func (c *DynamicChatView) Update(gtx layout.Context) {
-	if c.DismissButton.Clicked() {
+	if c.DismissButton.Clicked(gtx) {
 		c.Editing = false
 		c.Editor.SetText("")
 	}
-	if c.SendButton.Clicked() {
+	if c.SendButton.Clicked(gtx) {
 		c.sendMessage()
 		c.Editing = false
 		c.Editor.SetText("")
@@ -302,9 +302,9 @@ func (c *DynamicChatView) Update(gtx layout.Context) {
 	if c.FocusTracker.RefreshNodeStatus(c.Arbor().Store()) {
 		c.FocusAnimation.Start(gtx.Now)
 	}
-	for _, e := range c.BackgroundClick.Events(gtx) {
-		switch e.Type {
-		case gesture.TypeClick:
+	for _, e := range c.BackgroundClick.Update(gtx) {
+		switch e.Kind {
+		case gesture.KindClick:
 			c.FocusTracker.SetFocus(nil)
 		}
 	}
@@ -604,9 +604,9 @@ func (c *DynamicChatView) layoutCompositionArea(gtx layout.Context) D {
 
 func (c *DynamicChatView) processReplyStateUpdates(gtx layout.Context, element ds.ReplyData, state *sprigwidget.Reply) {
 	// Process any clicks on the reply.
-	for _, e := range state.Polyclick.Events(gtx) {
-		switch e.Type {
-		case gesture.TypeClick:
+	for _, e := range state.Polyclick.Update(gtx) {
+		switch e.Kind {
+		case gesture.KindClick:
 			if e.NumClicks == 1 {
 				c.FocusTracker.SetFocus(&element)
 			}

@@ -37,8 +37,8 @@ func (r *Reply) WithContent(s string) *Reply {
 func (r *Reply) Layout(gtx layout.Context, replyWidth int) layout.Dimensions {
 	r.Drag.Add(gtx.Ops)
 
-	for _, e := range r.Drag.Events(gtx.Metric, gtx, gesture.Horizontal) {
-		switch e.Type {
+	for _, e := range r.Drag.Update(gtx.Metric, gtx, gesture.Horizontal) {
+		switch e.Kind {
 		case pointer.Press:
 			r.dragStart = e.Position.X
 			r.dragOffset = 0

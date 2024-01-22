@@ -92,66 +92,65 @@ func eventLoop(w *app.Window) error {
 		vm.SetView(ReplyViewID)
 	}
 
+	go func() {
+		<-sigs
+		w.Perform(system.ActionClose)
+	}()
+
 	var ops op.Ops
 	for {
-		select {
-		case <-sigs:
+		ev := w.NextEvent()
+		giohyperlink.ListenEvents(ev)
+		switch event := ev.(type) {
+		case system.DestroyEvent:
 			app.Shutdown()
-			return nil
-		case event := (<-w.Events()):
-			giohyperlink.ListenEvents(event)
-
-			switch event := event.(type) {
-			case system.DestroyEvent:
-				app.Shutdown()
-				return event.Err
-			case system.FrameEvent:
-				gtx := layout.NewContext(&ops, event)
-				if profiler.Recorder != nil {
-					profiler.Record(gtx)
-				}
-				if invalidate {
-					op.InvalidateOp{}.Add(gtx.Ops)
-				}
-				for _, event := range gtx.Events(w) {
-					if ke, ok := event.(key.Event); ok && ke.Name == key.NameBack {
-						vm.HandleBackNavigation()
-					}
-				}
-				key.InputOp{
-					Tag:  w,
-					Keys: key.Set(key.NameBack),
-				}.Add(gtx.Ops)
-				th := app.Theme().Current()
-				layout.Stack{}.Layout(gtx,
-					layout.Expanded(func(gtx C) D {
-						return sprigTheme.Rect{
-							Color: th.Background.Dark.Bg,
-							Size: f32.Point{
-								X: float32(gtx.Constraints.Max.X),
-								Y: float32(gtx.Constraints.Max.Y),
-							},
-						}.Layout(gtx)
-					}),
-					layout.Stacked(func(gtx C) D {
-						return layout.Stack{}.Layout(gtx,
-							layout.Expanded(func(gtx C) D {
-								return sprigTheme.Rect{
-									Color: th.Background.Dark.Bg,
-									Size: f32.Point{
-										X: float32(gtx.Constraints.Max.X),
-										Y: float32(gtx.Constraints.Max.Y),
-									},
-								}.Layout(gtx)
-							}),
-							layout.Stacked(vm.Layout),
-						)
-					}),
-				)
-				event.Frame(gtx.Ops)
-			default:
-				ProcessPlatformEvent(app, event)
+			return event.Err
+		case system.FrameEvent:
+			gtx := layout.NewContext(&ops, event)
+			if profiler.Recorder != nil {
+				profiler.Record(gtx)
 			}
+			if invalidate {
+				op.InvalidateOp{}.Add(gtx.Ops)
+			}
+			for _, event := range gtx.Events(w) {
+				if ke, ok := event.(key.Event); ok && ke.Name == key.NameBack {
+					vm.HandleBackNavigation()
+				}
+			}
+			key.InputOp{
+				Tag:  w,
+				Keys: key.Set(key.NameBack),
+			}.Add(gtx.Ops)
+			th := app.Theme().Current()
+			layout.Stack{}.Layout(gtx,
+				layout.Expanded(func(gtx C) D {
+					return sprigTheme.Rect{
+						Color: th.Background.Dark.Bg,
+						Size: f32.Point{
+							X: float32(gtx.Constraints.Max.X),
+							Y: float32(gtx.Constraints.Max.Y),
+						},
+					}.Layout(gtx)
+				}),
+				layout.Stacked(func(gtx C) D {
+					return layout.Stack{}.Layout(gtx,
+						layout.Expanded(func(gtx C) D {
+							return sprigTheme.Rect{
+								Color: th.Background.Dark.Bg,
+								Size: f32.Point{
+									X: float32(gtx.Constraints.Max.X),
+									Y: float32(gtx.Constraints.Max.Y),
+								},
+							}.Layout(gtx)
+						}),
+						layout.Stacked(vm.Layout),
+					)
+				}),
+			)
+			event.Frame(gtx.Ops)
+		default:
+			ProcessPlatformEvent(app, event)
 		}
 	}
 }

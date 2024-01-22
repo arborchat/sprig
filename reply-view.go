@@ -676,7 +676,7 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 	}
 
 	// Dismiss the composer if the scrim is clicked
-	if c.replyListCover.Clicked() {
+	if c.replyListCover.Clicked(gtx) {
 		c.replyListCover.Disappear(gtx.Now)
 		c.hideEditor()
 	}
@@ -736,31 +736,31 @@ func (c *ReplyListView) Update(gtx layout.Context) {
 		}
 	}
 	overflowTag := c.manager.SelectedOverflowTag()
-	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked() {
+	if overflowTag == &c.JumpToBottomButton || c.JumpToBottomButton.Clicked(gtx) {
 		jumpEnd()
 	}
-	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked() {
+	if overflowTag == &c.JumpToTopButton || c.JumpToTopButton.Clicked(gtx) {
 		jumpStart()
 	}
-	if overflowTag == &c.HideDescendantsButton || c.HideDescendantsButton.Clicked() {
+	if overflowTag == &c.HideDescendantsButton || c.HideDescendantsButton.Clicked(gtx) {
 		c.toggleDescendantsHidden()
 	}
 	c.processMessagePointerEvents(gtx)
 	c.refreshNodeStatus(gtx)
-	if c.FilterButton.Clicked() || overflowTag == &c.FilterButton {
+	if c.FilterButton.Clicked(gtx) || overflowTag == &c.FilterButton {
 		c.toggleFilter()
 	}
-	if c.Focused != nil && (c.CopyReplyButton.Clicked() || overflowTag == &c.CopyReplyButton) {
+	if c.Focused != nil && (c.CopyReplyButton.Clicked(gtx) || overflowTag == &c.CopyReplyButton) {
 		c.copyFocused(gtx)
 	}
 
-	if c.Focused != nil && (c.CreateReplyButton.Clicked() || overflowTag == &c.CreateReplyButton) {
+	if c.Focused != nil && (c.CreateReplyButton.Clicked(gtx) || overflowTag == &c.CreateReplyButton) {
 		c.startReply()
 	}
-	if c.CreateConversationButton.Clicked() || overflowTag == &c.CreateConversationButton {
+	if c.CreateConversationButton.Clicked(gtx) || overflowTag == &c.CreateConversationButton {
 		c.startConversation()
 	}
-	if c.LoadMoreHistoryButton.Clicked() || overflowTag == &c.LoadMoreHistoryButton {
+	if c.LoadMoreHistoryButton.Clicked(gtx) || overflowTag == &c.LoadMoreHistoryButton {
 		go c.loadMoreHistory()
 	}
 	for _, event := range c.MessageList.Events() {
